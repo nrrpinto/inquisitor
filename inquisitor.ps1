@@ -1210,7 +1210,7 @@ Function Collect-MRUs {
                 }
                 else
                 {
-                    Write-Host "`t`t[.] There is no RunMRU values in the registry for this user." -ForegroundColor Yellow
+                    Write-Host "`t`t[i] There is no RunMRU values in the registry for this user." -ForegroundColor Yellow
                 }
             } 
             catch 
@@ -1785,7 +1785,7 @@ Function Collect-RecentApps {
                 }
                 else
                 {
-                    Write-Host "`t[.] There is not RecentApps info in the registry."
+                    Write-Host "`t[i] There is not RecentApps info in the registry."
                 }
             }
         }
@@ -2546,7 +2546,7 @@ Function Collect-Chrome-Data {
         }
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\")){
-            Write-Host "[i] There is no Chrome Browser in the System ..." -ForegroundColor Yellow
+            Write-Host "`t[i] There is no Chrome Browser in the System ..." -ForegroundColor Yellow
         }
     }
 }
@@ -2592,7 +2592,7 @@ Function Collect-Firefox-Data {
         }
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\")){
-            Write-Host "[i] There is no Firefox Browser installed for user $u ..." -ForegroundColor Yellow
+            Write-Host "`t[i] There is no Firefox Browser installed for user $u ..." -ForegroundColor Yellow
         }
     }
 }
@@ -2645,7 +2645,7 @@ Function Collect-IE-Data {
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\IE\"))
         {
-            Write-Host "[i] There is no IE Browser in the System ..." -ForegroundColor Yellow
+            Write-Host "`t[i] There is no IE Browser in the System ..." -ForegroundColor Yellow
         }
     }
 }
@@ -2695,7 +2695,7 @@ Function Collect-EDGE-Data {
         
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\EDGE\"))
         {
-            Write-Host "[i] There is no IE Browser in the System ..." -ForegroundColor Yellow
+            Write-Host "`t[i] There is no IE Browser in the System ..." -ForegroundColor Yellow
         }
     }
 }
@@ -2973,11 +2973,11 @@ Function Control-NOGUI{
 
     # LIVE                                                                                                                                                                                                                 # mm:ss
 
-    if ($true         ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Time ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
+    if ($true         ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Time ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # 00:00
     
     if (         $RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-    if ($All -or $NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
-    if ($All -or $SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # ??:??
+    if ($All -or $NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:20
+    if ($All -or $SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 00:??
     if ($All -or $STJ ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks-Jobs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # ??:??
     if ($All -or $CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Command-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
     if ($All -or $INS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Installed-Software ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
@@ -3002,7 +3002,7 @@ Function Control-NOGUI{
     if ($All -or $UAS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-User-Assist ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
     if (         $SFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Sign-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
     if ($All -or $LAC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Last-Activity ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
-    if ($All -or $AFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Autorun-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
+    if (         $AFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Autorun-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 05:40
 
     if ($All -or $LSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Local-Sessions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # ??:??
     if ($All -or $PWD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Passwords ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
@@ -3019,7 +3019,7 @@ Function Control-NOGUI{
     if ($All -or $ICO ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Iconcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
     if ($All -or $MUL ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MFT-UsnJrnl-LogFile ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
     if ($All -or $HPS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Hiberfil-Pagefile-Swapfile ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }       # ??:??
-    if ($All -or $DEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # ??:??
+    if (         $DEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
     if ($All -or $THA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-TextHarvester ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
     if ($All -or $SRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-SRUM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
     if ($All -or $CRE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Credentials ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
@@ -3302,7 +3302,6 @@ Function Start-Execution {
         exit
     }
 
-
     if( -not $GUI)
     {
         Check-Variables
@@ -3318,7 +3317,7 @@ Function Start-Execution {
         Control-NOGUI
     
         $TotalScriptTime.Stop()
-        Write-Host "[*] TOTAL Script Execution time: $($TotalScriptTime.Elapsed)"  -ForegroundColor DarkMagenta
+        Write-Host "[*] TOTAL Script Execution time: $($TotalScriptTime.Elapsed)"  -ForegroundColor Magenta
         Write-Host "[*] Finished to collect all the Evidence!"   -ForegroundColor Magenta
     
         exit
