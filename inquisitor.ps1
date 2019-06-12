@@ -2928,6 +2928,7 @@ Function Collect-Cloud-Dropbox-Logs {
         Write-Host "`t`t○ From user: $u" -ForegroundColor Green
 
         # & $SQL_DBX_EXE -key $ks1_key "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1\filecache.dbx" ".backup $Global:Destiny\\$HOSTNAME\\CLOUD\\DROPBOX\\$u\\instance1\\filecache.db" 
+        $rootTemp = $Global:Destiny -replace "\\","\\"
 
         Get-ChildItem "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1" -Filter *.dbx | ForEach-Object {
             try
@@ -2935,7 +2936,7 @@ Function Collect-Cloud-Dropbox-Logs {
                 if($_.Extension -ne ".dbx-wal" -and $_.Extension -ne ".dbx-shm" -and $_.BaseName -ne "aggregation")
                 {
                     $bn=$_.BaseName
-                    & $SQL_DBX_EXE -key $ks1_key $_.FullName ".backup $Global:Destiny\\$HOSTNAME\\\CLOUD\\DROPBOX\\$u\\instance1\\$bn.db" 
+                    & $SQL_DBX_EXE -key $ks1_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\CLOUD\\DROPBOX\\$u\\instance1\\$bn.db" 
                 }
             } 
             catch 
@@ -2948,7 +2949,7 @@ Function Collect-Cloud-Dropbox-Logs {
             try
             {
                 $bn=$_.BaseName
-                & $SQL_DBX_EXE -key $ks_key $_.FullName ".backup $Global:Destiny\\$HOSTNAME\\\CLOUD\\DROPBOX\\$u\\instance_db\\$bn.db" 
+                & $SQL_DBX_EXE -key $ks_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\CLOUD\\DROPBOX\\$u\\instance_db\\$bn.db" 
             } 
             catch 
             {
