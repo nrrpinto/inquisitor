@@ -27,6 +27,89 @@ $Global:Destiny = "F:\TFM\tests"
 
 ###################################################################
 
+
+
+
+
+<#
+
+$SID = "S-1-5-21-1043274734-587376806-3880736319-1001"
+
+Function Test-RegistryValue {
+    param (
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]$Path,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]$Value
+    )
+
+    $regvalue = Get-ItemProperty $Path $Value -ErrorAction SilentlyContinue
+
+    return ($? -and ($regvalue -ne $null))
+
+}
+
+# DOESN'T EXIST
+$dexists = (Test-RegistryValue -Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\" -Value "MRUList" )
+# EXISTS
+$exists = (Test-RegistryValue -Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU\" -Value MRUListEx)
+
+Write-Host "Doesn't exists: $dexists"
+
+Write-Host "Exsits: $exists"
+
+_______________________________
+
+# Test if specific value exists in the registry #
+Function Test-RegistryValue {
+    param (
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]$Path,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]$Value
+    )
+
+    try 
+    {
+        Get-ItemProperty -Path $Path | Select-Object -ExpandProperty $Value -ErrorAction Suspend | Out-Null
+        return $true
+    }
+    catch 
+    {
+        return $false
+    }
+}
+
+_______________________________
+
+$SID = "S-1-5-21-1043274734-587376806-3880736319-1001"
+$regkey = "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\"
+$name = "MRUList"
+
+# $regvalue = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\" -Name MRUList -ErrorAction SilentlyContinue
+
+# $regvalue = Get-ItemProperty $regkey $name -ErrorAction SilentlyContinue
+
+# ($? -and ($regvalue -ne $null))
+
+
+# DOESN'T EXIST
+
+$dexists = (Test-RegistryValue -Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\" -Value "MRUList" )
+
+# EXISTS
+
+$exists = (Test-RegistryValue -Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU\" -Value MRUListEx)
+
+Write-Host "Doesn't exists: $dexists"
+
+Write-Host "Exsits: $exists"
+
+_____________________________________________________________________________________________
+#>
+
+<#
+
 Get-ChildItem -Force "C:\Users\Nuno Pinto\AppData\Roaming\Microsoft\Protect\S-1-5-21-1177053623-3576167574-2408905411-1001" | ForEach-Object { 
 
     echo "--------------------------------------------"
@@ -35,8 +118,6 @@ Get-ChildItem -Force "C:\Users\Nuno Pinto\AppData\Roaming\Microsoft\Protect\S-1-
 
 }
 
-
-<#
 
 [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\JumpList.dll")) > $null
 [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\OleCf.dll")) > $null

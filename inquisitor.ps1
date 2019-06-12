@@ -407,6 +407,8 @@ $UsedParameters = $PSBoundParameters.Keys <# TODO: Will use this variable to che
 <########### S Y S T E M   T I M E #################> # TIM
 Function Collect-Time {
     
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\System_Info\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\System_Info\ > $null }
+
     Write-Host "[+] Collecting Date and Timezone ..." -ForegroundColor Green
     try
     {
@@ -882,7 +884,7 @@ Function Collect-Security-Config{
         Write-Host "[+] Collecting Security Configuration Info... " -ForegroundColor Green
         # cmd.exe /c reg export "HKEY_LOCAL_MACHINE\Software\Microsoft\Security Center" "$Global:Destiny\$HOSTNAME\SECURITY\HKLM_SecurityCenter.reg" > $null REMARK: I don't see useful information here.
         # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy" "$Global:Destiny\$HOSTNAME\SECURITY\HKLM_FirewallPolicy.reg" > $null 
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy" > "$Global:Destiny\$HOSTNAME\SecurityY\HKLM_FirewallPolicy.txt"
+        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy" > "$Global:Destiny\$HOSTNAME\Security\HKLM_FirewallPolicy.txt"
 
         Get-ItemProperty "HKLM:\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\" > "$Global:Destiny\$HOSTNAME\Security\FW_Programs.txt"
         Get-ItemProperty "HKLM:\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\RestrictedServices\*\*" > "$Global:Destiny\$HOSTNAME\Security\FW_Services.txt"
@@ -1193,10 +1195,9 @@ Function Collect-MRUs {
 
             # RUN MRU
             Write-Host "`t[+] RunMRU from $NAME" -ForegroundColor Green
-
             try 
             {
-                if(Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\" -Name MRUList -ErrorAction Ignore)
+                if(Test-RegistryValue -Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\" -Value "MRUList")
                 {
                     $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\" -Name MRUList
                     $temp = $cnt.ToCharArray()
@@ -1207,10 +1208,14 @@ Function Collect-MRUs {
                         echo "$temp" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
                     }
                 }
+                else
+                {
+                    Write-Host "`t`t[.] There is no RunMRU values in the registry for this user." -ForegroundColor Yellow
+                }
             } 
             catch 
             {
-                Report-Error -evidence "Collecting RunMRU"
+                Report-Error -evidence "RunMRU"
             }
     
         }
@@ -1736,10 +1741,12 @@ Function Collect-RecentApps {
                 if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Recent_Apps\$NAME" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Recent_Apps\$NAME" > $null }
                 Write-Host "[+] Collecting Recent Apps info from $NAME" -ForegroundColor Green
 
-                $RA_SID = Get-ChildItem "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\" | Select-Object -ExpandProperty Name | foreach { $_.split("\")[8] }
-
-                foreach($R in $RA_SID)
+                if( Test-Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\")
                 {
+                    $RA_SID = Get-ChildItem "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\" | Select-Object -ExpandProperty Name | foreach { $_.split("\")[8] }
+
+                    foreach($R in $RA_SID)
+                    {
                     echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\Recent_Apps\$NAME\RecentApps.txt"
                     echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\Recent_Apps\$NAME\RecentApps.txt"
                     echo "SID: $R" >> "$Global:Destiny\$HOSTNAME\Recent_Apps\$NAME\RecentApps.txt"
@@ -1774,6 +1781,11 @@ Function Collect-RecentApps {
                     {
                         echo "`tThis app doesn't have recent open files associated." >> "$Global:Destiny\$HOSTNAME\Recent_Apps\$NAME\RecentApps.txt"
                     }
+                }
+                }
+                else
+                {
+                    Write-Host "`t[.] There is not RecentApps info in the registry."
                 }
             }
         }
@@ -3172,6 +3184,20 @@ Function Execute-Format {
             cmd.exe /c format $Global:Destiny /FS:NTFS /V:INQUISITOR /Q
         }
     }
+}
+
+<# Test if specific value exists in the registry #>
+Function Test-RegistryValue {
+    param (
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]$Path,
+        [parameter(Mandatory=$true)]
+        [ValidateNotNullOrEmpty()]$Value
+    )
+
+    $regvalue = Get-ItemProperty $Path $Value -ErrorAction SilentlyContinue
+
+    return ($? -and ($regvalue -ne $null))
 }
 
 <##################################################################################################################################>
