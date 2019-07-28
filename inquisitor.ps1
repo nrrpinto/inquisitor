@@ -158,9 +158,6 @@ Exceptions are: "Signed Files" and "RAM"
     <# Collects Information about Environment variables. #>
     [switch]$ENV=$false, 
     
-    <# Collects Information about File Extensions #>
-    [switch]$FEX=$false, 
-    
 
     <# Collects Information about Most Recent Used registries. #>
     [switch]$MRU=$false, 
@@ -311,7 +308,6 @@ $Global:DEV=$DEV,
 $Global:SEC=$SEC, 
 $Global:SFO=$SFO, 
 $Global:ENV=$ENV, 
-$Global:FEX=$FEX,
  
 $Global:MRU=$MRU, 
 $Global:SHI=$SHI, 
@@ -623,6 +619,7 @@ Function Collect-Services-and-Processes {
 }
 
 <########### S C H E D U L E D   T A S K S #########> # STJ
+# TODO: Copy the folder with tasks: C:\Windows\System32\Tasks - https://attack.mitre.org/techniques/T1053/
 Function Collect-Scheduled-Tasks-Jobs {
 
     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Tasks_Jobs ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Tasks_Jobs > $null }
@@ -747,57 +744,262 @@ Function Collect-Persistence {
     
     try{
         Write-Host "[+] Collecting Persistence " -ForegroundColor Green
+        
+        echo "Notes: Look for Strange Executables"                                                                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
+        echo "More information: https://attack.mitre.org/techniques/T1060/"                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
+        echo ""                                                                                                                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 
+        
         # OLD - cmd.exe /c reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKCU_Run.reg" > $null
-        Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run" > "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+        Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
 
         # OLD - cmd.exe /c reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKCU_RunOnce.reg" > $null
-        Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+        Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce"                          >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
+
+        # OLD - cmd.exe /c reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKCU_RunOnce.reg" > $null
+        Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnceEx"                        >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 2> $null
 
         # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKLM_Run.reg" > $null 
-        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run"                             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
 
         # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKLM_RunOnce.reg" > $null 
-        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce"                         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
         
         # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKLM_WOW6432_Run.reg" > $null
-        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run"                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
 
         # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKLM_WOW6432_RunOnce.reg" > $null
-        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
 
         # OLD - cmd.exe /c reg export "HKEY_USERS\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Run" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKU_Run.reg" > $null
-        Get-Item -Path "REGISTRY::HKEY_USERS\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Run" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+        Get-Item -Path "REGISTRY::HKEY_USERS\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Run"                            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
 
         # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKLM_RunServices.reg" > $null
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices") {
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices"                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
         }
 
         # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKLM_RunServicesOnce.reg" > $null
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce") {
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
         }
 
         # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\Userinit" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKLM_Userinit.reg" > $null
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\Userinit") {
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\Userinit" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Winlogon\Userinit"        >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
         }
 
         # OLD - cmd.exe /c reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunServices" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKCU_RunServices.reg" > $null
         if(Test-Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunServices") {
-            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunServices" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunServices"                  >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
         }
 
         # OLD - cmd.exe /c reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKCU_RunServicesOnce.reg" > $null
         if(Test-Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce") {
-            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunServicesOnce"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
         }
 
         # OLD - cmd.exe /c reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Windows" "$Global:Destiny\$HOSTNAME\PERSISTENCE\HKCU_Windows.reg" > $null
         if(Test-Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Windows") {
-            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Windows" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence.txt"
+            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Windows"                   >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
         }
-        
+
+        # Winlogon Helper DLL - https://attack.mitre.org/techniques/T1004/
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon") {
+            echo "Notes: "                                                                                                       > "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+            echo "    Winlogon\Notify - points to notification package DLLs that handle Winlogon events"                        >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+            echo "    Winlogon\Userinit - points to userinit.exe, the user initialization program executed when a user logs on" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+            echo "    Winlogon\Shell - points to explorer.exe, the system shell executed when a user logs on"                   >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+            echo ""                                                                                                             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+            echo "More information: https://attack.mitre.org/techniques/T1004/"                                                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+            echo ""                                                                                                             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+            
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon"     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Winlogon") {
+            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Winlogon"                  >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+        }
+
+        # Time Providers - https://attack.mitre.org/techniques/T1209/
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\W32Time\TimeProviders\") {
+            echo "Notes: Look for Strange DLLs"                                                                             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_TimeProviders.txt"
+            echo "More information: https://attack.mitre.org/techniques/T1209/"                                             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_TimeProviders.txt"
+            echo ""                                                                                                         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_TimeProviders.txt" 
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\W32Time\TimeProviders\*"         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_TimeProviders.txt"
+        }
+
+        # SIP and Trust Provider Hijacking - https://attack.mitre.org/techniques/T1198/
+        # TODO - Hash the DLL's and send them to virustotal and receive the results
+        # HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData") {
+            echo "Notes: Look for Strange DLLs"                                                                                                          >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+            echo "More information: https://attack.mitre.org/techniques/T1198/"                                                                          >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+            echo ""                                                                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"   
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+        }
+        # HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+        }
+        # HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\Providers\Trust\FinalPolicy
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\Providers\Trust\FinalPolicy") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\Providers\Trust\FinalPolicy\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+        }
+        # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+        }
+        # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+        }
+        # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\Providers\Trust\FinalPolicy
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\Providers\Trust\FinalPolicy") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\Providers\Trust\FinalPolicy\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+        }
+
+
+        # Security Support Provider (SSP) - Local Security Authority (LSA) - https://attack.mitre.org/techniques/T1101/
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa") {
+            echo "Notes: Check Security Packages configuration   "                                            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SSP-LSA.txt"
+            echo "More information: https://attack.mitre.org/techniques/T1101/"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SSP-LSA.txt"
+            echo ""                                                                                           >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SSP-LSA.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\"               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SSP-LSA.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\OSConfig") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\OSConfig\"      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SSP-LSA.txt"
+        }
+
+        # Port Monitors - https://attack.mitre.org/techniques/T1013/
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Print\Monitors") {
+            echo "Notes: Check DLLs of: Local Port, Standard TCP/IP Port, USB Monitor, WSD Port"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_PortMonitors.txt"
+            echo "More information: https://attack.mitre.org/techniques/T1013/"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_PortMonitors.txt"
+            echo ""                                                                                           >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_PortMonitors.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Print\Monitors\*"   >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_PortMonitors.txt"
+        }
+
+        # Office Test - https://attack.mitre.org/techniques/T1137/
+        if(Test-Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf") {
+            echo "More information: https://attack.mitre.org/techniques/T1137/"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt"
+            echo ""                                                                                           >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt"
+            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf\"         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt"
+            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf\*"        >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt"
+        }
+
+
+        # Change Default File Association - https://attack.mitre.org/techniques/T1042/
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\open\command") {
+            echo "BAT files:"                                                                                      > "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\open\command") {
+            echo "BAT file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\open\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\open\command") {
+            echo "CMD files:"                                                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\comfile\shell\open\command") {
+            echo "COM files:"                                                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\comfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\comfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\open\command") {
+            echo "COM file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\open\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\open\command") {
+            echo "EXE files:"                                                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\open\command") {
+            echo "EXE file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\open\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\htafile\shell\open\command") {
+            echo "HTA files:"                                                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\htafile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\htafile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\https\shell\open\command") {
+            echo "HTTPS:"                                                                                         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\https\shell\open\command"                                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\https\shell\print\command"                                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\open\command") {
+            echo "JSE file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\piffile\shell\open\command") {
+            echo "PIF file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\piffile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\piffile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\open\command") {
+            echo "PIF file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\open\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\open\command") {
+            echo "REG file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\srcfile\shell\open\command") {
+            echo "SRC file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\srcfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\srcfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\open\command") {
+            echo "TXT file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\VBSfile\shell\open\command") {
+            echo "VBS file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbsfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbsfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\WSFfile\shell\open\command") {
+            echo "WSF file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\wsffile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\wsffile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+
+        # AppInit DLLs - https://attack.mitre.org/techniques/T1103/
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows") {
+            echo "Note: Look at key: AppInit_DLLs"                                                                                  >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppInitDLLs.txt"
+            echo "More information: https://attack.mitre.org/techniques/T1103/"                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppInitDLLs.txt"
+            echo ""                                                                                                                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppInitDLLs.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion\Windows\"                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppInitDLLs.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Windows\"         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppInitDLLs.txt"
+        }
+
+        # AppCert DLLs - https://attack.mitre.org/techniques/T1182/
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager") {
+            echo "Note: Look at key: AppCertDLLs. It's posible it doesn't exists "                                                  >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppCertDLLs.txt"
+            echo "More information: https://attack.mitre.org/techniques/T1182/"                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppCertDLLs.txt"
+            echo ""                                                                                                                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppCertDLLs.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\"                         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppCertDLLs.txt"
+        }
+
+        # Accessility Features - https://attack.mitre.org/techniques/T1015/
+        # On-Screen Keyboard: C:\Windows\System32\osk.exe
+        # Magnifier: C:\Windows\System32\Magnify.exe
+        # Narrator: C:\Windows\System32\Narrator.exe
+        # Display Switcher: C:\Windows\System32\DisplaySwitch.exe
+        # App Switcher: C:\Windows\System32\AtBroker.exe
+
+
     } catch {
         Report-Error -evidence "Persistence"
     }
@@ -938,121 +1140,6 @@ Function Collect-Env-Vars {
         Report-Error -evidence "Environment Variables"
     }
 }
-
-<########### F I L E   E X T E N S I O N S #########> # FEX
-Function Collect-File-Extensions {
-# <TODO: find other interesting extensions to add to this list and search the difference between the ones in ROOT and in LOCAL_MACHINE, add more from the LOCAL_MACHINE >
-    
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\File_Extensions ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\File_Extensions > $null }
-    
-    Write-Host "[+] Collecting File Extensions " -ForegroundColor Green
-    try
-    {
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\batfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_batfile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\open\command") {
-            echo "BAT files:" > "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKLM_batfile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\open\command") {
-            echo "BAT file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\cmdfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_cmdfile.reg" > $null
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\open\command") {
-            echo "CMD files:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\comfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_comfile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\comfile\shell\open\command") {
-            echo "COM files:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\comfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKLM_comfile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\open\command") {
-            echo "COM file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\exefile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_exefile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\open\command") {
-            echo "EXE files:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKLM_exefile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\open\command") {
-            echo "EXE file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-        
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\htafile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_htafile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\htafile\shell\open\command") {
-            echo "HTA files:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\htafile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\https\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_https.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\https\shell\open\command") {
-            echo "HTTPS:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\https\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\JSEfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_JSEfile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\open\command") {
-            echo "JSE file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\piffile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_piffile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\piffile\shell\open\command") {
-            echo "PIF file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\piffile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKLM_piffile.reg" > $null
-        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\open\command") {
-            echo "PIF file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\regfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_regfile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\open\command") {
-            echo "REG file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\scrfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_scrfile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\srcfile\shell\open\command") {
-            echo "SRC file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\srcfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\txtfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_txtfile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\open\command") {
-            echo "TXT file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\VBSfile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_VBSfile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\VBSfile\shell\open\command") {
-            echo "VBS file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbsfile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-        
-        # OLD - cmd.exe /c reg export "HKEY_CLASSES_ROOT\WSFFile\shell\open\command" "$Global:Destiny\$HOSTNAME\File_Extensions\HKCR_WSFFile.reg" > $null 
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\WSFfile\shell\open\command") {
-            echo "WSF file:" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\wsffile\shell\open\command" >> "$Global:Destiny\$HOSTNAME\File_Extensions\File_Extensions_Open_Configuration.txt"
-        }
-
-    } 
-    catch 
-    {
-        Report-Error -evidence "File Extensions"
-    }
-}
-
 
 
 <########### M R U s ###############################> # MRU
@@ -1992,6 +2079,7 @@ Function Collect-Hives {
 }
 
 <########### E V T X   F I L E S #################################################> # EVT
+# TODO: parse "Microsoft-Windows-TaskScheduler/Operational" in search for events 106, 140, 141 - More info: https://attack.mitre.org/techniques/T1053/
 Function Collect-EVTX-Files {
 
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\EVTX" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\EVTX" > $null }
@@ -2985,7 +3073,6 @@ Function Control-NOGUI{
     if ($All -or $SEC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Security-Config ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
     if ($All -or $SFO ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shell-Folders ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
     if ($All -or $ENV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Env-Vars ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
-    if ($All -or $FEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-File-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
 
     if ($All -or $MRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MRUs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
     if ($All -or $SHI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shimcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
