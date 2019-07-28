@@ -24,16 +24,16 @@
     Script in powershell to collect evidence from windows machines.
 
 .EXAMPLE
-    .\inquisitor.ps1 -SOURCE c: DESTINY d: -ALL -RAM -SF -FormatType Zeros
+    .\inquisitor.ps1 -SOURCE c: DESTINY d: -ALL -RAM -SFI -FormatType Zeros
 
-    In this example, the c: is chose as source drive and the d: as destiny drive.
-    All the the evidences that inquisitor can collect are set to true: "ALL", "RAM" "SF" (signed files)
+    In this example, the c: is chosen as source drive and the d: as destiny drive.
+    All the the evidences that inquisitor can collect are set to true: "ALL", "RAM" "SFI" (signed files)
     Before start, the destiny driver will be formated setting all the bits to 0.
 
 .EXAMPLE   
-    .\inquisitor.ps1 -SOURCE c: DESTINY d: -HI -EVT
+    .\inquisitor.ps1 -SOURCE c: DESTINY d: -HIV -EVT
 
-    This is an example where inquisitor only collects the HIVE files and the EVTX files.
+    Inquisitor only collects HIVE and EVTX files.
     
 .EXAMPLE
     .\inquisitor.ps1 -GUI 
@@ -45,10 +45,6 @@
 
     Collects information from drive C: about persistence in the machine, outputing the results to E: and not formating the destiny drive. 
 
-.EXAMPLE
-    .\bin\PsExec64.exe -i -s powershell.exe
-
-    For better performance and avoid errors, execute in "NT AUTHORITY\SYSTEM" mode using the above example
 
 .NOTES
 
