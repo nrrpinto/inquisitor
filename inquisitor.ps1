@@ -476,7 +476,7 @@ Function Collect-Network-Information {
     try
     {
     
-        cmd.exe /c net sessions > "$Global:Destiny\$HOSTNAME\Network\Remote_Established_Sessions.txt"
+        cmd.exe /c net sessions > "$Global:Destiny\$HOSTNAME\Network\LAN_Established_Sessions.txt"
     }
     catch
     {
@@ -487,7 +487,7 @@ Function Collect-Network-Information {
     Write-Host "[+] Collecting Info of Remotely Open/Locked files ..." -ForegroundColor Green
     try
     {
-        cmd.exe /c net file > "$Global:Destiny\$HOSTNAME\Network\Remote_Open_Locked_Files.txt"
+        cmd.exe /c net file > "$Global:Destiny\$HOSTNAME\Network\LAN_Open_Locked_Files.txt"
     }
     catch
     {
@@ -502,8 +502,8 @@ Function Collect-Network-Information {
            
         Get-NetAdapter | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_Visible_Adapters_Complete.csv"
         Get-NetAdapter | Select-Object ComponentID, CreationClassName, DeviceID, DriverDescription, DriverFileName, DriverInformation, DriverName, Hidden, ifAlias, ifDesc, LinkLayerAddress | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_Visible_Adapters_Resume.csv"
-        Get-CimInstance Win32_NetworkAdapterConfiguration | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_All_Adapters_Complete.csv"
-        Get-CimInstance Win32_NetworkAdapterConfiguration | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_All_Adapters_Resume.csv"
+        # Get-CimInstance Win32_NetworkAdapterConfiguration | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_All_Adapters_Complete.csv"
+        # Get-CimInstance Win32_NetworkAdapterConfiguration | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_All_Adapters_Resume.csv"
         
         cmd.exe /c type "$Global:Source\windows\system32\drivers\etc\hosts" > "$Global:Destiny\$HOSTNAME\Network\Raw_Files\hosts_file"
 
