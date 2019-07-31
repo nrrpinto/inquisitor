@@ -541,7 +541,6 @@ Function Collect-Network-Information {
     Write-Host "[+] Collecting Info from WIFI Network ..." -ForegroundColor Green
     try
     {
-        cmd.exe /c netsh wlan show profiles > "$Global:Destiny\$HOSTNAME\Network\WIFI_Profiles.txt"
         cmd.exe /c netsh wlan show all > "$Global:Destiny\$HOSTNAME\Network\WIFI_All_Configuration.txt"
         cmd.exe /c netsh wlan export profile folder=$Global:Destiny\$HOSTNAME\Network\ > $null
 
@@ -549,8 +548,8 @@ Function Collect-Network-Information {
              $bla = netsh wlan show profiles name=$(($_ -split ":")[1].Trim()) key="clear"
              $SSID = ((($bla | Select-String "SSID Name") -split ":")[1].Trim())
              $KEY = ((($bla | Select-string "Key Content") -split ":")[1].Trim())
-             Write-Host "SSID: $SSID | Key: $KEY" -ForegroundColor Green # create the object
-        }
+             echo "SSID: $SSID | Key: $KEY" >> "$Global:Destiny\$HOSTNAME\Network\WIFI_Credentials.txt"
+        }  2>$null
         
     } 
     catch 
@@ -569,53 +568,76 @@ Function Collect-Services-and-Processes {
 
 
     Write-Host "[+] Collecting Services ..." -ForegroundColor Green
-    try
+    try # Dependency of PowerShell 3.1 because or the Export-Csv
     {
-        Get-Service | Where-Object {$_.Status -eq "Running"} >> "$Global:Destiny\$HOSTNAME\Services_Processes\3.Services.txt"
-        Get-Service | Where-Object {$_.Status -eq "Stopped"} >> "$Global:Destiny\$HOSTNAME\Services_Processes\3.Services.txt"
-        Get-CimInstance -ClassName Win32_Service | Select-Object Name, DisplayName, StartMode, State, PathName, StartName, ServiceType >> "$Global:Destiny\$HOSTNAME\Services_Processes\3.Services.txt"
-        echo "Details for each " >> "$Global:Destiny\$HOSTNAME\Services_Processes\3.Services.txt"
-        Get-CimInstance -ClassName Win32_Service | Select-Object * >> "$Global:Destiny\$HOSTNAME\Services_Processes\3.Services.txt"
-        Get-Service | Select-Object * >> "$Global:Destiny\$HOSTNAME\Services_Processes\3.Services.txt"
+        Get-CimInstance -ClassName Win32_Service | Select-Object Name, DisplayName, StartMode, State, PathName, StartName, ServiceType | Export-Csv "$Global:Destiny\$HOSTNAME\Services_Processes\Services_simplified.csv"
+        Get-CimInstance -ClassName Win32_Service | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Services_Processes\Services_all.csv"
+        # Get-CimInstance -Query "SELECT * from Win32_Service"
+        # Get-Service  (Powershell 3.1)
     }
     catch
     {
-        Report-Error -evidence "Services"
+        Report-Error -evidence "Services in CSV format"
     }
-
+    # Duplicated because it has less Dependency: PowerShell 1.0 - This is in case the powershell in the machine is lower
+    try
+    {
+        Get-CimInstance -ClassName Win32_Service | Select-Object Name, DisplayName, StartMode, State, PathName, StartName, ServiceType > "$Global:Destiny\$HOSTNAME\Services_Processes\Services_simplified.txt" # Duplicated but with 
+        Get-CimInstance -ClassName Win32_Service | Select-Object * > "$Global:Destiny\$HOSTNAME\Services_Processes\Services_all.txt"
+    }
+    catch
+    {
+        Report-Error -evidence "Services in TXT format"
+    }
     
     Write-Host "[+] Collecting Processes ..." -ForegroundColor Green
-    try
+    try # Dependency of PowerShell 3.1 because or the Export-Csv
     {
-        echo "Resume 1: " > $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
-        Get-Process | Sort-Object -Property id >> $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
-        echo "Resume 2: " >> $Global:Destiny\$HOSTNAME\"4.Processes.txt"
-        Get-CimInstance -ClassName Win32_Process | Sort-Object ProcessId >> $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
-        echo "Details 1: " >> $Global:Destiny\$HOSTNAME\"4.Processes.txt"
-        Get-Process | Sort-Object -Property id | Select-Object * >> $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
-        echo "Details 2: " >> $Global:Destiny\$HOSTNAME\"4.Processes.txt"
-        Get-CimInstance -ClassName Win32_Process | Select-Object * >> $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
-        <# using cpu using in descending order: Get-Process | Sort-Object -Property cpu -Descending > .\004.Processes.txt #>
-        <# otra opcion: Get-Process | Select-Object Name, Path, Company, CPU, Product, TotalProcessorTime, StartTime, PagedSystemMemorySize #>
-        <# TODO: Analize the above results and decide which to use. Compare them with the below code, that crosses parent process with child process:
-        
-            $runningProcesses = Get-CimInstance -ClassName Win32_Process |
-                Select-Object CreationDate, ProcessName, ProcessId, CommandLine, ParentProcessId
+        Get-CimInstance -ClassName Win32_Process | Select-Object ProcessId,ProcessName,Path, CreationDate | Sort-Object ProcessId | Export-Csv $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Simplified.txt"
+        Get-CimInstance -ClassName Win32_Process | Select-Object * | Sort-Object ProcessId | Export-Csv $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_All.txt"
 
-            for($i=0; $i -le $runningProcesses.count; $i++)
-            {
-                $runningProcesses[$i]
-
-                Write-Host("Parent:")`                (Get-CimInstance -ClassName Win32_Process | where ProcessId -eq $runningProcesses[$i].ParentProcessId).ProcessName
-                Write-Host("Parent CmdLine:")`                (Get-CimInstance -ClassName Win32_Process | where ProcessId -eq $runningProcesses[$i].ParentProcessId).CommandLine
-                Write-Host("--------------------")
-            }
-        #>
     }
     catch
     {
-        Report-Error -evidence "Processes"
+        Report-Error -evidence "Processes in CSV format"
     }
+    # Duplicated because it has less Dependency: PowerShell 1.0 - This is in case the powershell in the machine is lower
+    try
+    {
+        Get-CimInstance -ClassName Win32_Process | Select-Object ProcessId,ProcessName,Path, CreationDate | Sort-Object ProcessId >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Simplified.txt"
+        Get-CimInstance -ClassName Win32_Process | Select-Object * | Sort-Object ProcessId >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_All.txt"
+
+    }
+    catch
+    {
+        Report-Error -evidence "Processes in TXT format"
+    }
+
+    # For each existing Process shows information about parent process
+    try
+    {
+       $runningProcesses = Get-CimInstance -ClassName Win32_Process | Select-Object ProcessId, ProcessName, CreationDate, CommandLine, ParentProcessId
+
+       for($i=0; $i -le $runningProcesses.count; $i++)
+       {
+            $runningProcesses[$i] >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Child_Parent.txt"
+
+            "Parent ProcessId:  " + (Get-CimInstance -ClassName Win32_Process | where ProcessId -eq $runningProcesses[$i].ParentProcessId).ProcessId >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Child_Parent.txt"
+            "Parent ProcessName:  " + (Get-CimInstance -ClassName Win32_Process | where ProcessId -eq $runningProcesses[$i].ParentProcessId).ProcessName >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Child_Parent.txt"
+            "Parent CreationDate:  " + (Get-CimInstance -ClassName Win32_Process | where ProcessId -eq $runningProcesses[$i].ParentProcessId).CreationDate >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Child_Parent.txt"
+            "Parent CmdLine:  " + (Get-CimInstance -ClassName Win32_Process | where ProcessId -eq $runningProcesses[$i].ParentProcessId).CommandLine >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Child_Parent.txt"
+            "Parent ParentProcessId:  " + (Get-CimInstance -ClassName Win32_Process | where ProcessId -eq $runningProcesses[$i].ParentProcessId).ParentProcessId >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Child_Parent.txt"
+            (" ") >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Child_Parent.txt"
+            ("--------------------") >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Child_Parent.txt"
+            (" ") >> $Global:Destiny\$HOSTNAME\Services_Processes\"Processes_Child_Parent.txt"
+       }
+    }
+    catch
+    {
+        Report-Error -evidence "Processes - Parente Child"
+    }
+
+
 }
 
 <########### S C H E D U L E D   T A S K S #########> # STJ
@@ -4061,3 +4083,13 @@ Function Old-Code{
         }
 
 #>
+
+# Process Information alternative commands
+
+        
+        # Get-Process has dependency PowerShell 3.1, while Get-CimInstance depends only on version 1.0
+        #
+        # Get-Process | Sort-Object -Property id >> $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
+        # Get-Process | Sort-Object -Property id | Select-Object * >> $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
+        # Get-Process | Sort-Object -Property cpu -Descending > .\004.Processes.txt
+        # Get-Process | Select-Object Name, Path, Company, CPU, Product, TotalProcessorTime, StartTime, PagedSystemMemorySize
