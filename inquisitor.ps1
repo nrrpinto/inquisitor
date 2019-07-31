@@ -641,16 +641,14 @@ Function Collect-Services-and-Processes {
 }
 
 <########### S C H E D U L E D   T A S K S #########> # STJ
-# TODO: Copy the folder with tasks: C:\Windows\System32\Tasks - https://attack.mitre.org/techniques/T1053/
-Function Collect-Scheduled-Tasks-Jobs {
+Function Collect-Scheduled-Tasks {
 
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Tasks_Jobs ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Tasks_Jobs > $null }
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Scheduled_Tasks\Tasks_Xml ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Scheduled_Tasks\Tasks_Xml > $null }
     
     Write-Host "[+] Collecting Scheduled Tasks ..." -ForegroundColor Green    
     try
     {
-        cmd.exe /c schtasks > "$Global:Destiny\$HOSTNAME\Tasks_Jobs\_RESUME_LIST_1.txt"
-        Get-ScheduledTask | Select-Object TaskName, TaskPath, Date, Author, Actions, Triggers, Description,State | where Author -NotLike "Microsoft*" | where Author -NotLike "*SystemRoot*" | where Author -ne $null > "$Global:Destiny\$HOSTNAME\Tasks_Jobs\_RESUME_LIST_2.txt"
+        cmd.exe /c schtasks > "$Global:Destiny\$HOSTNAME\Scheduled_Tasks\Scheduled_Tasks.txt"
     }
     catch
     {
@@ -661,24 +659,12 @@ Function Collect-Scheduled-Tasks-Jobs {
     {
         Get-ScheduledTask | where Author -NotLike "Microsoft*" | where Author -NotLike "*SystemRoot*" | where Author -ne $null |  foreach {
              Export-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath |
-             Out-File (Join-Path "$Global:Destiny\$HOSTNAME\Tasks_Jobs" "$($_.TaskName).xml") #-WhatIf
-             # cmd /c schtasks /query /tn "\Microsoft\Windows\WCM\WiFiTask" /xml
+             Out-File (Join-Path "$Global:Destiny\$HOSTNAME\Scheduled_Tasks\Tasks_Xml" "$($_.TaskName).xml")
         }  
     } 
     catch 
     {
         Report-Error -evidence "Scheduled Tasks"
-    }
-
-
-    Write-Host "[+] Collecting Scheduled Tasks ..." -ForegroundColor Green    
-    try
-    {
-        Get-ScheduledJob > $Global:Destiny\$HOSTNAME\Tasks_Jobs\Scheduled_jobs.txt
-    }
-    catch
-    {
-        Report-Error -evidence "Scheduled Jobs"
     }
 }
 
@@ -3085,7 +3071,7 @@ Function Control-NOGUI{
     if (         $RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
     if ($All -or $NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:20
     if ($All -or $SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 00:??
-    if ($All -or $STJ ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks-Jobs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # ??:??
+    if ($All -or $STJ ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # ??:??
     if ($All -or $CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Command-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
     if ($All -or $INS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Installed-Software ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
     if ($All -or $UGR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Users-Groups ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
@@ -4084,7 +4070,7 @@ Function Old-Code{
 
 #>
 
-# Process Information alternative commands
+<########### S E R V I C E S   P R O C E S S E S ###> # SAP
 
         
         # Get-Process has dependency PowerShell 3.1, while Get-CimInstance depends only on version 1.0
@@ -4093,3 +4079,17 @@ Function Old-Code{
         # Get-Process | Sort-Object -Property id | Select-Object * >> $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
         # Get-Process | Sort-Object -Property cpu -Descending > .\004.Processes.txt
         # Get-Process | Select-Object Name, Path, Company, CPU, Product, TotalProcessorTime, StartTime, PagedSystemMemorySize
+
+
+<########### S C H E D U L E D   T A S K S #########>
+# TODO: Copy the folder with tasks: C:\Windows\System32\Tasks - https://attack.mitre.org/techniques/T1053/
+
+        
+    # Get-ScheduledTask | Select-Object TaskName, TaskPath, Date, Author, Actions, Triggers, Description,State | where Author -NotLike "Microsoft*" | where Author -NotLike "*SystemRoot*" | where Author -ne $null > "$Global:Destiny\$HOSTNAME\Tasks_Jobs\_RESUME_LIST_2.txt"
+
+    # Get-ScheduledTask | where Author -NotLike "Microsoft*" | where Author -NotLike "*SystemRoot*" | where Author -ne $null |  foreach {
+    #        Export-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath |
+    #        Out-File (Join-Path "$Global:Destiny\$HOSTNAME\Tasks_Jobs" "$($_.TaskName).xml") #-WhatIf
+            # cmd /c schtasks /query /tn "\Microsoft\Windows\WCM\WiFiTask" /xml
+
+    # Get-ScheduledJob > $Global:Destiny\$HOSTNAME\Tasks_Jobs\Scheduled_jobs.txt -> is the same as Tasks, powershell makes diference, but it is seen as a task
