@@ -294,67 +294,67 @@ $Global:All=$All
 
 ##### LIVE
    
-$Global:RAM=$RAM,
+$Global:RAM=$RAM
 
-$Global:NET=$NET, 
-$Global:SAP=$SAP, 
-$Global:STJ=$STJ, 
-$Global:CPH=$CPH, 
-$Global:INS=$INS, 
-$Global:UGR=$UGR, 
-$Global:PER=$PER, 
-$Global:USB=$USB, 
-$Global:DEV=$DEV, 
-$Global:SEC=$SEC, 
-$Global:SFO=$SFO, 
-$Global:ENV=$ENV, 
+$Global:NET=$NET 
+$Global:SAP=$SAP 
+$Global:STJ=$STJ 
+$Global:CPH=$CPH 
+$Global:INS=$INS 
+$Global:UGR=$UGR 
+$global:PER=$PER 
+$Global:USB=$USB 
+$Global:DEV=$DEV 
+$Global:SEC=$SEC 
+$Global:SFO=$SFO 
+$Global:ENV=$ENV 
  
-$Global:MRU=$MRU, 
-$Global:SHI=$SHI, 
-$Global:JLI=$JLI,      
-$Global:BAM=$BAM,
+$Global:MRU=$MRU 
+$Global:SHI=$SHI 
+$Global:JLI=$JLI      
+$Global:BAM=$BAM
 
-$Global:TLH=$TLH, 
-$Global:RAP=$RAP,      
-$Global:SYS=$SYS,
+$Global:TLH=$TLH 
+$Global:RAP=$RAP      
+$Global:SYS=$SYS
 
-$Global:UAS=$UAS,         
-$Global:SFI=$SFI,          
-$Global:LAC=$LAC,         
-$Global:AFI=$AFI,         
+$Global:UAS=$UAS         
+$Global:SFI=$SFI          
+$Global:LAC=$LAC         
+$Global:AFI=$AFI         
     
         
 ##### OFFLINE  
 
-$Global:HIV=$HIV,          
-$Global:EVT=$EVT,         
-$Global:FIL=$FIL,         
-$Global:PRF=$PRF,         
-$Global:WSE=$WSE,          
-$Global:EET=$EET,         
-$Global:THC=$THC,          
-$Global:ICO=$ICO,          
-$Global:MUL=$MUL,         
-$Global:HPS=$HPS,          
-$Global:DEX=$DEX,          
-$Global:THA=$THA,
-$Global:SRU=$SRU,
-$Global:CRE=$CRE,
+$Global:HIV=$HIV          
+$Global:EVT=$EVT         
+$Global:FIL=$FIL         
+$Global:PRF=$PRF         
+$Global:WSE=$WSE          
+$Global:EET=$EET         
+$Global:THC=$THC          
+$Global:ICO=$ICO          
+$Global:MUL=$MUL         
+$Global:HPS=$HPS          
+$Global:DEX=$DEX          
+$Global:THA=$THA
+$Global:SRU=$SRU
+$Global:CRE=$CRE
 
-$Global:SKY=$SKY,
+$Global:SKY=$SKY
 
-$Global:CHR=$CHR,
-$Global:MFI=$MFI,
-$Global:IEX=$IEX,
-$Global:EDG=$EDG,
-$Global:SAF=$SAF,
-$Global:OPE=$OPE,
-$Global:TOR=$TOR,
+$Global:CHR=$CHR
+$Global:MFI=$MFI
+$Global:IEX=$IEX
+$Global:EDG=$EDG
+$Global:SAF=$SAF
+$Global:OPE=$OPE
+$Global:TOR=$TOR
 
-$Global:OUT=$OUT,
+$Global:OUT=$OUT
 
-$Global:COD=$COD,
-$Global:CGD=$CGD,
+$Global:COD=$COD
+$Global:CGD=$CGD
 $Global:CDB=$CDB
 
 
@@ -746,20 +746,20 @@ Function Collect-Persistence {
         echo "More information: https://attack.mitre.org/techniques/T1060/"                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
         echo ""                                                                                                                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 
         
-        Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
-        Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce"                          >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
+        Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 2> $null
+        Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce"                          >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 2> $null
         
         if(Test-Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnceEx") {
-            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnceEx"                    >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 2> $null
+            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnceEx"                    >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 
         }
 
-        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run"                             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
-        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce"                         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
+        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run"                             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 2> $null
+        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce"                         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 2> $null
         
-        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run"                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
-        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
+        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run"                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 2> $null
+        Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 2> $null
 
-        Get-Item -Path "REGISTRY::HKEY_USERS\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Run"                            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
+        Get-Item -Path "REGISTRY::HKEY_USERS\.DEFAULT\Software\Microsoft\Windows\CurrentVersion\Run"                            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt" 2> $null
 
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices") {
             Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunServices"                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
@@ -797,6 +797,9 @@ Function Collect-Persistence {
             
             Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon"     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
         }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
+        }
         if(Test-Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Winlogon") {
             Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Winlogon"                  >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_WinlogonHalperDLL.txt"
         }
@@ -810,33 +813,27 @@ Function Collect-Persistence {
         }
 
         # SIP and Trust Provider Hijacking - https://attack.mitre.org/techniques/T1198/
-        # TODO - Hash the DLL's and send them to virustotal and receive the results
-        # HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData
+        # TOD: Hash the DLL's and send them to virustotal and receive the results
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData") {
             echo "Notes: Look for Strange DLLs"                                                                                                          >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
             echo "More information: https://attack.mitre.org/techniques/T1198/"                                                                          >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
             echo ""                                                                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"   
             Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
         }
-        # HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg") {
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg\*"   >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
         }
-        # HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\Providers\Trust\FinalPolicy
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\Providers\Trust\FinalPolicy") {
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\Providers\Trust\FinalPolicy\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Cryptography\Providers\Trust\FinalPolicy\*"                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
         }
-        # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData") {
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllVerifyIndirectData\*"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
         }
-        # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg") {
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\OID\EncodingType 0\CryptSIPDllGetSignedDataMsg\*"               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
         }
-        # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\Providers\Trust\FinalPolicy
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\Providers\Trust\FinalPolicy") {
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\Providers\Trust\FinalPolicy\*" >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography\Providers\Trust\FinalPolicy\*"                                  >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_SIP&TrustProviderHijacking.txt"
         }
 
 
@@ -863,96 +860,224 @@ Function Collect-Persistence {
         if(Test-Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf") {
             echo "More information: https://attack.mitre.org/techniques/T1137/"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt"
             echo ""                                                                                           >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt"
-            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf\"         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt"
-            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf\*"        >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt"
+            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf\"         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt" 
+            Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Office test\Special\Perf\*"        >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_OfficeTest.txt" 
+        }
+
+        foreach($u in $USERS)
+        {
+            if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Templates\Normal.dotm")
+            {
+                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Persistence\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Persistence\$u" > $null }    
+
+                try
+                {
+                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Templates\Normal.dotm" "$Global:Destiny\$HOSTNAME\Persistence\$u" > $null
+                }
+                catch
+                {
+                    Report-Error -evidence "Persistence - Word template from user $u"
+                }
+            }
+
+            if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Excel\XLSTART\PERSONAL.XLSB")
+            {
+                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Persistence\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Persistence\$u" > $null }    
+
+                try
+                {
+                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Excel\XLSTART\PERSONAL.XLSB" "$Global:Destiny\$HOSTNAME\Persistence\$u" > $null
+                }
+                catch
+                {
+                    Report-Error -evidence "Persistence - Excel template from user $u"
+                }
+            }
         }
 
 
         # Change Default File Association - https://attack.mitre.org/techniques/T1042/
+        # https://fileinfo.com/extension/bat
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\open\command") {
             echo "BAT files:"                                                                                      > "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\edit\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\batfile\shell\runas\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\open\command") {
-            echo "BAT file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\open\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\print\command"            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\edit\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\batfile\shell\runas\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        
+        # https://fileinfo.com/extension/cmd
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\open\command") {
-            echo "CMD files:"                                                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "CMD files:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\edit\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\cmdfile\shell\runas\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\cmdfile\shell\open\command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\cmdfile\shell\edit\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\cmdfile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\cmdfile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\cmdfile\shell\runas\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        
+        # https://fileinfo.com/extension/com
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\comfile\shell\open\command") {
-            echo "COM files:"                                                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\comfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\comfile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "COM files:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\comfile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\open\command") {
-            echo "COM file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\open\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\print\command"            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\comfile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        
+        # https://fileinfo.com/extension/exe
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\open\command") {
-            echo "EXE files:"                                                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "EXE files:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\exefile\shell\runas\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\open\command") {
-            echo "EXE file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\open\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\print\command"            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\exefile\shell\runas\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        
+        # https://fileinfo.com/extension/hta
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\htafile\shell\open\command") {
-            echo "HTA files:"                                                                                     >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\htafile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\htafile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "HTA files:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\htafile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\htafile\Shell\Open\Command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\htafile\Shell\Open\Command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\https\shell\open\command") {
-            echo "HTTPS:"                                                                                         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\https\shell\open\command"                                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\https\shell\print\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "HTTPS:"                                                                                          >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\https\shell\open\command"                                  >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\https\Shell\Open\Command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\https\Shell\Open\Command"                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\http\shell\open\command") {
+            echo "HTTP:"                                                                                           >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\http\shell\open\command"                                   >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\http\Shell\Open\Command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\http\Shell\Open\Command"                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        
+        # https://fileinfo.com/extension/jse
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\open\command") {
-            echo "JSE file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "JSE file:"                                                                                       >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\edit\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\open2\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\JSEfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\JSEfile\Shell\open\Command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\JSEfile\Shell\edit\Command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\JSEfile\Shell\open\Command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\JSEfile\Shell\open2\Command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Classes\JSEfile\Shell\print\Command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        
+        # https://fileinfo.com/extension/pif
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\piffile\shell\open\command") {
-            echo "PIF file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\piffile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\piffile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "PIF file:"                                                                                       >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\piffile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\open\command") {
-            echo "PIF file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\open\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\print\command"            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\piffile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        
+        # https://fileinfo.com/extension/reg
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\open\command") {
-            echo "REG file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "REG file:"                                                                                       >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\edit\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\regfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
-        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\srcfile\shell\open\command") {
-            echo "SRC file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\srcfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\srcfile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\regfile\shell\open\command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\regfile\shell\edit\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\regfile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\regfile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        
+        # https://fileinfo.com/extension/scr
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\scrfile\shell\open\command") {
+            echo "SCR file:"                                                                                       >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\scrfile\shell\config\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\scrfile\shell\install\command"                             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\scrfile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\scrfile\shell\open\command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\scrfile\shell\config\command"            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\scrfile\shell\install\command"           >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\scrfile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        
+        # https://fileinfo.com/extension/txt
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\open\command") {
-            echo "TXT file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "TXT file:"                                                                                       >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\txtfile\shell\printto\command"                             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\txtfile\shell\open\command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\txtfile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\txtfile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\txtfile\shell\printto\command"           >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        
+        # https://fileinfo.com/extension/vbs
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\VBSfile\shell\open\command") {
-            echo "VBS file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbsfile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbsfile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "VBS file:"                                                                                       >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbsfile\shell\edit\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbsfile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbsfile\shell\open2\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbsfile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbsfile\shell\open\command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbsfile\shell\edit\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbsfile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbsfile\shell\open2\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbsfile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+
+        # https://fileinfo.com/extension/vbe
+        if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\VBEfile\shell\open\command") {
+            echo "VBE file:"                                                                                       >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbefile\shell\edit\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbefile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbefile\shell\open2\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\vbefile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbefile\shell\open\command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbefile\shell\edit\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbefile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbefile\shell\open2\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\vbefile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        
+        # https://fileinfo.com/extension/wsf
         if(Test-Path "REGISTRY::HKEY_CLASSES_ROOT\WSFfile\shell\open\command") {
-            echo "WSF file:"                                                                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\wsffile\shell\open\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
-            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\wsffile\shell\print\command"                              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            echo "WSF file:"                                                                                       >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\wsffile\shell\edit\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\wsffile\shell\open\command"                                >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\wsffile\shell\open2\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_CLASSES_ROOT\wsffile\shell\print\command"                               >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+        }
+        if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\WSFfile\shell\open\command") {
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\wsffile\shell\edit\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\wsffile\shell\open\command"              >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\wsffile\shell\open2\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
+            Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\software\Classes\wsffile\shell\print\command"             >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_FileAssociation.txt"
         }
 
         # AppInit DLLs - https://attack.mitre.org/techniques/T1103/
@@ -980,6 +1105,20 @@ Function Collect-Persistence {
         # Narrator: C:\Windows\System32\Narrator.exe
         # Display Switcher: C:\Windows\System32\DisplaySwitch.exe
         # App Switcher: C:\Windows\System32\AtBroker.exe
+        # utilman.exe
+
+        # others - https://threatvector.cylance.com/en_us/home/windows-registry-persistence-part-2-the-run-keys-and-search-order.html
+        # HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\BootExecute 
+        # HKLM\System\CurrentControlSet\Services TODO: Implement a list that shows all drivers that start before Kernel initialization that have value 0, maybe hash files and send them to VT
+        # HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ShellServiceObjectDelayLoad
+        # HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run
+        # HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run
+        # HKCU\Software\Microsoft\Windows NT\CurrentVersion\Windows\load
+        # HKLM\Software\Microsoft\Windows NT\CurrentVersion\Windows
+        # HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\SharedTaskScheduler
+        # 
+
+
 
 
     } catch {
@@ -3042,69 +3181,69 @@ Function Control-NOGUI{
 
     if ($true         ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Time ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # 00:00
     
-    if (         $RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-    if ($All -or $NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:20
-    if ($All -or $SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 00:??
-    if ($All -or $STJ ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # ??:??
-    if ($All -or $CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PSCommand-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
-    if ($All -or $INS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Installed-Software ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
-    if ($All -or $UGR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Users-Groups ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
-    if ($All -or $PER ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Persistence ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-    if ($All -or $USB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-USB-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
-    if ($All -or $DEV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Devices-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
-    if ($All -or $SEC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Security-Config ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
-    if ($All -or $SFO ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shell-Folders ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
-    if ($All -or $ENV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Env-Vars ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
+    if (         $Global:RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
+    if ($All -or $Global:NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:20
+    if ($All -or $Global:SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 00:??
+    if ($All -or $Global:STJ ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # ??:??
+    if ($All -or $Global:CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PSCommand-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
+    if ($All -or $Global:INS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Installed-Software ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
+    if ($All -or $Global:UGR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Users-Groups ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
+    if ($All -or $Global:PER ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Persistence ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
+    if ($All -or $Global:USB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-USB-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
+    if ($All -or $Global:DEV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Devices-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
+    if ($All -or $Global:SEC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Security-Config ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
+    if ($All -or $Global:SFO ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shell-Folders ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
+    if ($All -or $Global:ENV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Env-Vars ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
 
-    if ($All -or $MRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MRUs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
-    if ($All -or $SHI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shimcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if ($All -or $JLI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-JumpLists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if ($All -or $BAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-BAM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                              # ??:??
+    if ($All -or $Global:MRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MRUs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
+    if ($All -or $Global:SHI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shimcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
+    if ($All -or $Global:JLI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-JumpLists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
+    if ($All -or $Global:BAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-BAM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                              # ??:??
     
-    if ($All -or $TLH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Timeline ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
-    if ($All -or $RAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-RecentApps ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
-    if ($All -or $SYS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-System-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
+    if ($All -or $Global:TLH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Timeline ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
+    if ($All -or $Global:RAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-RecentApps ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
+    if ($All -or $Global:SYS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-System-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
 
-    if ($All -or $UAS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-User-Assist ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-    if (         $SFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Sign-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
-    if ($All -or $LAC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Last-Activity ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
-    if (         $AFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Autorun-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 05:40
+    if ($All -or $Global:UAS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-User-Assist ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
+    if (         $Global:SFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Sign-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
+    if ($All -or $Global:LAC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Last-Activity ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
+    if (         $Global:AFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Autorun-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 05:40
 
-    if ($All -or $LSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Local-Sessions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # ??:??
-    if ($All -or $PWD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Passwords ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
+    if ($All -or $Global:LSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Local-Sessions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # ??:??
+    if ($All -or $Global:PWD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Passwords ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
 
 
     # OFFLINE
-    if ($All -or $HIV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Hives ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                            # ??:??
-    if ($All -or $EVT ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-EVTX-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
-    if ($All -or $FIL ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Files-Lists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-    if ($All -or $PRF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Prefetch ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
-    if ($All -or $WSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Windows-Search ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # ??:??
-    if ($All -or $EET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-ETW-ETL ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # ??:??
-    if ($All -or $THC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Thumcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if ($All -or $ICO ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Iconcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if ($All -or $MUL ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MFT-UsnJrnl-LogFile ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
-    if ($All -or $HPS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Hiberfil-Pagefile-Swapfile ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }       # ??:??
-    if (         $DEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
-    if ($All -or $THA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-TextHarvester ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
-    if ($All -or $SRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-SRUM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
-    if ($All -or $CRE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Credentials ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
+    if ($All -or $Global:HIV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Hives ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                            # ??:??
+    if ($All -or $Global:EVT ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-EVTX-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
+    if ($All -or $Global:FIL ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Files-Lists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
+    if ($All -or $Global:PRF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Prefetch ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
+    if ($All -or $Global:WSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Windows-Search ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # ??:??
+    if ($All -or $Global:EET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-ETW-ETL ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # ??:??
+    if ($All -or $Global:THC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Thumcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
+    if ($All -or $Global:ICO ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Iconcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
+    if ($All -or $Global:MUL ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MFT-UsnJrnl-LogFile ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
+    if ($All -or $Global:HPS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Hiberfil-Pagefile-Swapfile ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }       # ??:??
+    if (         $Global:DEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
+    if ($All -or $Global:THA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-TextHarvester ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
+    if ($All -or $Global:SRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-SRUM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
+    if ($All -or $Global:CRE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Credentials ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
     
-    if ($All -or $SKY ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Skype-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
+    if ($All -or $Global:SKY ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Skype-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
 
-    if ($All -or $CHR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Chrome-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-    if ($All -or $MFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firefox-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
-    if ($All -or $IEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-IE-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # ??:??
-    if ($All -or $EDG ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-EDGE-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if ($All -or $SAF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Safari-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-    if ($All -or $OPE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Opera-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
-    if ($All -or $TOR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Tor-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
+    if ($All -or $Global:CHR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Chrome-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
+    if ($All -or $Global:MFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firefox-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
+    if ($All -or $Global:IEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-IE-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # ??:??
+    if ($All -or $Global:EDG ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-EDGE-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
+    if ($All -or $Global:SAF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Safari-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
+    if ($All -or $Global:OPE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Opera-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
+    if ($All -or $Global:TOR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Tor-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
 
-    if ($All -or $OUT ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Outlook-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
+    if ($All -or $Global:OUT ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Outlook-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
 
-    if ($All -or $COD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-OneDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
-    if ($All -or $CGD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-GoogleDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # ??:??
-    if ($All -or $CDB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-Dropbox-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
+    if ($All -or $Global:COD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-OneDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
+    if ($All -or $Global:CGD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-GoogleDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # ??:??
+    if ($All -or $Global:CDB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-Dropbox-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
      
 
 
