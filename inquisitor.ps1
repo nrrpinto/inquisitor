@@ -129,7 +129,7 @@ Exceptions are: "Signed Files" and "RAM"
     [switch]$SAP=$false, 
     
     <# Collects Information about Scheduled Tasks and Jobs. #>
-    [switch]$STJ=$false, 
+    [switch]$STA=$false, 
     
     <# Collects Information about Command Line and PowerShell history. #>
     [switch]$CPH=$false, 
@@ -152,9 +152,6 @@ Exceptions are: "Signed Files" and "RAM"
     <# Collects Information about Security configuration of the system. #>
     [switch]$SEC=$false, 
          
-    <# Collects Information about Shell Folders. #>
-    [switch]$SFO=$false, 
-    
     <# Collects Information about Environment variables. #>
     [switch]$ENV=$false, 
     
@@ -181,7 +178,13 @@ Exceptions are: "Signed Files" and "RAM"
     <# Collects Information about System Information. #>
     [switch]$SYS=$false, 
 
+    <# Developing. #>
+    [switch]$LSE=$false, 
+    
+    <# Developing. #>
+    [switch]$PWD=$false, 
 
+##### Third Party Tools  
 
     <# Collects Information about User Assist. #>
     [switch]$UAS=$false,         
@@ -298,7 +301,7 @@ $Global:RAM=$RAM
 
 $Global:NET=$NET 
 $Global:SAP=$SAP 
-$Global:STJ=$STJ 
+$Global:STA=$STA 
 $Global:CPH=$CPH 
 $Global:INS=$INS 
 $Global:UGR=$UGR 
@@ -306,7 +309,6 @@ $global:PER=$PER
 $Global:USB=$USB 
 $Global:DEV=$DEV 
 $Global:SEC=$SEC 
-$Global:SFO=$SFO 
 $Global:ENV=$ENV 
  
 $Global:MRU=$MRU 
@@ -318,11 +320,15 @@ $Global:TLH=$TLH
 $Global:RAP=$RAP      
 $Global:SYS=$SYS
 
+$Global:LSE=$LSE
+$Global:PWD=$PWD  
+
+##### THIRD PARTY TOOLS    
+
 $Global:UAS=$UAS         
 $Global:SFI=$SFI          
 $Global:LAC=$LAC         
-$Global:AFI=$AFI         
-    
+$Global:AFI=$AFI       
         
 ##### OFFLINE  
 
@@ -640,7 +646,7 @@ Function Collect-Services-and-Processes {
 
 }
 
-<########### S C H E D U L E D   T A S K S #########> # STJ*
+<########### S C H E D U L E D   T A S K S #########> # STA*
 Function Collect-Scheduled-Tasks {
 
     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Scheduled_Tasks\Tasks_Xml ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Scheduled_Tasks\Tasks_Xml > $null }
@@ -734,7 +740,7 @@ Function Collect-Users-Groups {
     }
 }
 
-<########### P E R S I S T E N C E #################> # PER
+<########### P E R S I S T E N C E #################> # PER*
 Function Collect-Persistence { 
     
     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Persistence ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Persistence > $null }
@@ -784,6 +790,16 @@ Function Collect-Persistence {
         if(Test-Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Windows") {
             Get-Item -Path "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows NT\CurrentVersion\Windows"                   >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_RegistryRunKeys.txt"
         }
+
+        # Shell Folders - https://attack.mitre.org/techniques/T1060/
+        echo "Notes: Look for Strange Paths"                                                                      > "$Global:Destiny\$HOSTNAME\Persistence\Persistence_ShellFolders.txt"
+        echo "More information: https://attack.mitre.org/techniques/T1060/"                                      >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_ShellFolders.txt"
+        echo ""                                                                                                  >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_ShellFolders.txt"
+        Get-Item -Path "HKCU:\software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\"                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_ShellFolders.txt"
+        Get-Item -Path "HKLM:\software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\"                 >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_ShellFolders.txt"
+        Get-Item -Path "HKCU:\software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\"            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_ShellFolders.txt"
+        Get-Item -Path "HKLM:\software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\"            >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_ShellFolders.txt"
+
 
         # Winlogon Helper DLL - https://attack.mitre.org/techniques/T1004/
         if(Test-Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows NT\CurrentVersion\Winlogon") {
@@ -1099,150 +1115,113 @@ Function Collect-Persistence {
             Get-Item -Path "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\"                         >> "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AppCertDLLs.txt"
         }
 
-        # Accessility Features - https://attack.mitre.org/techniques/T1015/
-        # On-Screen Keyboard: C:\Windows\System32\osk.exe
-        # Magnifier: C:\Windows\System32\Magnify.exe
-        # Narrator: C:\Windows\System32\Narrator.exe
-        # Display Switcher: C:\Windows\System32\DisplaySwitch.exe
-        # App Switcher: C:\Windows\System32\AtBroker.exe
-        # utilman.exe
+        # TODO:
+            # Accessility Features - https://attack.mitre.org/techniques/T1015/
+            # On-Screen Keyboard: C:\Windows\System32\osk.exe
+            # Magnifier: C:\Windows\System32\Magnify.exe
+            # Narrator: C:\Windows\System32\Narrator.exe
+            # Display Switcher: C:\Windows\System32\DisplaySwitch.exe
+            # App Switcher: C:\Windows\System32\AtBroker.exe
+            # utilman.exe
 
-        # others - https://threatvector.cylance.com/en_us/home/windows-registry-persistence-part-2-the-run-keys-and-search-order.html
-        # HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\BootExecute 
-        # HKLM\System\CurrentControlSet\Services TODO: Implement a list that shows all drivers that start before Kernel initialization that have value 0, maybe hash files and send them to VT
-        # HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ShellServiceObjectDelayLoad
-        # HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run
-        # HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run
-        # HKCU\Software\Microsoft\Windows NT\CurrentVersion\Windows\load
-        # HKLM\Software\Microsoft\Windows NT\CurrentVersion\Windows
-        # HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\SharedTaskScheduler
-        # 
-
-
-
+            # others - https://threatvector.cylance.com/en_us/home/windows-registry-persistence-part-2-the-run-keys-and-search-order.html
+            # HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\BootExecute 
+            # HKLM\System\CurrentControlSet\Services TODO: Implement a list that shows all drivers that start before Kernel initialization that have value 0, maybe hash files and send them to VT
+            # HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\ShellServiceObjectDelayLoad
+            # HKLM\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run
+            # HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run
+            # HKCU\Software\Microsoft\Windows NT\CurrentVersion\Windows\load
+            # HKLM\Software\Microsoft\Windows NT\CurrentVersion\Windows
+            # HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\SharedTaskScheduler
 
     } catch {
         Report-Error -evidence "Persistence"
     }
 }
 
-<########### U S B   I N F O #######################> # USB
+<########### U S B   I N F O #######################> # USB*
 Function Collect-USB-Info {
  
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\USB ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\USB > $null }
+    # TODO: https://blogs.sans.org/computer-forensics/files/2009/09/USBKEY-Guide.pdf (page 3 win7) 
+    # TODO: Cross with this: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Portable Devices\Devices
+
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\USB_`&_Devices ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\USB_`&_Devices > $null }
  
     try{
         Write-Host "[+] Collecting USB Info ..." -ForegroundColor Green
         
         if( Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB")
         {
-            echo "RESUME: " > "$Global:Destiny\$HOSTNAME\USB\USB.txt"
-            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB\*\*" | Select-Object FriendlyName, DeviceDesc, Mfg >> "$Global:Destiny\$HOSTNAME\USB\USB.txt" 2> $null
+            echo "RESUME: "                                                                                                       > "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USB.txt"
+            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB\*\*" | Select-Object FriendlyName, DeviceDesc, Mfg    >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USB.txt" 2> $null
 
-            echo "DETAILED: " >> "$Global:Destiny\$HOSTNAME\USB\USB.txt"
-            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB\*\*" >> "$Global:Destiny\$HOSTNAME\USB\USB.txt" 2> $null
+            echo "DETAILED: "                                                                                                     >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USB.txt"
+            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB\*\*"                                                  >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USB.txt" 2> $null
         }
 
 
         if( Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR")
         {
-            echo "RESUME: " > "$Global:Destiny\$HOSTNAME\USB\USBSTOR.txt"
-            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR\*\*" | Select-Object FriendlyName, DeviceDesc, Mfg >> "$Global:Destiny\$HOSTNAME\USB\USBSTOR.txt" 2> $null
+            echo "RESUME: "                                                                                                            > "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBSTOR.txt"
+            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR\*\*" | Select-Object FriendlyName, DeviceDesc, Mfg     >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBSTOR.txt" 2> $null
 
-            echo "DETAILED: " >> "$Global:Destiny\$HOSTNAME\USB\USBSTOR.txt"
-            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR\*\*" >> "$Global:Destiny\$HOSTNAME\USB\USBSTOR.txt" 2> $null
+            echo "DETAILED: "                                                                                                          >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBSTOR.txt"
+            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR\*\*"                                                   >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBSTOR.txt" 2> $null
         }
 
-        echo "RESUME: " > "$Global:Destiny\$HOSTNAME\USB\USBControllerDevice.txt"
-        Get-WmiObject Win32_USBControllerDevice | Foreach-Object { [Wmi]$_.Dependent } | Select-Object Caption, PNPClass, Present, Status >> "$Global:Destiny\$HOSTNAME\USB\USBControllerDevice.txt" 2> $null
-        # Get-CimInstance
+        echo "RESUME: "                                                                                                                      > "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBControllerDevice.txt"
+        Get-WmiObject Win32_USBControllerDevice | Foreach-Object { [Wmi]$_.Dependent } | Select-Object Caption, PNPClass, Present, Status    >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBControllerDevice.txt" 2> $null
             
-        echo "DETAILED: " >> "$Global:Destiny\$HOSTNAME\USB\USBControllerDevice.txt"
-        Get-WmiObject Win32_USBControllerDevice | Foreach-Object { [Wmi]$_.Dependent } >> "$Global:Destiny\$HOSTNAME\USB\USBControllerDevice.txt" 2> $null
-        # Get-CimInstance
+        echo "DETAILED: "                                                                                                                    >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBControllerDevice.txt"
+        Get-WmiObject Win32_USBControllerDevice | Foreach-Object { [Wmi]$_.Dependent }                                                       >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBControllerDevice.txt" 2> $null
 
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\USBSTOR" "$Global:Destiny\$HOSTNAME\USB\USBSTOR.reg" > $null
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Enum\USB" "$Global:Destiny\$HOSTNAME\USB\USB.reg" > $null
-        # OLD - Get-WmiObject Win32_USBControllerDevice | Foreach-Object { [Wmi]$_.Dependent } > "$Global:Destiny\$HOSTNAME\USB\USBControllerDevice.txt"
     } catch {
         Report-Error -evidence "USB info"
     }
 }
 
-<########### D E V I C E S   I N F O ###############> # DEV
+<########### D E V I C E S   I N F O ###############> # DEV*
 Function Collect-Devices-Info {
 
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Devices ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Devices > $null }
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\USB_`&_Devices" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\USB_`&_Devices" > $null }
 
-    Write-Host "[+] Collecting Devices Info in the Registry ..." -ForegroundColor Green
+    Write-Host "[+] Collecting Devices Info ..." -ForegroundColor Green
     try
     {
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\DeviceClasses" "$Global:Destiny\$HOSTNAME\DEVICES\DeviceClasses.reg" > $null <# TODO: Review this, it seems without useful information#>
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\DeviceClasses\*\*" > "$Global:Destiny\$HOSTNAME\Devices\DeviceClasses.txt" 2> $null
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\System\MountedDevices" "$Global:Destiny\$HOSTNAME\DEVICES\MountedDevices.reg" > $null <# TODO: Review this, it seems without useful information#>
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\MountedDevices\*\*" > "$Global:Destiny\$HOSTNAME\Devices\MountedDevices.txt" 2> $null
-        # TODO: 
-        #  Get-ItemProperty  "REGISTRY::HKEY_LOCAL_MACHINE\System\MountedDevices"
-        #
-        #  [System.Text.Encoding]::Default.GetString((Get-ItemProperty "HKLM:\System\MountedDevices")."\??\Volume{f688de94-3dd5-11e9-a93b-3c6aa7859fb6}")
-        #  [System.Text.Encoding]::Default.GetString((Get-ItemProperty "HKLM:\System\MountedDevices")."\DosDevices\S:")
-
+        echo "Devices Resume: "                                                                     > "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
+        Get-PnpDevice | Select-Object Class, FriendlyName, InstanceID | Sort-Object Class          >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
+        echo "Devices Details: "                                                                   >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
+        Get-PnpDevice | Select-Object * | Sort-Object Class                                        >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
+        echo "Devices Deep Details: "                                                              >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt" 
+        Get-PnpDevice | Select-Object InstanceId | ForEach-Object {
+            echo $_.Name                                                                           >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
+            Get-PnpDeviceProperty -InstanceId $_.instanceID | Sort-Object type                     >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
+        }
     } 
     catch 
     {
-        Report-Error -evidence "Devices Info from the Registry"
+        Report-Error -evidence "Devices Info"
     }
 }
 
-<########### S E C U R I T Y   C O N F . ###########> # SEC
-Function Collect-Security-Config{
+<########### F I R E W A L L   C O N F . ###########> # SEC*
+Function Collect-Firewall-Config{
 
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Security ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Security > $null }
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Firewall ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Firewall > $null }
 
     try{
-        Write-Host "[+] Collecting Security Configuration Info... " -ForegroundColor Green
-        # cmd.exe /c reg export "HKEY_LOCAL_MACHINE\Software\Microsoft\Security Center" "$Global:Destiny\$HOSTNAME\SECURITY\HKLM_SecurityCenter.reg" > $null REMARK: I don't see useful information here.
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy" "$Global:Destiny\$HOSTNAME\SECURITY\HKLM_FirewallPolicy.reg" > $null 
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy" > "$Global:Destiny\$HOSTNAME\Security\HKLM_FirewallPolicy.txt"
-
-        Get-ItemProperty "HKLM:\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\" > "$Global:Destiny\$HOSTNAME\Security\FW_Programs.txt"
-        Get-ItemProperty "HKLM:\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\RestrictedServices\*\*" > "$Global:Destiny\$HOSTNAME\Security\FW_Services.txt"
+        Write-Host "[+] Collecting Firewall Configuration Info... " -ForegroundColor Green
+        Get-NetFirewallProfile | Select-Object *           >> "$Global:Destiny\$HOSTNAME\Firewall\FW_Profiles.txt"
+        Get-NetFirewallSetting | Select-Object *           >> "$Global:Destiny\$HOSTNAME\Firewall\FW_Settings.txt"
+        Get-NetFirewallRule                                | Export-Csv "$Global:Destiny\$HOSTNAME\Firewall\FW_Rules.csv"
         
         if($OS -eq "XP") {
-            # OLD - cmd.exe /c reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Action Center" "$Global:Destiny\$HOSTNAME\SECURITY\HKLM_ActionCenter.reg" > $null
-            Get-ItemProperty "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Action Center" > "$Global:Destiny\$HOSTNAME\Security\HKLM_ActionCenter.txt"
+            Get-ItemProperty "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Action Center" > "$Global:Destiny\$HOSTNAME\Firewall\HKLM_ActionCenter.txt"
         } <# TODO: Review in a XP environment #>
         
        
     } catch {
-        Report-Error -evidence "Security Information"
-    }
-}
-
-<########### S H E L L   F O L D E R S #############> # SFO
-Function Collect-Shell-Folders {
-
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Shell_Folders ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Shell_Folders > $null }
-
-    Write-Host "[+] Collecting Shell Folders " -ForegroundColor Green
-    try
-    {
-        # OLD - cmd.exe /c reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" "$Global:Destiny\$HOSTNAME\Shell_Folders\HKCU_ShellFolders.reg" > $null 
-        Get-Item -Path "HKCU:\software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\" > "$Global:Destiny\$HOSTNAME\Shell_Folders\HKCU_ShellFolders.txt"
-        
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" "$Global:Destiny\$HOSTNAME\Shell_Folders\HKLM_ShellFolders.reg" > $null 
-        Get-Item -Path "HKLM:\software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\" > "$Global:Destiny\$HOSTNAME\Shell_Folders\HKLM_ShellFolders.txt"
-        
-        # OLD - cmd.exe /c reg export "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" "$Global:Destiny\$HOSTNAME\Shell_Folders\HKCU_UserShellFolders.reg" > $null 
-        Get-Item -Path "HKCU:\software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\" > "$Global:Destiny\$HOSTNAME\Shell_Folders\HKCU_UserShellFolders.txt"
-
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders" "$Global:Destiny\$HOSTNAME\Shell_Folders\HKLM_UserShellFolders.reg" > $null 
-        Get-Item -Path "HKLM:\software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\" > "$Global:Destiny\$HOSTNAME\Shell_Folders\HKLM_UserShellFolders.txt"
-
-    } 
-    catch 
-    {
-        Report-Error -evidence "Shell Folders"
+        Report-Error -evidence "Firewall Information"
     }
 }
 
@@ -2804,7 +2783,8 @@ Function Collect-Firefox-Data {
 
 <########### I E   W E B   B R O W S E R #####################> # IEX
 Function Collect-IE-Data {
-    # TODO: see if it adds something new -> Extracts cache inf0rmation from IE - http://www.nirsoft.net/utils/ie_cache_viewer.html 
+    # TODO: see if it adds something new -> Extracts cache inf0rmation from IE - http://www.nirsoft.net/utils/ie_cache_viewer.html
+    # TODO: Computer\HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\TypedURLs
     foreach($u in $USERS)
     {
         if($OS -eq "XP")
@@ -3184,15 +3164,14 @@ Function Control-NOGUI{
     if (         $Global:RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
     if ($All -or $Global:NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:20
     if ($All -or $Global:SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 00:??
-    if ($All -or $Global:STJ ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # ??:??
+    if ($All -or $Global:STA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # ??:??
     if ($All -or $Global:CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PSCommand-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
     if ($All -or $Global:INS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Installed-Software ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
     if ($All -or $Global:UGR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Users-Groups ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
     if ($All -or $Global:PER ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Persistence ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
     if ($All -or $Global:USB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-USB-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
     if ($All -or $Global:DEV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Devices-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
-    if ($All -or $Global:SEC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Security-Config ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
-    if ($All -or $Global:SFO ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shell-Folders ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
+    if ($All -or $Global:SEC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firewall-Config ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
     if ($All -or $Global:ENV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Env-Vars ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
 
     if ($All -or $Global:MRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MRUs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
@@ -3329,22 +3308,23 @@ Function Report-Error {
 Function Show-Banner {
 
     cls
-    Write-Host '▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒'
-    Write-Host '▓                                                                                              ▒'
-    Write-Host '▓    ######\                               ##\           ##\   ##\                             ▒'
-    Write-Host '▓    \_##  _|                              \__|          \__|  ## |                            ▒'
-    Write-Host '▓      ## |  #######\   ######\  ##\   ##\ ##\  #######\ ##\ ######\    ######\   ######\      ▒'
-    Write-Host '▓      ## |  ##  __##\ ##  __##\ ## |  ## |## |##  _____|## |\_##  _|  ##  __##\ ##  __##\     ▒'
-    Write-Host '▓      ## |  ## |  ## |## /  ## |## |  ## |## |\######\  ## |  ## |    ## /  ## |## |  \__|    ▒'
-    Write-Host '▓      ## |  ## |  ## |## |  ## |## |  ## |## | \____##\ ## |  ## |##\ ## |  ## |## |          ▒'
-    Write-Host '▓    ######\ ## |  ## |\####### |\######  |## |#######  |## |  \####  |\######  |## |          ▒'
-    Write-Host '▓    \______|\__|  \__| \____## | \______/ \__|\_______/ \__|   \____/  \______/ \__|          ▒'
-    Write-Host '▓                            ## |                                                              ▒'
-    Write-Host '▓                            ## |                                                              ▒'
-    Write-Host '▓                            \__|                           By:      f4d0                      ▒'
-    Write-Host '▓                                                           Version: 0.7                       ▒'
-    Write-Host '▓                                                                                              ▒'
-    Write-Host '▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒'
+    write-host ''
+    Write-Host '  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒'
+    Write-Host '  ▓                                                                                              ▒'
+    Write-Host '  ▓    ######\                               ##\           ##\   ##\                             ▒'
+    Write-Host '  ▓    \_##  _|                              \__|          \__|  ## |                            ▒'
+    Write-Host '  ▓      ## |  #######\   ######\  ##\   ##\ ##\  #######\ ##\ ######\    ######\   ######\      ▒'
+    Write-Host '  ▓      ## |  ##  __##\ ##  __##\ ## |  ## |## |##  _____|## |\_##  _|  ##  __##\ ##  __##\     ▒'
+    Write-Host '  ▓      ## |  ## |  ## |## /  ## |## |  ## |## |\######\  ## |  ## |    ## /  ## |## |  \__|    ▒'
+    Write-Host '  ▓      ## |  ## |  ## |## |  ## |## |  ## |## | \____##\ ## |  ## |##\ ## |  ## |## |          ▒'
+    Write-Host '  ▓    ######\ ## |  ## |\####### |\######  |## |#######  |## |  \####  |\######  |## |          ▒'
+    Write-Host '  ▓    \______|\__|  \__| \____## | \______/ \__|\_______/ \__|   \____/  \______/ \__|          ▒'
+    Write-Host '  ▓                            ## |                                                              ▒'
+    Write-Host '  ▓                            ## |                                                              ▒'
+    Write-Host '  ▓                            \__|                           By:      f4d0                      ▒'
+    Write-Host '  ▓                                                           Version: 0.7                       ▒'
+    Write-Host '  ▓                                                                                              ▒'
+    Write-Host '  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒'
 
 }
 
@@ -3352,19 +3332,85 @@ Function Show-Banner {
 Function Show-Simple-Options-Resume {
 
     Write-Host ""
-    Write-Host "╔═══════════════════════════════════════════"
-    Write-Host "║                                           "
-    Write-Host "║ Input information:                        "
-    Write-Host "║                                           "
-    Write-Host "║     GUI:         $GUI                     "
-    Write-Host "║     Source:      $Global:Source                  "
-    Write-Host "║     Destiny:     $Global:Destiny                 "
-    Write-Host "║     Memory Dump: $RAM                     "
-    Write-Host "║     Format:      $Global:FormatType              "
-    Write-Host "║     Dev. Mode:   $DevMode                 "  
-    Write-Host "║                                           "
-    Write-Host "║                                           "
-    Write-Host "╚═══════════════════════════════════════════"
+    Write-Host "  ═══════════════════════════════════════════ "
+    Write-Host "                                              "
+    Write-Host "    Input information:                        "
+    Write-Host "                                              "
+    Write-Host "        GUI:         $GUI                     "
+    Write-Host "        Source:      $Global:Source           "
+    Write-Host "        Destiny:     $Global:Destiny          "
+    Write-Host "        Memory Dump: $RAM                     "
+    Write-Host "        Format:      $Global:FormatType       "
+    Write-Host "        Dev. Mode:   $DevMode                 "  
+    Write-Host "                                              "
+    Write-Host "        Collect:                              "
+    Write-Host " "
+    if ($Global:RAM ) {Write-Host "            • RAM"}
+    if ($Global:SFI ) {Write-Host "            • SFI"}
+    if ($Global:AFI ) {Write-Host "            • AFI"}
+    if ($Global:DEX ) {Write-Host "            • DEX"}
+    if ($All) {Write-Host "            • ALL"}
+    else
+    {
+        if ($Global:NET ) {Write-Host "            • NET"}
+        if ($Global:SAP ) {Write-Host "            • SAP"}
+        if ($Global:STA ) {Write-Host "            • STA"}
+        if ($Global:CPH ) {Write-Host "            • CPH"}
+        if ($Global:INS ) {Write-Host "            • INS"}
+        if ($Global:UGR ) {Write-Host "            • UGR"}
+        if ($Global:PER ) {Write-Host "            • PER"}
+        if ($Global:USB ) {Write-Host "            • USB"}
+        if ($Global:DEV ) {Write-Host "            • DEV"}
+        if ($Global:SEC ) {Write-Host "            • SEC"}
+        if ($Global:ENV ) {Write-Host "            • ENV"}
+
+        if ($Global:MRU ) {Write-Host "            • MRU"}
+        if ($Global:SHI ) {Write-Host "            • SHI"}
+        if ($Global:JLI ) {Write-Host "            • JLI"}
+        if ($Global:BAM ) {Write-Host "            • BAM"}
+    
+        if ($Global:TLH ) {Write-Host "            • TLH"}
+        if ($Global:RAP ) {Write-Host "            • RAP"}
+        if ($Global:SYS ) {Write-Host "            • SYS"}
+
+        if ($Global:UAS ) {Write-Host "            • UAS"}
+        if ($Global:LAC ) {Write-Host "            • LAC"}
+
+        if ($Global:LSE ) {Write-Host "            • LSE"}
+        if ($Global:PWD ) {Write-Host "            • PWD"}
+
+        # OFFLINE
+        if ($Global:HIV ) {Write-Host "            • HIV"}
+        if ($Global:EVT ) {Write-Host "            • EVT"}
+        if ($Global:FIL ) {Write-Host "            • FIL"}
+        if ($Global:PRF ) {Write-Host "            • PRF"}
+        if ($Global:WSE ) {Write-Host "            • WSE"}
+        if ($Global:EET ) {Write-Host "            • EET"}
+        if ($Global:THC ) {Write-Host "            • THC"}
+        if ($Global:ICO ) {Write-Host "            • ICO"}
+        if ($Global:MUL ) {Write-Host "            • MUL"}
+        if ($Global:HPS ) {Write-Host "            • HPS"}
+        if ($Global:THA ) {Write-Host "            • THA"}
+        if ($Global:SRU ) {Write-Host "            • SRU"}
+        if ($Global:CRE ) {Write-Host "            • CRE"}
+    
+        if ($Global:SKY ) {Write-Host "            • SKY"}
+
+        if ($Global:CHR ) {Write-Host "            • CHR"}
+        if ($Global:MFI ) {Write-Host "            • MFI"}
+        if ($Global:IEX ) {Write-Host "            • IEX"}
+        if ($Global:EDG ) {Write-Host "            • EDG"}
+        if ($Global:SAF ) {Write-Host "            • SAF"}
+        if ($Global:OPE ) {Write-Host "            • OPE"}
+        if ($Global:TOR ) {Write-Host "            • TOR"}
+
+        if ($Global:OUT ) {Write-Host "            • OUT"}
+
+        if ($Global:COD ) {Write-Host "            • COD"}
+        if ($Global:CGD ) {Write-Host "            • CGD"}
+        if ($Global:CDB ) {Write-Host "            • CDB"}
+    }
+    Write-Host "  ═══════════════════════════════════════════"
     Write-Host ""
     $result = Read-Host "Please click <ENTER> to continue."
 
@@ -3889,15 +3935,15 @@ Function Collect-Mounted-Points {
 
 Function Collect-Wireless-Info {
 
-        <# TODO: Review in respective OS #>       
+        # TODO: Review in respective OS       
         if ($OS -eq "XP") 
         {
             #OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WZCSVC\Parameters\Interfaces" "$Global:Destiny\$HOSTNAME\WIFI\WifiNetworkList.reg" > $null
             Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WZCSVC\Parameters\Interfaces" "$Global:Destiny\$HOSTNAME\WIFI\WifiNetworkList.txt"
         } 
-        <# TODO: Check the equivalent to the above for windows vista,7,8,10 #>
+        # TODO: Check the equivalent to the above for windows vista,7,8,10
         # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\TCPIP\Parameters\Interfaces" "$Global:Destiny\$HOSTNAME\WIFI\WifiNetworkCfg.reg" > $null
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\TCPIP\Parameters\Interfaces\*" > "$Global:Destiny\$HOSTNAME\WIFI\WifiNetworkCfg.reg" <# TODO: Is this really WIFI #>
+        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\TCPIP\Parameters\Interfaces\*" > "$Global:Destiny\$HOSTNAME\WIFI\WifiNetworkCfg.reg" # TODO: Is this really WIFI
 
 }
 
@@ -4095,8 +4141,8 @@ Function Old-Code{
             }
 
             
-            # COMDLG32 :: OpenSavePidlMRU <# TODO: Substitute the SID static number in the function by variable #>
-            <# TODO: Translation of the ecnripted code into readable code #>
+            # COMDLG32 :: OpenSavePidlMRU # TODO: Substitute the SID static number in the function by variable
+            # TODO: Translation of the ecnripted code into readable code
             #  [System.Text.Encoding]::Default.GetString((Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU\docx")."9")
             
             Write-Host "`t[+] OpenSavePidlMRU from $NAME" -ForegroundColor Green
@@ -4218,3 +4264,68 @@ Function Old-Code{
 
 #        Get-ChildItem "$Global:Source\Program Files" | ?{$_.PSIsContainer}                                   >> "$Global:Destiny\$HOSTNAME\Software\InstalledSoftware_ProgramsFolder_x64.txt"
 #        Get-ChildItem "$Global:Source\Program Files (x86)" | ?{$_.PSIsContainer}                             >> "$Global:Destiny\$HOSTNAME\Software\InstalledSoftware_ProgramsFolder_x86.txt"
+
+
+<########### D E V I C E S   I N F O ###############> # DEV
+<#
+Function Collect-Devices-Info {
+
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Devices ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Devices > $null }
+
+    Write-Host "[+] Collecting Devices Info in the Registry ..." -ForegroundColor Green
+    try
+    {
+        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\DeviceClasses\*\*" > "$Global:Destiny\$HOSTNAME\Devices\DeviceClasses.txt" 2> $null
+        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\MountedDevices\*\*" > "$Global:Destiny\$HOSTNAME\Devices\MountedDevices.txt" 2> $null
+        # TODO: 
+        #  Get-ItemProperty  "REGISTRY::HKEY_LOCAL_MACHINE\System\MountedDevices"
+        #
+        #  [System.Text.Encoding]::Default.GetString((Get-ItemProperty "HKLM:\System\MountedDevices")."\??\Volume{f688de94-3dd5-11e9-a93b-3c6aa7859fb6}")
+        #  [System.Text.Encoding]::Default.GetString((Get-ItemProperty "HKLM:\System\MountedDevices")."\DosDevices\S:")
+
+        
+        foreach ($id in $(Get-PnpDevice | Select-Object InstanceId)){ 
+            Get-PnpDeviceProperty -InstanceId "$id" | Sort-Object type
+        }
+
+    } 
+    catch 
+    {
+        Report-Error -evidence "Devices Info from the Registry"
+    }
+}
+#>
+
+<########### S E C U R I T Y   C O N F . ###########> # SEC
+<#
+Function Collect-Firewall-Config{
+
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Security ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Security > $null }
+
+    try{
+        Write-Host "[+] Collecting Security Configuration Info... " -ForegroundColor Green
+        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile"     >> "$Global:Destiny\$HOSTNAME\Security\FW_Profiles.txt"
+        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile"   >> "$Global:Destiny\$HOSTNAME\Security\FW_Profiles.txt"
+        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile"     >> "$Global:Destiny\$HOSTNAME\Security\FW_Profiles.txt"
+
+        Get-ItemProperty "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\"  | Export-Csv "$Global:Destiny\$HOSTNAME\Security\FW_Rules.csv" -NoTypeInformation
+        
+        #$fw_rules = Get-ItemProperty "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\"
+        #foreach($rule in $fw_rules)
+        #{
+        #    echo $rule >> "$Global:Destiny\$HOSTNAME\Security\FW_Rules.txt"
+        #}
+
+        
+        Get-ItemProperty "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\RestrictedServices\*\*"   >> "$Global:Destiny\$HOSTNAME\Security\FW_RestrictedServices.txt"
+        
+        if($OS -eq "XP") {
+            Get-ItemProperty "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Action Center" > "$Global:Destiny\$HOSTNAME\Security\HKLM_ActionCenter.txt"
+        } # TODO: Review in a XP environment 
+        
+       
+    } catch {
+        Report-Error -evidence "Security Information"
+    }
+}
+#>
