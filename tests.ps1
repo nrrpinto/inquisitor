@@ -23,10 +23,103 @@ if($ARCH -eq "AMD64") {
 
 $UsedParameters = $PSBoundParameters.Keys <# TODO: Will use this variable to check which parameters were inserted in the command line and therefore don't need confirmation #>
 
-$Global:Destiny = "F:\TFM\tests"
+$Global:Destiny = "F:\MyDOCS\TFM\tests"
+
+Function Report-Error {
+
+    param(
+        [string]$evidence        
+    )
+
+    Write-Host "`t[-] Error Collecting $evidence . Check log file for more info."  -ForegroundColor Red
+    echo "`t[-] Error Collecting $evidence :" >> $Global:Destiny\$HOSTNAME\errors.log
+    $_.Exception.GetType().FullName >> $Global:Destiny\$HOSTNAME\errors.log
+    $_.Exception.Message >> $Global:Destiny\$HOSTNAME\errors.log
+}
 
 ###################################################################
 
+
+foreach($SID in $SIDS){
+
+    if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that users removes the system and network and classes
+    { 
+
+        $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"  # get's the name correspondent to the SID
+        $NAME = $($N.Split("\")[2])
+
+        if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
+            
+        Write-Host "`t[+] Collecting RECENT DOCS from $NAME - From Registry" -ForegroundColor Green
+
+        echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+        echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+        echo "INFO: Identifies recently accessed documents by extension subkeys. Values in the main RecentDocs subkey lists the last 150 objects opened in order." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+        echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+        echo "More Info(page.20): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+        echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+
+            
+            
+
+        $list = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" -Name MRUListEx 2> $null
+
+        $count = 0
+        $n = 0
+        foreach($pos in $list)
+        {
+            if( (($count % 4) -eq 0) -and (-not ($pos -eq 255)) )
+            {
+                echo "Count: $count | Pos: $pos"
+                $entry = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" -Name $pos 2>$null
+                
+                if($entry -eq $null) 
+                { 
+                    #echo "(EMPTY)" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+                    #$n++
+                    continue 
+                } # In case the value position is empty continue to the next one
+            
+                $read=$true
+                $i = 0
+                            
+                foreach($b in $entry)
+                {
+                    if($read)
+                    {
+                        if([int]$b -ne 0)
+                        {
+                            $c = [char][int]$b
+                            $filename = $filename + "$c"
+                        }
+                        if([int]$b -eq 0) 
+                        { 
+                            $i = $i + 1 
+                        }
+                        else 
+                        { 
+                            $i = 0 
+                        }
+                        if($i -gt 1) 
+                        {
+                            $read = $false
+                        }
+                    }
+                }
+                echo "$n : $filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+                
+                $n++    
+                
+            }
+            $filename = ""
+            $entry = $null
+            $count++
+        }
+
+        
+
+    }
+}
 
 
 
