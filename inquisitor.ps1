@@ -363,7 +363,7 @@ $Global:CDB=$CDB
 <# GLOBAL VARIABLES #>
 $HOSTNAME = hostname
 $OS = ((Get-CimInstance win32_operatingsystem).name).split(" ")[2] <# Intead of collecting the windows version: XP, Vista, 7, 10, ... should be according to the core #>
-$USERS = Get-LocalUser | ? { $_.Enabled } | Select-Object -ExpandProperty Name
+$USERS = Get-LocalUser | ? { $_.Enabled } | Select-Object -ExpandProperty Name # TODO: Get the users from Users folder and not from PowerShell command, it will not work correctly for offline collection like it is at the moment
 $SIDS = Get-ChildItem "REGISTRY::HKEY_USERS" | ForEach-Object { ($_.Name).Split("\")[1] } # list of user SIDs
 $ARCH = $env:PROCESSOR_ARCHITECTURE
 $SCRIPTPATH = split-path -parent $MyInvocation.MyCommand.Definition
@@ -1541,9 +1541,6 @@ Function Collect-MRUs {
     # SHIMCACHE
     Collect-Shimcache
 
-    # JUMP LISTS
-    Collect-JumpLists
-
     # RECENT APPS
     Collect-RecentApps
 }
@@ -1833,7 +1830,269 @@ Function Collect-Shimcache {
 
 }
 
-<########### J U M P   L I S T S ###################> # JLI - Used with MRUs
+<########### R E C E N T   A P P S #################> # RAP - Used with MRUs
+Function Collect-RecentApps {
+
+    if($OS -eq "10")
+    {
+        foreach($SID in $SIDS)
+        {
+            if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that users removes the system and network and classes
+            {
+                $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"  # get's the name correspondent to the SID
+                $NAME = $($N.Split("\")[2])
+
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$NAME" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$NAME" > $null }
+                Write-Host "`t[+] Collecting Recent Apps info from $NAME" -ForegroundColor Green
+
+                if( Test-Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\")
+                {
+                    $RA_SID = Get-ChildItem "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\" | Select-Object -ExpandProperty Name | foreach { $_.split("\")[8] }
+
+                    foreach($R in $RA_SID)
+                    {
+                    echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                    echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                    echo "SID: $R" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                    $tempAppId = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name AppId
+                    echo "AppID: $tempAppId"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                    $tempLaunchCount = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name LaunchCount
+                    echo "LaunchCount: $tempLaunchCount"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                    $tempAppPath = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name AppPath
+                    echo "AppPath: $tempAppPath"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                    $tempDateDec = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R"-Name LastAccessedTime
+                    $tempDate = [datetime]::FromFileTime($tempDateDec)
+                    echo "Date: $tempDate" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+            
+                    echo "--- Associated Files:" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+            
+                    if(Test-Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems")
+                    {
+                        $FILE_SID = Get-ChildItem "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\" | Select-Object -ExpandProperty Name | foreach { $_.split("\")[10] }
+
+                        foreach($F in $FILE_SID)
+                        {
+                            $tempName = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name DisplayName
+                            echo "`tName: $tempName"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                            $tempPath = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name Path
+                            echo "`tPath: $tempPath"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                            $tempDateDec = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name LastAccessedTime
+                            $tempDate = [datetime]::FromFileTime($tempDateDec)
+                            echo "`tDate: $tempDate" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                        }
+                    }
+                    else
+                    {
+                        echo "`tThis app doesn't have recent open files associated." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                    }
+                }
+                }
+                else
+                {
+                    Write-Host "`t[i] There is not RecentApps info in the registry."
+                }
+            }
+        }
+    }
+}
+
+
+
+<########### B A M #################################> # BAM
+Function Collect-BAM {
+    
+    # BAM - BACKGROUND ACTIVITY MODERATOR
+
+    $avoidlist = "Version","SequenceNumber"
+
+    if( Test-Path -Path "REGISTRY::HKLM\SYSTEM\CurrentControlSet\services\bam\") 
+    {
+
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\BAM") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\BAM" > $null }    
+        echo "User,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
+
+        $SIDs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\*"  | foreach { 
+            $_.Name.split("\")[-1] 
+        }
+
+        foreach($SID in $SIDs)
+        {
+            $APPs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\$SID\" | foreach{ 
+                $_.Property 
+            }
+
+            foreach($APP in $APPs)
+            {
+                if((-not ($avoidlist -contains $APP))) # if not in the blacklist
+                {
+                    <# TODO: Create a function that indexes the name of the User to the SID and use for example here to print username instead of SID
+                        KEY: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\ #>
+                     
+                    $RawDate = Get-ItemPropertyValue "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\$SID\" -Name $APP
+                    $DateTimeOffset = [System.DateTimeOffset]::FromFileTime([System.BitConverter]::ToInt64($RawDate,0))
+                    $LastExecutedDateUTC = $($DateTimeOffset.UtcDateTime)
+
+                    $LastExecutedDateLocal = [datetime]::FromFileTime([System.BitConverter]::ToInt64($RawDate,0))
+                    
+                    echo "$SID,$APP,$LastExecutedDateUTC,$LastExecutedDateLocal" >> "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
+                }
+            }
+        }
+    }
+    else
+    {
+        Write-Host "[-] No BAM registry record found in the system ..." -ForegroundColor Yellow
+    }
+
+}
+
+<########### T I M E L I N E   H I S T O R Y #######> # TLH 
+Function Collect-Timeline {
+
+    Write-Host "[+] Collecting Timeline History ..." -ForegroundColor Green
+
+    if($OS -eq "10")
+    {
+        foreach($u in $USERS)
+        {
+            if(Test-Path "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform")
+            {       
+                Get-Item  "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\*" | ForEach-Object {
+                 
+                    if(Test-Path -Path $_.FullName -PathType Container) # if it's a folder
+                    {
+                        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null }
+
+                        cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\$($_.Name)\*.*" "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null
+                    }
+                }
+            }
+            else
+            {
+                Write-Host "[-] Time Line not activated for user $u" -ForegroundColor Yellow
+            }
+        }
+    }
+}
+
+<########### S Y S T E M   I N F O #################> # SYS
+Function Collect-System-Info {    
+    
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\System_Info\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\System_Info\ > $null }
+    
+    Write-Host "[+] Collecting Computer Info..." -ForegroundColor Green
+    try
+    {
+        cmd.exe /c systeminfo > "$Global:Destiny\$HOSTNAME\System_Info\System_Info.txt"
+        Get-CimInstance Win32_OperatingSystem | Select-Object * >> "$Global:Destiny\$HOSTNAME\System_Info\Operating_System_Info.txt"
+        Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object * >> "$Global:Destiny\$HOSTNAME\System_Info\Computer_System_Info.txt"
+        Get-HotFix | Select-Object HotFixID, Description, InstalledBy, InstalledOn >> "$Global:Destiny\$HOSTNAME\System_Info\Hot_Fixes_Info.txt"
+    } 
+    catch 
+    {
+        Report-Error -evidence "Computer Info"
+    }
+
+    # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables?view=powershell-6
+    Write-Host "[+] Collecting Environment Variables ..." -ForegroundColor Green
+    try
+    {
+        cmd.exe /c path > "$Global:Destiny\$HOSTNAME\System_Info\9.Environment_Variables.txt"
+        Get-Item Env:
+        Get-ChildItem Env:
+    }
+    catch
+    {
+        Report-Error -evidence "Environment Variables"
+    }
+}
+
+
+
+
+<# TODO #> <########### L O C A L   S E S S I O N S #######################> # LSE 
+Function Collect-Local-Sessions {
+    
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\System_Info" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\System_Info" > $null }
+
+    Write-Host "[+] Collecting Local Sessions ..." -ForegroundColor Green
+    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
+    
+    # query user
+}
+
+<# TODO #> <########### U S E R   A N D   P A S S W O R D   H A S H E S ###> # PWD 
+Function Collect-Passwords {
+    
+    Write-Host "[+] Collecting Passwords" -ForegroundColor Green
+    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
+
+}
+
+
+
+<##################################################################################################################################>
+<############  THIRD PARTY SOFTWARE   /   LIVE SYSTEM #############################################################################>
+<##################################################################################################################################>
+
+<########### S I G N E D   F I L E S ######################> # SFI <# TIME CONSUMING - Not by Default#>
+Function Collect-Sign-Files {
+    
+    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Signed_Files\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Signed_Files\" > $null }
+
+    Write-Host "[+] Collecting Info About Signed Files " -ForegroundColor Green
+    try{
+        
+        & $SIG_EXE /accepteula -vt -h -c -e $Global:Source\Windows\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
+        & $SIG_EXE /accepteula -vt -h -c -e $Global:Source\Windows\system32\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
+        <# & $SIG_EXE /accepteula -ct -h -vn -vt c:\Windows > "$Global:Destiny\$HOSTNAME\FILES\Signed_Windows_Files.txt" #>
+        <# & $SIG_EXE /accepteula -ct -h -vn -vt c:\Windows\System32 > "$Global:Destiny\$HOSTNAME\FILES\Signed_Windows_System32_Files.txt" #>
+        <# sigcheck /accepteula -s -h -e -q -c C:\ > outfilename.csv #> <# Signs all the files in the entire system - it takes a lot of time
+        and if there is a onedrive installed, it will download files that are not physically in the disk#>
+    } catch {
+        Report-Error -evidence "Info About Signed Files"
+    }
+}
+
+<########### L A S T   A C T I V I T Y ####################> # LAC
+Function Collect-Last-Activity {
+    
+    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Last_Activity\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Last_Activity\" > $null }
+
+    Write-Host "[+] Collecting Last Activity ..." -ForegroundColor Green
+    try
+    {
+        & "$SCRIPTPATH\bin\lastactivityview\LastActivityView.exe" /shtml "$Global:Destiny\$HOSTNAME\Last_Activity\Last_Ativity.html"
+    }
+    catch
+    {
+        Report-Error -evidence "Last Activity"
+    }
+}
+
+<########### A L L   A U T O R U N   F I L E S ############> # AFI
+Function Collect-Autorun-Files {
+    
+    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Autorun_Files\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Autorun_Files\" > $null }
+    
+    Write-Host "[+] Collecting Autorun Files ..." -ForegroundColor Green
+    try
+    {
+        cmd.exe /c  $SCRIPTPATH\bin\autorunsc.exe -accepteula -a * -c -h -o "$Global:Destiny\$HOSTNAME\Autorun_Files\7.AutorunFiles.csv" -s -t -u -v -vt -nobanner
+    }
+    catch
+    {
+        Report-Error -evidence "Autorun Files"
+    }
+}
+
+
+
+<##################################################################################################################################>
+<############  LIVE OR OFFLINE SYSTEM  /  NO VOLATILE #############################################################################>
+<##################################################################################################################################>
+
+<########### J U M P   L I S T S ###################> # JLI
 Function Collect-JumpLists {
 
     if($OS -eq "10" -or $OS -like "8" -or $OS -eq "7")
@@ -1972,272 +2231,6 @@ Function Collect-JumpLists {
         }
     }
 }
-
-<########### R E C E N T   A P P S #################> # RAP - Used with MRUs
-Function Collect-RecentApps {
-
-    if($OS -eq "10")
-    {
-        foreach($SID in $SIDS)
-        {
-            if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that users removes the system and network and classes
-            {
-                $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"  # get's the name correspondent to the SID
-                $NAME = $($N.Split("\")[2])
-
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$NAME" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$NAME" > $null }
-                Write-Host "`t[+] Collecting Recent Apps info from $NAME" -ForegroundColor Green
-
-                if( Test-Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\")
-                {
-                    $RA_SID = Get-ChildItem "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\" | Select-Object -ExpandProperty Name | foreach { $_.split("\")[8] }
-
-                    foreach($R in $RA_SID)
-                    {
-                    echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    echo "SID: $R" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    $tempAppId = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name AppId
-                    echo "AppID: $tempAppId"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    $tempLaunchCount = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name LaunchCount
-                    echo "LaunchCount: $tempLaunchCount"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    $tempAppPath = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name AppPath
-                    echo "AppPath: $tempAppPath"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    $tempDateDec = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R"-Name LastAccessedTime
-                    $tempDate = [datetime]::FromFileTime($tempDateDec)
-                    echo "Date: $tempDate" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-            
-                    echo "--- Associated Files:" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-            
-                    if(Test-Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems")
-                    {
-                        $FILE_SID = Get-ChildItem "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\" | Select-Object -ExpandProperty Name | foreach { $_.split("\")[10] }
-
-                        foreach($F in $FILE_SID)
-                        {
-                            $tempName = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name DisplayName
-                            echo "`tName: $tempName"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                            $tempPath = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name Path
-                            echo "`tPath: $tempPath"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                            $tempDateDec = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name LastAccessedTime
-                            $tempDate = [datetime]::FromFileTime($tempDateDec)
-                            echo "`tDate: $tempDate" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                        }
-                    }
-                    else
-                    {
-                        echo "`tThis app doesn't have recent open files associated." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    }
-                }
-                }
-                else
-                {
-                    Write-Host "`t[i] There is not RecentApps info in the registry."
-                }
-            }
-        }
-    }
-}
-
-
-
-<########### B A M #################################> # BAM
-Function Collect-BAM {
-    
-    # BAM - BACKGROUND ACTIVITY MODERATOR
-
-    $avoidlist = "Version","SequenceNumber"
-
-    if( Test-Path -Path "REGISTRY::HKLM\SYSTEM\CurrentControlSet\services\bam\") 
-    {
-
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\BAM") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\BAM" > $null }    
-        echo "User,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
-
-        $SIDs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\*"  | foreach { 
-            $_.Name.split("\")[-1] 
-        }
-
-        foreach($SID in $SIDs)
-        {
-            $APPs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\$SID\" | foreach{ 
-                $_.Property 
-            }
-
-            foreach($APP in $APPs)
-            {
-                if((-not ($avoidlist -contains $APP))) # if not in the blacklist
-                {
-                    <# TODO: Create a function that indexes the name of the User to the SID and use for example here to print username instead of SID
-                        KEY: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\ #>
-                     
-                    $RawDate = Get-ItemPropertyValue "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\$SID\" -Name $APP
-                    $DateTimeOffset = [System.DateTimeOffset]::FromFileTime([System.BitConverter]::ToInt64($RawDate,0))
-                    $LastExecutedDateUTC = $($DateTimeOffset.UtcDateTime)
-
-                    $LastExecutedDateLocal = [datetime]::FromFileTime([System.BitConverter]::ToInt64($RawDate,0))
-                    
-                    echo "$SID,$APP,$LastExecutedDateUTC,$LastExecutedDateLocal" >> "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
-                }
-            }
-        }
-    }
-    else
-    {
-        Write-Host "[-] No BAM registry record found in the system ..." -ForegroundColor Yellow
-    }
-
-}
-
-
-
-<########### T I M E L I N E   H I S T O R Y #######> # TLH 
-Function Collect-Timeline {
-
-    Write-Host "[+] Collecting Timeline History ..." -ForegroundColor Green
-
-    if($OS -eq "10")
-    {
-        foreach($u in $USERS)
-        {
-            if(Test-Path "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform")
-            {       
-                Get-Item  "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\*" | ForEach-Object {
-                 
-                    if(Test-Path -Path $_.FullName -PathType Container) # if it's a folder
-                    {
-                        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null }
-
-                        cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\$($_.Name)\*.*" "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null
-                    }
-                }
-            }
-            else
-            {
-                Write-Host "[-] Time Line not activated for user $u" -ForegroundColor Yellow
-            }
-        }
-    }
-}
-
-
-
-<########### S Y S T E M   I N F O #################> # SYS
-Function Collect-System-Info {    
-    
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\System_Info\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\System_Info\ > $null }
-    
-    Write-Host "[+] Collecting Computer Info..." -ForegroundColor Green
-    try
-    {
-        cmd.exe /c systeminfo > "$Global:Destiny\$HOSTNAME\System_Info\System_Info.txt"
-        Get-CimInstance Win32_OperatingSystem | Select-Object * >> "$Global:Destiny\$HOSTNAME\System_Info\Operating_System_Info.txt"
-        Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object * >> "$Global:Destiny\$HOSTNAME\System_Info\Computer_System_Info.txt"
-        Get-HotFix | Select-Object HotFixID, Description, InstalledBy, InstalledOn >> "$Global:Destiny\$HOSTNAME\System_Info\Hot_Fixes_Info.txt"
-    } 
-    catch 
-    {
-        Report-Error -evidence "Computer Info"
-    }
-
-    # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables?view=powershell-6
-    Write-Host "[+] Collecting Environment Variables ..." -ForegroundColor Green
-    try
-    {
-        cmd.exe /c path > "$Global:Destiny\$HOSTNAME\System_Info\9.Environment_Variables.txt"
-        Get-Item Env:
-        Get-ChildItem Env:
-    }
-    catch
-    {
-        Report-Error -evidence "Environment Variables"
-    }
-}
-
-
-
-
-<# TODO #> <########### L O C A L   S E S S I O N S #######################> # LSE 
-Function Collect-Local-Sessions {
-    
-    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\System_Info" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\System_Info" > $null }
-
-    Write-Host "[+] Collecting Local Sessions ..." -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-    
-    # query user
-}
-
-<# TODO #> <########### U S E R   A N D   P A S S W O R D   H A S H E S ###> # PWD 
-Function Collect-Passwords {
-    
-    Write-Host "[+] Collecting Passwords" -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-
-}
-
-
-
-<##################################################################################################################################>
-<############  THIRD PARTY SOFTWARE   /   LIVE SYSTEM #############################################################################>
-<##################################################################################################################################>
-
-<########### S I G N E D   F I L E S ######################> # SFI <# TIME CONSUMING - Not by Default#>
-Function Collect-Sign-Files {
-    
-    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Signed_Files\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Signed_Files\" > $null }
-
-    Write-Host "[+] Collecting Info About Signed Files " -ForegroundColor Green
-    try{
-        
-        & $SIG_EXE /accepteula -vt -h -c -e $Global:Source\Windows\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
-        & $SIG_EXE /accepteula -vt -h -c -e $Global:Source\Windows\system32\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
-        <# & $SIG_EXE /accepteula -ct -h -vn -vt c:\Windows > "$Global:Destiny\$HOSTNAME\FILES\Signed_Windows_Files.txt" #>
-        <# & $SIG_EXE /accepteula -ct -h -vn -vt c:\Windows\System32 > "$Global:Destiny\$HOSTNAME\FILES\Signed_Windows_System32_Files.txt" #>
-        <# sigcheck /accepteula -s -h -e -q -c C:\ > outfilename.csv #> <# Signs all the files in the entire system - it takes a lot of time
-        and if there is a onedrive installed, it will download files that are not physically in the disk#>
-    } catch {
-        Report-Error -evidence "Info About Signed Files"
-    }
-}
-
-<########### L A S T   A C T I V I T Y ####################> # LAC
-Function Collect-Last-Activity {
-    
-    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Last_Activity\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Last_Activity\" > $null }
-
-    Write-Host "[+] Collecting Last Activity ..." -ForegroundColor Green
-    try
-    {
-        & "$SCRIPTPATH\bin\lastactivityview\LastActivityView.exe" /shtml "$Global:Destiny\$HOSTNAME\Last_Activity\Last_Ativity.html"
-    }
-    catch
-    {
-        Report-Error -evidence "Last Activity"
-    }
-}
-
-<########### A L L   A U T O R U N   F I L E S ############> # AFI
-Function Collect-Autorun-Files {
-    
-    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Autorun_Files\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Autorun_Files\" > $null }
-    
-    Write-Host "[+] Collecting Autorun Files ..." -ForegroundColor Green
-    try
-    {
-        cmd.exe /c  $SCRIPTPATH\bin\autorunsc.exe -accepteula -a * -c -h -o "$Global:Destiny\$HOSTNAME\Autorun_Files\7.AutorunFiles.csv" -s -t -u -v -vt -nobanner
-    }
-    catch
-    {
-        Report-Error -evidence "Autorun Files"
-    }
-}
-
-
-
-<##################################################################################################################################>
-<############  LIVE OR OFFLINE SYSTEM  /  NO VOLATILE #############################################################################>
-<##################################################################################################################################>
 
 <########### H I V E S ###########################################################> # HIV
 Function Collect-Hives {
