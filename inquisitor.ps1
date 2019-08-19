@@ -1218,7 +1218,7 @@ Function Collect-Firewall-Config{
 }
 
 
-<########### M R U s ###############################> # MRU
+<########### M R U s ###############################> # MRU*
 Function Collect-MRUs {
 
     Write-Host "[+] Collecting MRU's ..." -ForegroundColor Green
@@ -1226,6 +1226,44 @@ Function Collect-MRUs {
     if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\" > $null }
 
     # MUI CACHE - HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache | TODO: Collect without external tool
+    Collect-MUICache
+        
+    # RECENT DOCS -  C:\Documents and Settings\[Profile]\Recent - C:\Users\[Profile]\Recent - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSaveMRU | TODO: Collect without external tool
+    Collect-RecentDocs1
+
+    # RECENT DOCS -  NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs | TODO: Read subkeys that store info by extension
+    # Same info as in C:\Users\[PROFILE]\Recent or C:\Users\[PROFILE]\AppData\Roaming\Microsoft\Windows\Recent
+    Collect-RecentDocs2
+
+    # COMDLG32 :: OpenSavePidlMRU - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSaveMRU - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU | TODO: Collect without external tool
+    Collect-OpenSavePidlMRU
+
+    # Userassist - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist
+    Collect-UserAssist
+
+    # ShellBags - HKEY_CURRENT_USER\Software\Microsoft\Windows\ShellNoRoam - HKEY_CURRENT_USER\Software\Microsoft\Windows\Shell - HKEY_CURRENT_USER\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell 
+    Collect-ShellBags
+
+    # COMDLG32 :: CIDSizeMRU - NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU
+    Collect-CIDSizeMRU
+
+    # COMDLG32 :: LastVisitedPidlMRU - NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU
+    Collect-COMDLG32-LastVisitedPidlMRU
+
+    # RUN DialogBox MRU
+    Collect-RunDialogBoxMRU
+
+    # SHIMCACHE
+    Collect-Shimcache
+
+    # RECENT APPS
+    Collect-RecentApps
+}
+
+
+<########### MUI CACHE #############################> # N/A - Used with MRUs*
+Function Collect-MUICache {
+    
     Write-Host "`t[+] Collecting MUICACHE" -ForegroundColor Green
     try
     {
@@ -1235,8 +1273,11 @@ Function Collect-MRUs {
     {
         Report-Error -evidence "MUI CACHE"
     }
-        
-    # RECENT DOCS -  C:\Documents and Settings\[Your Profile]\Recent - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSaveMRU | TODO: Collect without external tool
+}
+
+<########### RECENT DOCS - Third Party #############> # N/A - Used with MRUs*
+Function Collect-RecentDocs1 {
+    
     Write-Host "`t[+] Collecting RECENT DOCS - Third Party Tool" -ForegroundColor Green
     try
     {
@@ -1246,115 +1287,99 @@ Function Collect-MRUs {
     {
         Report-Error -evidence "RECENT DOCS"
     }
+}
 
-    # RECENT DOCS -  NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs | TODO: Read subkeys that store info by extension
-    # Same info as in C:\Users\[PROFILE]\Recent or C:\Users\[PROFILE]\AppData\Roaming\Microsoft\Windows\Recent
-    foreach($SID in $SIDS){
+<########### RECENT DOCS ###########################> # N/A - Used with MRUs*
+Function Collect-RecentDocs2 {
+    
+    foreach($SID in $SIDS)
+    {
 
-    if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that users removes the system and network and classes
-    { 
+        if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that users removes the system and network and classes
+        { 
 
-        $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"  # get's the name correspondent to the SID
-        $NAME = $($N.Split("\")[2])
+            $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"  # get's the name correspondent to the SID
+            $NAME = $($N.Split("\")[2])
 
-        if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
+            if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
             
-        Write-Host "`t[+] Collecting RECENT DOCS from $NAME - From Registry" -ForegroundColor Green
+            Write-Host "`t[+] Collecting RECENT DOCS from $NAME - From Registry" -ForegroundColor Green
 
-        echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
-        echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
-        echo "INFO: Identifies recently accessed documents by extension subkeys. Values in the main RecentDocs subkey lists the last 150 objects opened in order." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
-        echo "INFO: Same info as in C:\Users\[PROFILE]\Recent or C:\Users\[PROFILE]\AppData\Roaming\Microsoft\Windows\Recent " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
-        echo "INFO: This function overcomes a failure in Microsoft Explorer: the obove folders don't show any record after a deleted entry, this list does show" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
-        echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
-        echo "More Info(page.20): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
-        echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+            echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+            echo "INFO: Identifies recently accessed documents by extension subkeys. Values in the main RecentDocs subkey lists the last 150 objects opened in order." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+            echo "INFO: Same info as in C:\Users\[PROFILE]\Recent or C:\Users\[PROFILE]\AppData\Roaming\Microsoft\Windows\Recent " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+            echo "INFO: This function overcomes a failure in Microsoft Explorer: the obove folders don't show any record after a deleted entry, this list does show" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+            echo "More Info(page.20): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
 
-        $list = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" -Name MRUListEx 2> $null # gets the list that has the order of las open
+            $list = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" -Name MRUListEx 2> $null # gets the list that has the order of las open
 
-        $count = 0
-        $n = 0
-        foreach($pos in $list)
-        {
-            if( (($count % 4) -eq 0) -and (-not ($pos -eq 255)) )
+            $count = 0
+            $n = 0
+            foreach($pos in $list)
             {
+                if( (($count % 4) -eq 0) -and (-not ($pos -eq 255)) )
+                {
                 
-                try
-                {
-                    $entry = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" -Name $pos 2>$null
-                }
-                catch
-                {
-                    $entry = "29A"
-                }
-
-                if($entry -like "29A") 
-                { 
-                    $count++
-                    continue 
-                }
-            
-                $read=$true
-                $i = 0
-                            
-                foreach($b in $entry)
-                {
-                    if($read)
+                    try
                     {
-                        if([int]$b -ne 0)
+                        $entry = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" -Name $pos 2>$null
+                    }
+                    catch
+                    {
+                        $entry = "29A"
+                    }
+
+                    if($entry -like "29A") 
+                    { 
+                        $count++
+                        continue 
+                    }
+            
+                    $read=$true
+                    $i = 0
+                            
+                    foreach($b in $entry)
+                    {
+                        if($read)
                         {
-                            $c = [char][int]$b
-                            $filename = $filename + "$c"
-                        }
-                        if([int]$b -eq 0) 
-                        { 
-                            $i = $i + 1 
-                        }
-                        else 
-                        { 
-                            $i = 0 
-                        }
-                        if($i -gt 1) 
-                        {
-                            $read = $false
+                            if([int]$b -ne 0)
+                            {
+                                $c = [char][int]$b
+                                $filename = $filename + "$c"
+                            }
+                            if([int]$b -eq 0) 
+                            { 
+                                $i = $i + 1 
+                            }
+                            else 
+                            { 
+                                $i = 0 
+                            }
+                            if($i -gt 1) 
+                            {
+                                $read = $false
+                            }
                         }
                     }
+                    echo "$n : $filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
+                
+                    $n++    
+                
                 }
-                echo "$n : $filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
-                
-                $n++    
-                
+                $filename = ""
+                $entry = ""
+                $count++
             }
-            $filename = ""
-            $entry = ""
-            $count++
         }
     }
 }
 
-    # COMDLG32 :: OpenSavePidlMRU - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSaveMRU - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU | TODO: Collect without external tool
-    Write-Host "`t[+] Collecting OpenSavePidlMRU" -ForegroundColor Green
-    try
-    {
-        & $OPEN_SAVED_FILES_VIEW /shtml "$Global:Destiny\$HOSTNAME\MRUs\OpenSavePidlMRU.html"
-    }
-    catch
-    {
-        Report-Error -evidence "COMDLG32 :: OpenSavePidlMRU"
-    }
-
-    # Userassist - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist
-    Write-Host "`t[+] Collecting User Assist ..." -ForegroundColor Green
-    try
-    {
-        & "$SCRIPTPATH\bin\userassistview\UserAssistView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\User_Assist.html"
-    }
-    catch
-    {
-        Report-Error -evidence "User Assist"
-    }
-
-    # COMDLG32 :: CIDSizeMRU - NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU
+<########### CID Size MRU ##########################> # N/A - Used with MRUs*
+Function Collect-CIDSizeMRU {
+ 
     foreach($SID in $SIDS) # Instead of using current user, it iterates through the connected users to the system.
     {
         if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that are users, removes the system, network and classes
@@ -1366,13 +1391,15 @@ Function Collect-MRUs {
             
             Write-Host "`t[+] CIDSizeMRU from $NAME" -ForegroundColor Green
 
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo "INFO: Tracks applications used to access documents. Supplies application name and extension." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo "More Info(page.10): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
+            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+            echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+            echo "INFO: Tracks applications used to access documents using Dialog Box because this record is reponsible for the size of the Dialog Box." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+            echo "More Info(page.10): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+            echo "More Info: http://windowsir.blogspot.com/2013/07/howto-determine-program-execution.html" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
 
+            # TODO: Order the extraction of the data using the MRUListEx like it's implemented in "Collect-RecentDocs2"
             $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU\" -Name MRUListEx
             $i=0
             foreach($b in $cnt){$i++} # gets the number of entries
@@ -1410,7 +1437,7 @@ Function Collect-MRUs {
                             }
                         }
                     }
-                    echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
+                    echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
                     $filename = ""
                 } 
                 catch 
@@ -1421,7 +1448,53 @@ Function Collect-MRUs {
         }
     }
 
-    # COMDLG32 :: LastVisitedPidlMRU - NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU
+}
+
+<########### USER ASSIST ###########################> # N/A - Used with MRUs*
+Function Collect-OpenSavePidlMRU {
+    
+    Write-Host "`t[+] Collecting OpenSavePidlMRU" -ForegroundColor Green
+    try
+    {
+        & $OPEN_SAVED_FILES_VIEW /shtml "$Global:Destiny\$HOSTNAME\MRUs\OpenSavePidlMRU.html"
+    }
+    catch
+    {
+        Report-Error -evidence "COMDLG32 :: OpenSavePidlMRU"
+    }
+}
+
+<########### USER ASSIST ###########################> # N/A - Used with MRUs*
+Function Collect-UserAssist {
+    
+    Write-Host "`t[+] Collecting User Assist ..." -ForegroundColor Green
+    try
+    {
+        & "$SCRIPTPATH\bin\userassistview\UserAssistView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\User_Assist.html"
+    }
+    catch
+    {
+        Report-Error -evidence "User Assist"
+    }
+}
+
+<########### SHELLBAGS #############################> # N/A - Used with MRUs*
+Function Collect-ShellBags {
+    
+    Write-Host "`t[+] Collecting ShellBags ..." -ForegroundColor Green
+    try
+    {
+        & "$SCRIPTPATH\bin\shellbagsview\ShellBagsView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\ShellBags.html"
+    }
+    catch
+    {
+        Report-Error -evidence "ShellBags"
+    }
+}
+
+<########### Last Visited Pidl MRU #################> # N/A - Used with MRUs*
+Function Collect-COMDLG32-LastVisitedPidlMRU {
+    
     foreach($SID in $SIDS) # Instead of using current user, it iterates through the connected users to the system.
     {
         if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that are users, removes the system, network and classes
@@ -1433,13 +1506,15 @@ Function Collect-MRUs {
 
             Write-Host "`t[+] LastVisitedPidlMRU from $NAME" -ForegroundColor Green
 
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo "INFO: Tracks applications usedto access documents." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo "More Info(page.10): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
+            echo " "                                                                                                                 >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
+            echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU"                    >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
+            echo "INFO: Tracks applications used to access documents. This is that have opened the Commom Dialog Box of windows."    >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
+            echo " "                                                                                                                 >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
+            echo "More Info(page.10): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf"               >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
+            echo "http://windowsir.blogspot.com/2013/07/howto-determine-user-access-to-files.html"                                   >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
+            echo " "                                                                                                                 >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
 
+            # TODO: Order the extraction of the data using the MRUListEx like it's implemented in "Collect-RecentDocs2"
             $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU\" -Name MRUListEx
             $i=0
             foreach($b in $cnt){$i++} # gets the number of entries
@@ -1478,7 +1553,7 @@ Function Collect-MRUs {
                             }
                         }
                     }
-                    echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\APPs_ToAccessDocs.txt"
+                    echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
                     $filename = ""
                 } 
                 catch 
@@ -1490,7 +1565,10 @@ Function Collect-MRUs {
         }
     }
 
-    # RUN MRU
+}
+
+<########### RUN DialogBOX MRU #####################> # N/A - Used with MRUs*
+Function Collect-RunDialogBoxMRU {
     foreach($SID in $SIDS) # Instead of using current user, it iterates through the connected users to the system.
     {
 
@@ -1505,12 +1583,12 @@ Function Collect-MRUs {
             # RUN MRU
             Write-Host "`t[+] RunMRU from $NAME" -ForegroundColor Green
 
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
-            echo "INFO: Lists the most recent commands entered in the Windows Runbox." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
-            echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
+            echo " "                                                                                                    > "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
+            echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU"                           >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
+            echo "INFO: Lists the most recent commands entered in the Windows Run Dialog Box."                         >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
+            echo " "                                                                                                   >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
             echo "More Info(page.20): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
+            echo " "                                                                                                   >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
 
             try 
             {
@@ -1537,15 +1615,9 @@ Function Collect-MRUs {
     
         }
     }
-
-    # SHIMCACHE
-    Collect-Shimcache
-
-    # RECENT APPS
-    Collect-RecentApps
 }
 
-<########### S H I M C A C H E #####################> # SHI - Used with MRUs
+<########### S H I M C A C H E #####################> # SHI - Used with MRUs*
 Function Collect-Shimcache {
     #  [System.Text.Encoding]::Default.GetString((Get-ItemPropertyValue "REGISTRY::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\AppCompatCache" -Name AppCompatCache))
 
@@ -1830,7 +1902,7 @@ Function Collect-Shimcache {
 
 }
 
-<########### R E C E N T   A P P S #################> # RAP - Used with MRUs
+<########### R E C E N T   A P P S #################> # RAP - Used with MRUs*
 Function Collect-RecentApps {
 
     if($OS -eq "10")
@@ -1851,41 +1923,41 @@ Function Collect-RecentApps {
 
                     foreach($R in $RA_SID)
                     {
-                    echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    echo "SID: $R" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    $tempAppId = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name AppId
-                    echo "AppID: $tempAppId"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    $tempLaunchCount = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name LaunchCount
-                    echo "LaunchCount: $tempLaunchCount"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    $tempAppPath = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name AppPath
-                    echo "AppPath: $tempAppPath"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    $tempDateDec = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R"-Name LastAccessedTime
-                    $tempDate = [datetime]::FromFileTime($tempDateDec)
-                    echo "Date: $tempDate" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                        echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                        echo "---------------------------------------------------" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                        echo "SID: $R" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                        $tempAppId = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name AppId
+                        echo "AppID: $tempAppId"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                        $tempLaunchCount = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name LaunchCount
+                        echo "LaunchCount: $tempLaunchCount"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                        $tempAppPath = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R" -Name AppPath
+                        echo "AppPath: $tempAppPath"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                        $tempDateDec = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R"-Name LastAccessedTime
+                        $tempDate = [datetime]::FromFileTime($tempDateDec)
+                        echo "Date: $tempDate" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
             
-                    echo "--- Associated Files:" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                        echo "--- Associated Files:" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
             
-                    if(Test-Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems")
-                    {
-                        $FILE_SID = Get-ChildItem "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\" | Select-Object -ExpandProperty Name | foreach { $_.split("\")[10] }
-
-                        foreach($F in $FILE_SID)
+                        if(Test-Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems")
                         {
-                            $tempName = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name DisplayName
-                            echo "`tName: $tempName"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                            $tempPath = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name Path
-                            echo "`tPath: $tempPath"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                            $tempDateDec = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name LastAccessedTime
-                            $tempDate = [datetime]::FromFileTime($tempDateDec)
-                            echo "`tDate: $tempDate" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                            $FILE_SID = Get-ChildItem "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\" | Select-Object -ExpandProperty Name | foreach { $_.split("\")[10] }
+
+                            foreach($F in $FILE_SID)
+                            {
+                                $tempName = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name DisplayName
+                                echo "`tName: $tempName"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                                $tempPath = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name Path
+                                echo "`tPath: $tempPath"  >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                                $tempDateDec = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\$R\RecentItems\$F" -Name LastAccessedTime
+                                $tempDate = [datetime]::FromFileTime($tempDateDec)
+                                echo "`tDate: $tempDate" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
+                            }
+                        }
+                        else
+                        {
+                            echo "`tThis app doesn't have recent open files associated." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
                         }
                     }
-                    else
-                    {
-                        echo "`tThis app doesn't have recent open files associated." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentApps.txt"
-                    }
-                }
                 }
                 else
                 {
@@ -1895,7 +1967,6 @@ Function Collect-RecentApps {
         }
     }
 }
-
 
 
 <########### B A M #################################> # BAM
@@ -1946,35 +2017,6 @@ Function Collect-BAM {
 
 }
 
-<########### T I M E L I N E   H I S T O R Y #######> # TLH 
-Function Collect-Timeline {
-
-    Write-Host "[+] Collecting Timeline History ..." -ForegroundColor Green
-
-    if($OS -eq "10")
-    {
-        foreach($u in $USERS)
-        {
-            if(Test-Path "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform")
-            {       
-                Get-Item  "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\*" | ForEach-Object {
-                 
-                    if(Test-Path -Path $_.FullName -PathType Container) # if it's a folder
-                    {
-                        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null }
-
-                        cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\$($_.Name)\*.*" "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null
-                    }
-                }
-            }
-            else
-            {
-                Write-Host "[-] Time Line not activated for user $u" -ForegroundColor Yellow
-            }
-        }
-    }
-}
-
 <########### S Y S T E M   I N F O #################> # SYS
 Function Collect-System-Info {    
     
@@ -2006,29 +2048,6 @@ Function Collect-System-Info {
         Report-Error -evidence "Environment Variables"
     }
 }
-
-
-
-
-<# TODO #> <########### L O C A L   S E S S I O N S #######################> # LSE 
-Function Collect-Local-Sessions {
-    
-    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\System_Info" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\System_Info" > $null }
-
-    Write-Host "[+] Collecting Local Sessions ..." -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-    
-    # query user
-}
-
-<# TODO #> <########### U S E R   A N D   P A S S W O R D   H A S H E S ###> # PWD 
-Function Collect-Passwords {
-    
-    Write-Host "[+] Collecting Passwords" -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-
-}
-
 
 
 <##################################################################################################################################>
@@ -2091,146 +2110,6 @@ Function Collect-Autorun-Files {
 <##################################################################################################################################>
 <############  LIVE OR OFFLINE SYSTEM  /  NO VOLATILE #############################################################################>
 <##################################################################################################################################>
-
-<########### J U M P   L I S T S ###################> # JLI
-Function Collect-JumpLists {
-
-    if($OS -eq "10" -or $OS -like "8" -or $OS -eq "7")
-    {
-        Write-Host "`t[+] Collecting Jump Lists ..." -ForegroundColor Green
-        
-        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\JumpList.dll")) > $null
-        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\OleCf.dll")) > $null
-        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\Lnk.dll")) > $null
-        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\ExtensionBlocks.dll")) > $null
-        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\GuidMapping.dll")) > $null
-
-        foreach($u in $USERS)
-        {
-            # Automatic Destinations
-            if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations")
-            {
-                # Copies Automatic Destinations
-                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations" > $null }    
-            
-                try
-                {
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\*.*" "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations" > $null
-                }
-                catch
-                {
-                    Report-Error -evidence "Jump Lists - AutomaticDestinations from user $u"
-                }
-
-                # Treating Automatic Destinations
-                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u" > $null }    
-
-                echo "File Name, Full Path, Last Modified, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Entry ID, Pos. MRU, Appication ID, Application Name, Mac Address, File Extension, Computer Name, Network Share Name, Drive Type, Volume Label, Volume SN, Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Auto.csv"
-
-                Get-ChildItem "C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations" | ForEach-Object {
-    
-                    try
-                    {
-                        $list = [JumpList.JumpList]::LoadAutoJumplist("C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\$_")
-
-                        $JLFilename = $($list.SourceFile)
-                        $AppID = $($list.AppId.AppId)
-    
-                        $AppName = $($list.AppId.Description)
-    
-                        foreach($bla in $list.DestListEntries)
-                        {
-                            $EntryID = $($bla.EntryNumber)
-                            $PosMRU = $($bla.MRUPosition)
-
-                            $FullPath = $($bla.Path).Replace(","," ")
-                            $FileName = $($FullPath).Split("\")[-1]
-                            $Extension = $($FileName).Split(".")[-1]
-                            if($Extension.length -gt 3) { $Extension = "" }
-                            
-                            $LastModified = $($bla.LastModified)
-                            $ComputerName = $($bla.Hostname)
-                            $MacAddress = $($bla.MacAddress)
-
-                            $FileAttributes = $($bla.Lnk.Header.FileAttributes).ToString().Replace(","," ")
-                            $FileSize = $($bla.Lnk.Header.FileSize)
-                            $CreationDate = $($bla.Lnk.Header.TargetCreationDate)
-                            $AccessedDate = $($bla.Lnk.Header.TargetLastAccessedDate)
-                            $ModificationDate = $($bla.Lnk.Header.TargetModificationDate)
-                            $NetworkShareName = $($bla.Lnk.NetworkShareInfo.NetworkShareName)
-            
-                            $DriveType = $($bla.Lnk.VolumeInfo.DriveType)
-                            $VolumeLabel = $($bla.Lnk.VolumeInfo.VolumeLabel)
-                            $VolumeSerialNumber = $($bla.Lnk.VolumeInfo.VolumeSerialNumber)
-
-                            echo "$FileName, $FullPath, $LastModified, $CreationDate, $AccessedDate, $ModificationDate, $FileAttributes, $FileSize, $EntryID, $PosMRU, $AppID, $AppName, $MacAddress, $Extension, $ComputerName, $NetworkShareName, $DriveType, $VolumeLabel, $VolumeSerialNumber, $JLFilename " >> "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Auto.csv"
-                        }
-                    }
-                    catch
-                    {
-                        Report-Error -evidence "Jump Lists - Treating Automatic Destinations from user $u"
-                    }
-                }
-            }
-
-            # Custom Destinations
-            if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations")
-            {
-                # Copies Custom Destinations
-                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations" > $null }    
-
-                try
-                {
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations\*.*" "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations" > $null
-                }
-                catch
-                {
-                    Report-Error -evidence "Jump Lists - CustomDestinations from user $u"
-                }
-
-                # Treating Custom Destinations
-                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u" > $null }
-                
-                echo "App ID, App Name, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Network Share Name, Drive Type, Volume Label, Volume SN , Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Custom.csv"
-
-                Get-ChildItem "C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations" | ForEach-Object {
-
-                    try
-                    {
-                        $list = [JumpList.JumpList]::LoadCustomJumplist("C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations\$_")
-
-                        $SourceFilename = $($list)
-                        $AppID = $($list.AppId.AppId)
-                        $AppName = $($list.AppId.Description)
-
-                        foreach($entry in $list.Entries)
-                        {
-                            foreach($bla in $entry.LnkFiles)
-                            {
-                                $FileAttributes = $($bla.Header.FileAttributes).ToString().Replace(","," ")
-                                $FileSize = $($bla.Header.FileSize)
-                                $CreationDate = $($bla.Header.TargetCreationDate)
-                                $AccessedDate = $($bla.Header.TargetLastAccessedDate)
-                                $ModificationDate = $($bla.Header.TargetModificationDate)
-                                $NetworkShareName = $($bla.NetworkShareInfo.NetworkShareName)
-                                $DriveType = $($bla.VolumeInfo.DriveType)
-                                $VolumeLabel = $($bla.VolumeInfo.VolumeLabel)
-                                $VolumeSerialNumber = $($bla.VolumeInfo.VolumeSerialNumber)
-                            
-                                echo "$AppID, $AppName, $CreationDate, $AccessedDate, $ModificationDate, $FileAttributes, $FileSize, $NetworkShareName, $DriveType, $VolumeLabel, $VolumeSerialNumber, $JLFilename " >> "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Custom.csv"
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        # 3 errors are always catched because of 3 Custom Destination Lists
-                        # Report-Error -evidence "Jump Lists - Treating Custom Destinations from user $u - [Normal to happen]"
-                    }
-                }
-            }
-        }
-    }
-}
 
 <########### H I V E S ###########################################################> # HIV
 Function Collect-Hives {
@@ -2441,6 +2320,146 @@ Function Collect-ETW-ETL {
     }
 }
 
+<########### J U M P   L I S T S ###################> # JLI
+Function Collect-JumpLists {
+
+    if($OS -eq "10" -or $OS -like "8" -or $OS -eq "7")
+    {
+        Write-Host "`t[+] Collecting Jump Lists ..." -ForegroundColor Green
+        
+        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\JumpList.dll")) > $null
+        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\OleCf.dll")) > $null
+        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\Lnk.dll")) > $null
+        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\ExtensionBlocks.dll")) > $null
+        [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\GuidMapping.dll")) > $null
+
+        foreach($u in $USERS)
+        {
+            # Automatic Destinations
+            if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations")
+            {
+                # Copies Automatic Destinations
+                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations" > $null }    
+            
+                try
+                {
+                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\*.*" "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations" > $null
+                }
+                catch
+                {
+                    Report-Error -evidence "Jump Lists - AutomaticDestinations from user $u"
+                }
+
+                # Treating Automatic Destinations
+                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u" > $null }    
+
+                echo "File Name, Full Path, Last Modified, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Entry ID, Pos. MRU, Appication ID, Application Name, Mac Address, File Extension, Computer Name, Network Share Name, Drive Type, Volume Label, Volume SN, Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Auto.csv"
+
+                Get-ChildItem "C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations" | ForEach-Object {
+    
+                    try
+                    {
+                        $list = [JumpList.JumpList]::LoadAutoJumplist("C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations\$_")
+
+                        $JLFilename = $($list.SourceFile)
+                        $AppID = $($list.AppId.AppId)
+    
+                        $AppName = $($list.AppId.Description)
+    
+                        foreach($bla in $list.DestListEntries)
+                        {
+                            $EntryID = $($bla.EntryNumber)
+                            $PosMRU = $($bla.MRUPosition)
+
+                            $FullPath = $($bla.Path).Replace(","," ")
+                            $FileName = $($FullPath).Split("\")[-1]
+                            $Extension = $($FileName).Split(".")[-1]
+                            if($Extension.length -gt 3) { $Extension = "" }
+                            
+                            $LastModified = $($bla.LastModified)
+                            $ComputerName = $($bla.Hostname)
+                            $MacAddress = $($bla.MacAddress)
+
+                            $FileAttributes = $($bla.Lnk.Header.FileAttributes).ToString().Replace(","," ")
+                            $FileSize = $($bla.Lnk.Header.FileSize)
+                            $CreationDate = $($bla.Lnk.Header.TargetCreationDate)
+                            $AccessedDate = $($bla.Lnk.Header.TargetLastAccessedDate)
+                            $ModificationDate = $($bla.Lnk.Header.TargetModificationDate)
+                            $NetworkShareName = $($bla.Lnk.NetworkShareInfo.NetworkShareName)
+            
+                            $DriveType = $($bla.Lnk.VolumeInfo.DriveType)
+                            $VolumeLabel = $($bla.Lnk.VolumeInfo.VolumeLabel)
+                            $VolumeSerialNumber = $($bla.Lnk.VolumeInfo.VolumeSerialNumber)
+
+                            echo "$FileName, $FullPath, $LastModified, $CreationDate, $AccessedDate, $ModificationDate, $FileAttributes, $FileSize, $EntryID, $PosMRU, $AppID, $AppName, $MacAddress, $Extension, $ComputerName, $NetworkShareName, $DriveType, $VolumeLabel, $VolumeSerialNumber, $JLFilename " >> "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Auto.csv"
+                        }
+                    }
+                    catch
+                    {
+                        Report-Error -evidence "Jump Lists - Treating Automatic Destinations from user $u"
+                    }
+                }
+            }
+
+            # Custom Destinations
+            if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations")
+            {
+                # Copies Custom Destinations
+                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations" > $null }    
+
+                try
+                {
+                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations\*.*" "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations" > $null
+                }
+                catch
+                {
+                    Report-Error -evidence "Jump Lists - CustomDestinations from user $u"
+                }
+
+                # Treating Custom Destinations
+                if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u" > $null }
+                
+                echo "App ID, App Name, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Network Share Name, Drive Type, Volume Label, Volume SN , Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Custom.csv"
+
+                Get-ChildItem "C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations" | ForEach-Object {
+
+                    try
+                    {
+                        $list = [JumpList.JumpList]::LoadCustomJumplist("C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations\$_")
+
+                        $SourceFilename = $($list)
+                        $AppID = $($list.AppId.AppId)
+                        $AppName = $($list.AppId.Description)
+
+                        foreach($entry in $list.Entries)
+                        {
+                            foreach($bla in $entry.LnkFiles)
+                            {
+                                $FileAttributes = $($bla.Header.FileAttributes).ToString().Replace(","," ")
+                                $FileSize = $($bla.Header.FileSize)
+                                $CreationDate = $($bla.Header.TargetCreationDate)
+                                $AccessedDate = $($bla.Header.TargetLastAccessedDate)
+                                $ModificationDate = $($bla.Header.TargetModificationDate)
+                                $NetworkShareName = $($bla.NetworkShareInfo.NetworkShareName)
+                                $DriveType = $($bla.VolumeInfo.DriveType)
+                                $VolumeLabel = $($bla.VolumeInfo.VolumeLabel)
+                                $VolumeSerialNumber = $($bla.VolumeInfo.VolumeSerialNumber)
+                            
+                                echo "$AppID, $AppName, $CreationDate, $AccessedDate, $ModificationDate, $FileAttributes, $FileSize, $NetworkShareName, $DriveType, $VolumeLabel, $VolumeSerialNumber, $JLFilename " >> "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Custom.csv"
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        # 3 errors are always catched because of 3 Custom Destination Lists
+                        # Report-Error -evidence "Jump Lists - Treating Custom Destinations from user $u - [Normal to happen]"
+                    }
+                }
+            }
+        }
+    }
+}
+
 <########### T H U M C A C H E ###################################################> # THC
 Function Collect-Thumcache {
     
@@ -2483,7 +2502,7 @@ Function Collect-Iconcache {
     }
 }
 
-<########### M F T   A N D   U S R J R N L #######################################> # MUL
+<########### M F T   A N D   U S N J R N L #######################################> # MUL
 Function Collect-MFT-UsnJrnl-LogFile {
     
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\ROOT_FILES\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\ROOT_FILES\" > $null }
@@ -2596,6 +2615,35 @@ Function Collect-Dangerous-Extensions {
         }
     }
 
+}
+
+<########### T I M E L I N E   H I S T O R Y #######> # TLH 
+Function Collect-Timeline {
+
+    Write-Host "[+] Collecting Timeline History ..." -ForegroundColor Green
+
+    if($OS -eq "10")
+    {
+        foreach($u in $USERS)
+        {
+            if(Test-Path "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform")
+            {       
+                Get-Item  "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\*" | ForEach-Object {
+                 
+                    if(Test-Path -Path $_.FullName -PathType Container) # if it's a folder
+                    {
+                        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null }
+
+                        cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\$($_.Name)\*.*" "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null
+                    }
+                }
+            }
+            else
+            {
+                Write-Host "[-] Time Line not activated for user $u" -ForegroundColor Yellow
+            }
+        }
+    }
 }
 
 <########### T E X T   H A R V E S T E R #########################################> # THA
@@ -3289,8 +3337,6 @@ Function Collect-Cloud-Dropbox-Logs {
 <############  MANAGE GRAPHIC AND NON GRAPHIC EXECUTION  #############################>
 <##################################################################################################################################>
 
-
-
 <# MANAGE NO GUI EXECUTION #>
 Function Control-NOGUI{
 
@@ -3737,6 +3783,26 @@ Function Collect-Browsers-Passwords {
 
 
 }
+
+<# TODO #> <########### L O C A L   S E S S I O N S #######################> # LSE 
+Function Collect-Local-Sessions {
+    
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\System_Info" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\System_Info" > $null }
+
+    Write-Host "[+] Collecting Local Sessions ..." -ForegroundColor Green
+    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
+    
+    # query user
+}
+
+<# TODO #> <########### U S E R   A N D   P A S S W O R D   H A S H E S ###> # PWD 
+Function Collect-Passwords {
+    
+    Write-Host "[+] Collecting Passwords" -ForegroundColor Green
+    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
+
+}
+
 
 <# TODO: Adjust info collection to the below map
     Windows Versions MAP:
