@@ -1969,7 +1969,7 @@ Function Collect-RecentApps {
 }
 
 
-<########### B A M #################################> # BAM
+<########### B A M #################################> # BAM*
 Function Collect-BAM {
     
     # BAM - BACKGROUND ACTIVITY MODERATOR
@@ -1980,7 +1980,7 @@ Function Collect-BAM {
     {
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\BAM") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\BAM" > $null }    
-        echo "User,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
+        echo "UserSID,Username,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
 
         $SIDs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\*"  | foreach { 
             $_.Name.split("\")[-1] 
@@ -1988,24 +1988,23 @@ Function Collect-BAM {
 
         foreach($SID in $SIDs)
         {
+            $USERNAME = Get-SIDUsername -sid $SID
+            
             $APPs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\$SID\" | foreach{ 
                 $_.Property 
             }
-
+            
             foreach($APP in $APPs)
             {
                 if((-not ($avoidlist -contains $APP))) # if not in the blacklist
                 {
-                    <# TODO: Create a function that indexes the name of the User to the SID and use for example here to print username instead of SID
-                        KEY: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\ #>
-                     
                     $RawDate = Get-ItemPropertyValue "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\$SID\" -Name $APP
                     $DateTimeOffset = [System.DateTimeOffset]::FromFileTime([System.BitConverter]::ToInt64($RawDate,0))
                     $LastExecutedDateUTC = $($DateTimeOffset.UtcDateTime)
 
                     $LastExecutedDateLocal = [datetime]::FromFileTime([System.BitConverter]::ToInt64($RawDate,0))
-                    
-                    echo "$SID,$APP,$LastExecutedDateUTC,$LastExecutedDateLocal" >> "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
+
+                    echo "$SID,$USERNAME,$APP,$LastExecutedDateUTC,$LastExecutedDateLocal" >> "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
                 }
             }
         }
@@ -2017,7 +2016,7 @@ Function Collect-BAM {
 
 }
 
-<########### S Y S T E M   I N F O #################> # SYS
+<########### S Y S T E M   I N F O #################> # SYS*
 Function Collect-System-Info {    
     
     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\System_Info\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\System_Info\ > $null }
@@ -2025,10 +2024,10 @@ Function Collect-System-Info {
     Write-Host "[+] Collecting Computer Info..." -ForegroundColor Green
     try
     {
-        cmd.exe /c systeminfo > "$Global:Destiny\$HOSTNAME\System_Info\System_Info.txt"
-        Get-CimInstance Win32_OperatingSystem | Select-Object * >> "$Global:Destiny\$HOSTNAME\System_Info\Operating_System_Info.txt"
-        Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object * >> "$Global:Destiny\$HOSTNAME\System_Info\Computer_System_Info.txt"
-        Get-HotFix | Select-Object HotFixID, Description, InstalledBy, InstalledOn >> "$Global:Destiny\$HOSTNAME\System_Info\Hot_Fixes_Info.txt"
+        cmd.exe /c systeminfo                                                          > "$Global:Destiny\$HOSTNAME\System_Info\System_Info.txt"
+        Get-CimInstance Win32_OperatingSystem | Select-Object *                        > "$Global:Destiny\$HOSTNAME\System_Info\Operating_System_Info.txt"
+        Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object *              > "$Global:Destiny\$HOSTNAME\System_Info\Computer_System_Info.txt"
+        Get-HotFix | Select-Object HotFixID, Description, InstalledBy, InstalledOn     > "$Global:Destiny\$HOSTNAME\System_Info\Hot_Fixes_Info.txt"
     } 
     catch 
     {
@@ -2036,12 +2035,18 @@ Function Collect-System-Info {
     }
 
     # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables?view=powershell-6
-    Write-Host "[+] Collecting Environment Variables ..." -ForegroundColor Green
+    Write-Host "`t[+] Environment Variables ..." -ForegroundColor Green
     try
     {
-        cmd.exe /c path > "$Global:Destiny\$HOSTNAME\System_Info\9.Environment_Variables.txt"
-        Get-Item Env:
-        Get-ChildItem Env:
+        echo ""                                    > "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
+        echo "Environment Valiables: "            >> "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
+        Get-ChildItem Env:                        >> "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
+        echo ""                                   >> "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
+        echo "Path: "                             >> "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
+        (Get-Item Env:\Path).Value                >> "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
+        echo ""                                   >> "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
+        echo "PowerShell Module Path: "           >> "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
+        (Get-Item Env:\PSModulePath).Value        >> "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
     }
     catch
     {
@@ -3358,7 +3363,7 @@ Function Control-NOGUI{
 
     if ($All -or $Global:MRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MRUs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
     if ($All -or $Global:SHI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shimcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if ($All -or $Global:JLI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-JumpLists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
+    
     if ($All -or $Global:BAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-BAM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                              # ??:??
     
     if ($All -or $Global:TLH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Timeline ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
@@ -3369,10 +3374,6 @@ Function Control-NOGUI{
     if ($All -or $Global:LAC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Last-Activity ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
     if (         $Global:AFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Autorun-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 05:40
 
-    if ($All -or $Global:LSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Local-Sessions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # ??:??
-    if ($All -or $Global:PWD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Passwords ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-
-
     # OFFLINE
     if ($All -or $Global:HIV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Hives ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                            # ??:??
     if ($All -or $Global:EVT ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-EVTX-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
@@ -3380,6 +3381,7 @@ Function Control-NOGUI{
     if ($All -or $Global:PRF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Prefetch ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
     if ($All -or $Global:WSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Windows-Search ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # ??:??
     if ($All -or $Global:EET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-ETW-ETL ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # ??:??
+    if ($All -or $Global:JLI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-JumpLists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
     if ($All -or $Global:THC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Thumcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
     if ($All -or $Global:ICO ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Iconcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
     if ($All -or $Global:MUL ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MFT-UsnJrnl-LogFile ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
@@ -3472,6 +3474,24 @@ Function Control-GUI {
 <############  SEVERAL OTHER FUNCTIONS  ##############################################>
 <##################################################################################################################################>
 
+<# Given a SID it returns a username #>
+Function Get-SIDUsername {
+    
+    param(
+        [string]$sid        
+    )
+    try
+    {
+        $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath" 2>$null
+        $NAME = $($N.Split("\")[2])
+        return $NAME
+    }
+    catch # In case the user was deleted from the system
+    {
+        return "<User Not Present>"
+    }
+}
+
 <# HANDLES THE ERRORS REPORT AND OUTPUT #>
 Function Report-Error {
 
@@ -3526,7 +3546,7 @@ Function Show-Simple-Options-Resume {
     Write-Host "                                              "
     Write-Host "        Collect:                              "
     Write-Host " "
-    if ($Global:RAM ) {Write-Host "            • RAM"}
+    if ($Global:RAM ) {Write-Host "            • RAM - Random Access Memory"}
     if ($Global:SFI ) {Write-Host "            • SFI"}
     if ($Global:AFI ) {Write-Host "            • AFI"}
     if ($Global:DEX ) {Write-Host "            • DEX"}
@@ -3547,11 +3567,11 @@ Function Show-Simple-Options-Resume {
         if ($Global:MRU ) {Write-Host "            • MRU"}
         if ($Global:SHI ) {Write-Host "            • SHI"}
         if ($Global:JLI ) {Write-Host "            • JLI"}
-        if ($Global:BAM ) {Write-Host "            • BAM"}
+        if ($Global:BAM ) {Write-Host "            • BAM - BACKGROUND ACTIVITY MODERATOR"}
     
         if ($Global:TLH ) {Write-Host "            • TLH"}
         if ($Global:RAP ) {Write-Host "            • RAP"}
-        if ($Global:SYS ) {Write-Host "            • SYS"}
+        if ($Global:SYS ) {Write-Host "            • SYS - System Information"}
 
         if ($Global:LAC ) {Write-Host "            • LAC"}
 
