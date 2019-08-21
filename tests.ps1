@@ -39,7 +39,20 @@ Function Report-Error {
 
 ###################################################################
 
+Function Get-SIDUsername {
+    
+    param(
+        [string]$sid        
+    )
 
+    $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"
+    $NAME = $($N.Split("\")[2])
+    return $NAME
+}
+
+
+
+<#
 foreach($SID in $SIDS){
 
     if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that users removes the system and network and classes
@@ -116,7 +129,7 @@ foreach($SID in $SIDS){
     }
 }
 
-
+#>
 
 
 <#

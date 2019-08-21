@@ -2054,31 +2054,7 @@ Function Collect-System-Info {
     }
 }
 
-
-<##################################################################################################################################>
-<############  THIRD PARTY SOFTWARE   /   LIVE SYSTEM #############################################################################>
-<##################################################################################################################################>
-
-<########### S I G N E D   F I L E S ######################> # SFI <# TIME CONSUMING - Not by Default#>
-Function Collect-Sign-Files {
-    
-    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Signed_Files\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Signed_Files\" > $null }
-
-    Write-Host "[+] Collecting Info About Signed Files " -ForegroundColor Green
-    try{
-        
-        & $SIG_EXE /accepteula -vt -h -c -e $Global:Source\Windows\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
-        & $SIG_EXE /accepteula -vt -h -c -e $Global:Source\Windows\system32\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
-        <# & $SIG_EXE /accepteula -ct -h -vn -vt c:\Windows > "$Global:Destiny\$HOSTNAME\FILES\Signed_Windows_Files.txt" #>
-        <# & $SIG_EXE /accepteula -ct -h -vn -vt c:\Windows\System32 > "$Global:Destiny\$HOSTNAME\FILES\Signed_Windows_System32_Files.txt" #>
-        <# sigcheck /accepteula -s -h -e -q -c C:\ > outfilename.csv #> <# Signs all the files in the entire system - it takes a lot of time
-        and if there is a onedrive installed, it will download files that are not physically in the disk#>
-    } catch {
-        Report-Error -evidence "Info About Signed Files"
-    }
-}
-
-<########### L A S T   A C T I V I T Y ####################> # LAC
+<########### L A S T   A C T I V I T Y #############> # LAC*
 Function Collect-Last-Activity {
     
     if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Last_Activity\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Last_Activity\" > $null }
@@ -2094,7 +2070,7 @@ Function Collect-Last-Activity {
     }
 }
 
-<########### A L L   A U T O R U N   F I L E S ############> # AFI
+<########### A L L   A U T O R U N   F I L E S #####> # AFI*
 Function Collect-Autorun-Files {
     
     if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Autorun_Files\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Autorun_Files\" > $null }
@@ -2111,12 +2087,13 @@ Function Collect-Autorun-Files {
 }
 
 
-
 <##################################################################################################################################>
 <############  LIVE OR OFFLINE SYSTEM  /  NO VOLATILE #############################################################################>
 <##################################################################################################################################>
 
-<########### H I V E S ###########################################################> # HIV
+
+
+<########### H I V E S ###########################################################> # HIV*
 Function Collect-Hives {
 
     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\HIVES ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\HIVES > $null }
@@ -2199,10 +2176,10 @@ Function Collect-Hives {
     }
 }
 
-<########### E V T X   F I L E S #################################################> # EVT
-# TODO: parse "Microsoft-Windows-TaskScheduler/Operational" in search for events 106, 140, 141 - More info: https://attack.mitre.org/techniques/T1053/
+<########### E V T X   F I L E S #################################################> # EVT*
 Function Collect-EVTX-Files {
-
+# TODO: parse important suspicious event numbers
+# TODO: parse "Microsoft-Windows-TaskScheduler/Operational" in search for events 106, 140, 141 - More info: https://attack.mitre.org/techniques/T1053/
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\EVTX" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\EVTX" > $null }
 
     Write-Host "[+] Collecting EVTX Files ..." -ForegroundColor Green
@@ -2211,11 +2188,9 @@ Function Collect-EVTX-Files {
         {
             $evtx_name_ext = ($_.FullName).Split("\")[5]
             try{
-                <# Write-Host "[+] ... EVTX File: $evtx_name_ext" #>
+                # Write-Host "[+] ... EVTX File: $evtx_name_ext"
                 $evtx_name = ((($_.FullName).Split("\")[5]).Split(".")[0]).Replace("%4","/")
                 & cmd.exe /c wevtutil epl $evtx_name $Global:Destiny\$HOSTNAME\EVTX\$evtx_name_ext
-                <# & cmd.exe /c psloglist -s $evtx_name "$Global:Destiny\$HOSTNAME\EVTX\"+(($evtx_name_ext).Split(".")[0])+".csv" #> <# Just works fot application, system and security #>
-                <# & $RAW_EXE $_.FullName $Global:Destiny\$HOSTNAME\EVTX\. > $null #> <# much slower #>
             } catch {
                 Report-Error -evidence "$evtx_name_ext"
             }
@@ -2232,7 +2207,7 @@ Function Collect-EVTX-Files {
     }
 }
 
-<########### F I L E S   L I S T S ###############################################> # FIL
+<########### F I L E S   L I S T S ###############################################> # FIL*
 Function Collect-Files-Lists {
 
     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\FILES ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\FILES > $null }
@@ -2248,8 +2223,9 @@ Function Collect-Files-Lists {
     }
 }
 
-<########### P R E F E T C H #####################################################> # PRF
+<########### P R E F E T C H #####################################################> # PRF*
 Function Collect-Prefetch {
+    # TODO: Use Nirsoft tool to parse the information
 
     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Prefetch ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Prefetch > $null }
 
@@ -2262,10 +2238,11 @@ Function Collect-Prefetch {
     }
 }
 
-<########### W I N D O W S   S E A R C H #########################################> # WSE
+<########### W I N D O W S   S E A R C H #########################################> # WSE*
 Function Collect-Windows-Search {
-    
-    if( Test-Path -Path "$Global:Source\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb")
+    # TODO: User ESEDatabaseView to export content to a CSV file for better analysis
+
+    if( Test-Path -Path "$Global:Source\ProgramData\Microsoft\Search\Data\Applications\Windows\Windows.edb") # TODO: if it does not find the file search in the registry for posible change: \HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Search\Databases
     {
         Write-Host "[+] Collecting Windows Search File windows.edb ... " -ForegroundColor Green
         try
@@ -2276,7 +2253,19 @@ Function Collect-Windows-Search {
         } 
         catch 
         {
-            Report-Error -evidence "Windows Search File windows.edb"
+            Report-Error -evidence "Collecting Windows Search File windows.edb"
+        }
+        
+        Write-Host "`t[+] Converting Windows Search File windows.edb to CSV file ... " -ForegroundColor Green
+        try
+        {
+            if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Windows_Search\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Windows_Search\ > $null }
+
+            & "$SCRIPTPATH\bin\esedatabaseview\ESEDatabaseView.exe" /table "$Global:Destiny\$HOSTNAME\Windows_Search\Windows.edb" * /scomma "$Global:Destiny\$HOSTNAME\Windows_Search\WindowsSearchDatabase_*.csv"
+        } 
+        catch 
+        {
+            Report-Error -evidence "Converting Windows Search File windows.edb"
         }
     }
     else
@@ -2285,9 +2274,9 @@ Function Collect-Windows-Search {
     }
 }
 
-<########### E T W   &   E T L ###################################################> # EET
+<########### E T W   &   E T L ###################################################> # EET*
 Function Collect-ETW-ETL {
-    <# maybe consider the following: C:\Windows\System32\WDI #>
+    <# TODO: maybe consider the following: C:\Windows\System32\WDI #>
     try
     {
         Write-Host "[+] Collecting ETL files ..." -ForegroundColor Green
@@ -2295,12 +2284,14 @@ Function Collect-ETW-ETL {
         if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\ETL\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\ETL\ > $null }
         
         & $RAW_EXE /FileNamePath:"$Global:Source\Windows\System32\WDI\LogFiles\BootCKCL.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:BootCKCL.etl > $null
+        
+        & copy "$Global:Source\Windows\System32\WDI\LogFiles\WdiContextLog.*" "$Global:Destiny\$HOSTNAME\ETL"
 
         & $RAW_EXE /FileNamePath:"$Global:Source\Windows\System32\WDI\LogFiles\ShutdownCKCL.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:ShutdownCKCL.etl > $null
         
-        & $RAW_EXE /FileNamePath:"$Global:Source\Windows\System32\LogFiles\WMI\LwtNetLog.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:LwtNetLog.etl > $null <# TODO: Can't Copy#>
+        & copy "$Global:Source\Windows\System32\LogFiles\WMI\LwtNetLog.etl" "$Global:Destiny\$HOSTNAME\ETL"
 
-        & $RAW_EXE /FileNamePath:"$Global:Source\Windows\System32\LogFiles\WMI\Wifi.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:Wifi.etl > $null <# TODO: Can't Copy#>
+        & copy "$Global:Source\Windows\System32\LogFiles\WMI\Wifi.etl" "$Global:Destiny\$HOSTNAME\ETL"
         
         & $RAW_EXE /FileNamePath:"$Global:Source\Windows\Panther\setup.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:setup.etl > $null
         
@@ -2325,12 +2316,12 @@ Function Collect-ETW-ETL {
     }
 }
 
-<########### J U M P   L I S T S ###################> # JLI
+<########### J U M P   L I S T S #################################################> # JLI
 Function Collect-JumpLists {
 
     if($OS -eq "10" -or $OS -like "8" -or $OS -eq "7")
     {
-        Write-Host "`t[+] Collecting Jump Lists ..." -ForegroundColor Green
+        Write-Host "[+] Collecting Jump Lists ..." -ForegroundColor Green
         
         [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\JumpList.dll")) > $null
         [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\OleCf.dll")) > $null
@@ -2338,11 +2329,13 @@ Function Collect-JumpLists {
         [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\ExtensionBlocks.dll")) > $null
         [System.Reflection.Assembly]::Load([System.IO.File]::ReadAllBytes("$SCRIPTPATH\dependencies\GuidMapping.dll")) > $null
 
-        foreach($u in $USERS)
+        foreach($u in $USERS) # TODO: Sometimes the user might have something more in the name in \Users\[user] - adjust it so it identifies the name part of the folder and not as the obsolute name of the folder.
         {
             # Automatic Destinations
             if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations")
             {
+                Write-Host "`t[+] Collecting Automatic Jump Lists for user $u ..." -ForegroundColor Green
+
                 # Copies Automatic Destinations
                 if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations" > $null }    
             
@@ -2358,6 +2351,8 @@ Function Collect-JumpLists {
                 # Treating Automatic Destinations
                 if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u" > $null }    
 
+                Write-Host "`t[+] Parsing Automatic Jump Lists for user $u ..." -ForegroundColor Green
+                
                 echo "File Name, Full Path, Last Modified, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Entry ID, Pos. MRU, Appication ID, Application Name, Mac Address, File Extension, Computer Name, Network Share Name, Drive Type, Volume Label, Volume SN, Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Auto.csv"
 
                 Get-ChildItem "C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations" | ForEach-Object {
@@ -2409,6 +2404,8 @@ Function Collect-JumpLists {
             # Custom Destinations
             if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations")
             {
+                Write-Host "`t[+] Collecting Custom Jump Lists for user $u ..." -ForegroundColor Green
+
                 # Copies Custom Destinations
                 if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations" > $null }    
 
@@ -2423,6 +2420,8 @@ Function Collect-JumpLists {
 
                 # Treating Custom Destinations
                 if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u" > $null }
+                
+                Write-Host "`t[+] Parsing Custom Jump Lists for user $u ..." -ForegroundColor Green
                 
                 echo "App ID, App Name, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Network Share Name, Drive Type, Volume Label, Volume SN , Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Custom.csv"
 
@@ -3151,9 +3150,8 @@ Function Collect-Outlook-Files {
 <########### C L O U D #####################################################>
 
 <########### CLOUD - ONEDRIVE ##############################> # COD
-# It collects the logs, but I don't know how to TREAT the information
 Function Collect-Cloud-OneDrive-Logs {
-    
+# It collects the logs, but I don't know how to TREAT the information   
     Write-Host "[+] Collecting OneDrive Logs ..." -ForegroundColor Green
 
     foreach($u in $USERS)
@@ -3335,7 +3333,25 @@ Function Collect-Cloud-Dropbox-Logs {
 
     Remove-Item -Recurse -Path "$Global:Destiny\$HOSTNAME\z_temp"
 }
+
+
+<########### S I G N E D   F I L E S ######################> # SFI <# TIME CONSUMING - Not by Default#>
+Function Collect-Sign-Files {
     
+    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Signed_Files\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Signed_Files\" > $null }
+
+    Write-Host "[+] Collecting Info About Signed Files " -ForegroundColor Green
+    try
+    {
+        
+        & $SIG_EXE /accepteula -vt -h -c -e -q $Global:Source\Windows\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
+        & $SIG_EXE /accepteula -vt -h -c -e -q $Global:Source\Windows\system32\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
+    } 
+    catch 
+    {
+        Report-Error -evidence "Info About Signed Files"
+    }
+}
 
 
 <##################################################################################################################################>
@@ -3547,8 +3563,8 @@ Function Show-Simple-Options-Resume {
     Write-Host "        Collect:                              "
     Write-Host " "
     if ($Global:RAM ) {Write-Host "            • RAM - Random Access Memory"}
-    if ($Global:SFI ) {Write-Host "            • SFI"}
-    if ($Global:AFI ) {Write-Host "            • AFI"}
+    if ($Global:SFI ) {Write-Host "            • SFI - Signed Files for folders \Windows and \windows\system32 (Time Consuming)"}
+    if ($Global:AFI ) {Write-Host "            • AFI - All Autorun Files (Time Consuming)"}
     if ($Global:DEX ) {Write-Host "            • DEX"}
     if ($All) {Write-Host "            • ALL"}
     else
@@ -3566,25 +3582,26 @@ Function Show-Simple-Options-Resume {
 
         if ($Global:MRU ) {Write-Host "            • MRU"}
         if ($Global:SHI ) {Write-Host "            • SHI"}
-        if ($Global:JLI ) {Write-Host "            • JLI"}
+        
         if ($Global:BAM ) {Write-Host "            • BAM - BACKGROUND ACTIVITY MODERATOR"}
     
         if ($Global:TLH ) {Write-Host "            • TLH"}
         if ($Global:RAP ) {Write-Host "            • RAP"}
         if ($Global:SYS ) {Write-Host "            • SYS - System Information"}
 
-        if ($Global:LAC ) {Write-Host "            • LAC"}
+        if ($Global:LAC ) {Write-Host "            • LAC - Last Activity"}
 
         if ($Global:LSE ) {Write-Host "            • LSE"}
         if ($Global:PWD ) {Write-Host "            • PWD"}
 
         # OFFLINE
-        if ($Global:HIV ) {Write-Host "            • HIV"}
-        if ($Global:EVT ) {Write-Host "            • EVT"}
+        if ($Global:HIV ) {Write-Host "            • HIV - HIVES"}
+        if ($Global:EVT ) {Write-Host "            • EVT - Windows Event Files"}
         if ($Global:FIL ) {Write-Host "            • FIL"}
-        if ($Global:PRF ) {Write-Host "            • PRF"}
-        if ($Global:WSE ) {Write-Host "            • WSE"}
-        if ($Global:EET ) {Write-Host "            • EET"}
+        if ($Global:PRF ) {Write-Host "            • PRF - Prefetch Files"}
+        if ($Global:WSE ) {Write-Host "            • WSE - Windows Search Engine file (Windows.edb) and conversion to CSV file."}
+        if ($Global:EET ) {Write-Host "            • EET - ETW (Event Tracing for Windows) and ETL (Event Trace Logs)"}
+        if ($Global:JLI ) {Write-Host "            • JLI - Automatic and Custom JumpLists"}
         if ($Global:THC ) {Write-Host "            • THC"}
         if ($Global:ICO ) {Write-Host "            • ICO"}
         if ($Global:MUL ) {Write-Host "            • MUL"}
@@ -3779,6 +3796,9 @@ Start-Execution # STARTS THE EXECUTION OF THE PROGRAM
 <##################################################################################################################################>
 <#########################  FUTURE DEVELOPMENTS  ###########################################>
 <##################################################################################################################################>
+
+# C:\Windows\System32\WDI\LogFiles\StartupInfo
+# It has information about running processes with timestamp, can be an alternative way that anti-forensics don't delete.
 
 <########### S Y S T E M   P O L I C I E S #######################################> # SPO <# TODO #>
 Function Collect-System-Policies {
