@@ -374,13 +374,14 @@ if($ARCH -eq "AMD64") {
     $SIG_EXE = "$SCRIPTPATH\bin\sigcheck64.exe"
     $SQL_DBX_EXE = "$SCRIPTPATH\bin\sqlite-dbx-win64.exe"
     $OPEN_SAVED_FILES_VIEW = "$SCRIPTPATH\bin\opensavefilesview-x64\OpenSaveFilesView.exe" # not used
+    $THUMB_CACHE_VIEWER = "$SCRIPTPATH\bin\thumbcache_viewer_64\thumbcache_viewer.exe"
     
 } else {
     $RAW_EXE = "$SCRIPTPATH\bin\RawCopy.exe"
     $SIG_EXE = "$SCRIPTPATH\bin\sigcheck.exe"
     $SQL_DBX_EXE = "$SCRIPTPATH\bin\sqlite-dbx-win32.exe"
     $OPEN_SAVED_FILES_VIEW = "$SCRIPTPATH\bin\opensavefilesview\OpenSaveFilesView.exe"
-    
+    $THUMB_CACHE_VIEWER = "$SCRIPTPATH\bin\thumbcache_viewer_32\thumbcache_viewer.exe"
 }
 
 $UsedParameters = $PSBoundParameters.Keys <# TODO: Will use this variable to check which parameters were inserted in the command line and therefore don't need confirmation #>
@@ -2316,7 +2317,7 @@ Function Collect-ETW-ETL {
     }
 }
 
-<########### J U M P   L I S T S #################################################> # JLI
+<########### J U M P   L I S T S #################################################> # JLI*
 Function Collect-JumpLists {
 
     if($OS -eq "10" -or $OS -like "8" -or $OS -eq "7")
@@ -2355,7 +2356,7 @@ Function Collect-JumpLists {
                 
                 echo "File Name, Full Path, Last Modified, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Entry ID, Pos. MRU, Appication ID, Application Name, Mac Address, File Extension, Computer Name, Network Share Name, Drive Type, Volume Label, Volume SN, Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Auto.csv"
 
-                Get-ChildItem "C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations" | ForEach-Object {
+                Get-ChildItem "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations" | ForEach-Object {
     
                     try
                     {
@@ -2425,7 +2426,7 @@ Function Collect-JumpLists {
                 
                 echo "App ID, App Name, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Network Share Name, Drive Type, Volume Label, Volume SN , Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Custom.csv"
 
-                Get-ChildItem "C:\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations" | ForEach-Object {
+                Get-ChildItem "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations" | ForEach-Object {
 
                     try
                     {
@@ -2464,12 +2465,13 @@ Function Collect-JumpLists {
     }
 }
 
-<########### T H U M C A C H E ###################################################> # THC
+<########### T H U M C A C H E ###################################################> # THC*
 Function Collect-Thumcache {
     
     Write-Host "[+] Collecting THUMCACHE files. Check log file for more info." -ForegroundColor Green
     foreach($u in $USERS)
     {
+        Write-Host "`t[+] THUMCACHE files from user $u." -ForegroundColor Green
         try
         {
             New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\THUMCACHE\$u\ > $null
@@ -2478,6 +2480,21 @@ Function Collect-Thumcache {
         catch 
         {
             Report-Error -evidence "THUMCACHE files"
+        }
+        
+        Write-Host "`t[+] Extracting images from THUMCACHE files from user $u." -ForegroundColor Green
+        
+        New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\THUMCACHE\$u\Images > $null
+        
+        try
+        {
+            Get-ChildItem "$Global:Destiny\$HOSTNAME\THUMCACHE\$u\" | ForEach-Object {
+                & $THUMB_CACHE_VIEWER "$Global:Destiny\$HOSTNAME\THUMCACHE\$u\$_" -O "$Global:Destiny\$HOSTNAME\THUMCACHE\$u\Images"
+            }
+        }
+        catch
+        {
+            Report-Error -evidence "Extracting THUMCACHE image files."
         }
     }
 }
@@ -3602,7 +3619,7 @@ Function Show-Simple-Options-Resume {
         if ($Global:WSE ) {Write-Host "            • WSE - Windows Search Engine file (Windows.edb) and conversion to CSV file."}
         if ($Global:EET ) {Write-Host "            • EET - ETW (Event Tracing for Windows) and ETL (Event Trace Logs)"}
         if ($Global:JLI ) {Write-Host "            • JLI - Automatic and Custom JumpLists"}
-        if ($Global:THC ) {Write-Host "            • THC"}
+        if ($Global:THC ) {Write-Host "            • THC - Thumbcache db files"}
         if ($Global:ICO ) {Write-Host "            • ICO"}
         if ($Global:MUL ) {Write-Host "            • MUL"}
         if ($Global:HPS ) {Write-Host "            • HPS"}
