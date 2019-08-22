@@ -105,10 +105,11 @@ There are 3 options:
 - Zeros -> Formats the driver and sets all the bits to 0.#>
     [ValidateSet("No","Quick","Zeros")][string]$FormatType="No",    
     
-    <# Defines if the SOURCE drive is mounted. 
-If the SOURCE drive is mounted the way to collect the evidences change slightly, so this is a crucial parameter to use in this cases. 
-If the drive unit is different from C the script will detect and ask the user to confirm that it's a mounted drive.#>
-    [switch]$Live=$true,      
+    <# Defines if the triage is over a Live system #>
+    [switch]$Live=$null,
+    
+    <# Defines if the triage is over an Offline system #>
+    [switch]$Offline=$null,
 
     
     <# Enables the collection of all the posible evidences by Inquisitor.
@@ -216,20 +217,19 @@ TIME CONSUMING: Depending on the computer and disk can go easly over 20 minutes.
     [switch]$EET=$false,         
     
     <# Collects Thumcache files from the system. #>
-    [switch]$THC=$false,          
+    [switch]$TIC=$false,          
     
-    <# Collects Iconcache files from the system. #>
-    [switch]$ICO=$false,          
+    <# Collects File System files: $MFT, $UsnJrnl and $LogFile #>
+    [switch]$FSF=$false,         
     
-    <# Collects some root files: $MFT, $UsnJrnl and $LogFile #>
-    [switch]$MUL=$false,         
-    
-    <# Collects some system files: Hiberfil.sys, Pagefile.sys, Swapfile.sys #>
-    [switch]$HPS=$false,          
-    
+    <# Collects Memory Support files: Hiberfil.sys, Pagefile.sys and Swapfile.sys #>
+    [switch]$MSF=$false,   
+
     <# Collects all the files from the system with "Dangerous" extensions #>
-    [switch]$DEX=$false,          
-    
+    [switch]$DEX1=$false,          
+    <# Collects all the files from the system with "Dangerous" extensions #>
+    [switch]$DEX2=$false,  
+
     <# Collects info stored in the Text Harvester. #>
     [switch]$THA=$false,
 
@@ -282,11 +282,12 @@ TIME CONSUMING: Depending on the computer and disk can go easly over 20 minutes.
 
 
 
-<# The Global variables that are almost a mirror of the inut parameters, but needed it we need to change then on runtime #>
+<# The Global variables that are almost a mirror of the inut parameters, but they are needed to change then at runtime in case necessary. #>
 $Global:Source=$Source
 $Global:Destiny=$Destiny
 $Global:FormatType=$FormatType
 $Global:Live=$Live
+$Global:Offline=$Offline
 $Global:All=$All
 
 ##### LIVE
@@ -330,11 +331,15 @@ $Global:FIL=$FIL
 $Global:PRF=$PRF         
 $Global:WSE=$WSE          
 $Global:EET=$EET         
-$Global:THC=$THC          
-$Global:ICO=$ICO          
-$Global:MUL=$MUL         
-$Global:HPS=$HPS          
-$Global:DEX=$DEX          
+$Global:TIC=$TIC          
+
+$Global:FSF=$FSF         
+$Global:MSF=$MSF
+          
+$Global:DEX1=$DEX1  
+$Global:DEX2=$DEX2  
+
+        
 $Global:THA=$THA
 $Global:SRU=$SRU
 $Global:CRE=$CRE
@@ -360,6 +365,9 @@ $Global:CDB=$CDB
 <############  GENERAL CONFIGURATIONS AND SETUPS  ####################################>
 <##################################################################################################################################>
 
+$APPName = "Inquisitor"
+$APPVersion = "v1.0"
+
 <# GLOBAL VARIABLES #>
 $HOSTNAME = hostname
 $OS = ((Get-CimInstance win32_operatingsystem).name).split(" ")[2] <# Intead of collecting the windows version: XP, Vista, 7, 10, ... should be according to the core #>
@@ -367,7 +375,7 @@ $USERS = Get-LocalUser | ? { $_.Enabled } | Select-Object -ExpandProperty Name #
 $SIDS = Get-ChildItem "REGISTRY::HKEY_USERS" | ForEach-Object { ($_.Name).Split("\")[1] } # list of user SIDs
 $ARCH = $env:PROCESSOR_ARCHITECTURE
 $SCRIPTPATH = split-path -parent $MyInvocation.MyCommand.Definition
-    
+
 <# defines according to architecture which version of Rawcpoy and SigCheck to use #>
 if($ARCH -eq "AMD64") {
     $RAW_EXE = "$SCRIPTPATH\bin\RawCopy64.exe"
@@ -1218,6 +1226,7 @@ Function Collect-Firewall-Config{
     }
 }
 
+##########################################################################################################
 
 <########### M R U s ###############################> # MRU*
 Function Collect-MRUs {
@@ -1969,6 +1978,7 @@ Function Collect-RecentApps {
     }
 }
 
+##########################################################################################################
 
 <########### B A M #################################> # BAM*
 Function Collect-BAM {
@@ -2215,8 +2225,11 @@ Function Collect-Files-Lists {
 
     try{
         Write-Host "[+] Collecting List of Files of the System ... " -ForegroundColor Green
+        Write-Host "`t[+] List of Files sorted by Modification Date ... " -ForegroundColor Green
         cmd.exe /c dir /t:w /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FILES\File_List_Sorted_Modification_Date.txt"
+        Write-Host "`t[+] List of Files sorted by Last Access Date ... " -ForegroundColor Green
         cmd.exe /c dir /t:a /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FILES\File_List_Sorted_Last_Access.txt"
+        Write-Host "`t[+] List of Files sorted by Creation Date ... " -ForegroundColor Green
         cmd.exe /c dir /t:c /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FILES\File_List_Sorted_Creation_Date.txt"
     
     } catch {
@@ -2465,142 +2478,193 @@ Function Collect-JumpLists {
     }
 }
 
-<########### T H U M C A C H E ###################################################> # THC*
-Function Collect-Thumcache {
+<########### T H U M C A C H E   &   I C O N C A C H E ###########################> # TIC*
+Function Collect-Thumcache-Iconcache {
     
-    Write-Host "[+] Collecting THUMCACHE files. Check log file for more info." -ForegroundColor Green
+    Write-Host "[+] Collecting Thumbcache and Iconcache files..." -ForegroundColor Green
     foreach($u in $USERS)
     {
-        Write-Host "`t[+] THUMCACHE files from user $u." -ForegroundColor Green
+        # THUMBCACHE
+        Write-Host "`t[+] Thumbcache files from user $u." -ForegroundColor Green
+        New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Thumbcache" > $null
+        
         try
         {
-            New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\THUMCACHE\$u\ > $null
-            cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\thumbcache*.db" "$Global:Destiny\$HOSTNAME\THUMCACHE\$u\." > $null
+            cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\thumbcache*.db" "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Thumbcache\." > $null
         } 
         catch 
         {
-            Report-Error -evidence "THUMCACHE files"
+            Report-Error -evidence "Thumbcache and Iconcache files"
         }
+
+        Write-Host "`t[+] Extracting images from Thumbcache files from user $u." -ForegroundColor Green
         
-        Write-Host "`t[+] Extracting images from THUMCACHE files from user $u." -ForegroundColor Green
-        
-        New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\THUMCACHE\$u\Images > $null
+        New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\Images_Thumbcache" > $null
         
         try
         {
-            Get-ChildItem "$Global:Destiny\$HOSTNAME\THUMCACHE\$u\" | ForEach-Object {
-                & $THUMB_CACHE_VIEWER "$Global:Destiny\$HOSTNAME\THUMCACHE\$u\$_" -O "$Global:Destiny\$HOSTNAME\THUMCACHE\$u\Images"
+            Get-ChildItem "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Thumbcache" | ForEach-Object {
+                & $THUMB_CACHE_VIEWER "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Thumbcache\$_" -O "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\Images_Thumbcache"
             }
         }
         catch
         {
-            Report-Error -evidence "Extracting THUMCACHE image files."
+            Report-Error -evidence "Extracting Thumbcache image files."
         }
-    }
-}
 
-<########### I C O N C A C H E ###################################################> # ICO
-Function Collect-Iconcache {
-    
-    Write-Host "[+] Collecting ICONCACHE files. Check log file for more info." -ForegroundColor Green
-    
-    foreach($u in $USERS)
-    {
-        if(Test-Path "$Global:Source\Users\$u\AppData\Local\IconCache.db")
+        # ICONCACHE
+        Write-Host "`t[+] Iconcache files from user $u." -ForegroundColor Green
+        New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Iconcache" > $null
+
+        try
         {
-            try
-            {
-                if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\ICONCACHE\$u\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\ICONCACHE\$u\ > $null }
-            
-                & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\IconCache.db" /OutputPath:"$Global:Destiny\$HOSTNAME\ICONCACHE\$u" /OutputName:IconCache.db > $null
-                cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\iconcache*.db" "$Global:Destiny\$HOSTNAME\ICONCACHE\$u\." > $null
-            } 
-            catch 
-            {
-                Report-Error -evidence "ICONCACHE files"
+            cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\iconcache*.db" "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Iconcache\." > $null
+        } 
+        catch 
+        {
+            Report-Error -evidence "Thumbcache and Iconcache files"
+        }
+        
+        Write-Host "`t[+] Extracting icons from Iconcache files from user $u." -ForegroundColor Green
+        New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\Images_Iconcache" > $null
+
+        try
+        {
+            Get-ChildItem "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Iconcache" | ForEach-Object {
+                & $THUMB_CACHE_VIEWER "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Iconcache\$_" -O "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\Images_Iconcache"
             }
         }
+        catch
+        {
+            Report-Error -evidence "Iconcache icons."
+        }
     }
 }
 
-<########### M F T   A N D   U S N J R N L #######################################> # MUL
-Function Collect-MFT-UsnJrnl-LogFile {
-    
-    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\ROOT_FILES\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\ROOT_FILES\" > $null }
+##########################################################################################################
 
-    # $MFT
-    Write-Host "[+] Collecting `$MFT file. Check log file for more info." -ForegroundColor Green
+<########### F I L E   S Y S T E M   F I L E S ###################################> # FSF*
+Function Collect-FileSystemFiles {
+    
+    Write-Host "[+] Collecting File System Files..." -ForegroundColor Green
+    
+    Collect-MFT
+    Collect-UsnJrnl
+    Collect-LogFile
+}
+
+<########### M F T   F I L E #######################> # MFT- - Used in File System Files*
+Function Collect-MFT {
+    
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" > $null }
+
+    Write-Host "`t[+] Collecting `$MFT file. " -ForegroundColor Green
 
     try
     {
-        & $RAW_EXE /FileNamePath:$Global:Source\`$MFT /OutputPath:$Global:Destiny\$HOSTNAME\ROOT_FILES /OutputName:`$MFT > $null
+        & $RAW_EXE /FileNamePath:$Global:Source\`$MFT /OutputPath:$Global:Destiny\$HOSTNAME\FileSystemFiles /OutputName:`$MFT > $null
     }
     catch
     {
         Report-Error -evidence "`$MFT file"
     }
+}
 
-    # $UsnJrnl
-    Write-Host "[+] Collecting `$UsnJrnl file. Check log file for more info." -ForegroundColor Green
+<########### U S N J R N L   F I L E ###############> # USN- - Used in File System Files*
+Function Collect-UsnJrnl {
+
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" > $null }
+
+    Write-Host "`t[+] Collecting `$UsnJrnl file." -ForegroundColor Green
 
     try
     {
-        & $RAW_EXE /FileNamePath:$Global:Source\`$Extend\`$UsnJrnl /OutputPath:$Global:Destiny\$HOSTNAME\ROOT_FILES /OutputName:`$UsnJrnl > $null
+        & $RAW_EXE /FileNamePath:$Global:Source\`$Extend\`$UsnJrnl /OutputPath:$Global:Destiny\$HOSTNAME\FileSystemFiles /OutputName:`$UsnJrnl > $null
     }
     catch
     {
         Report-Error -evidence "`$UsnJrnl file"
     }
 
-    # $LogFile
-    Write-Host "[+] Collecting `$LogFile file. Check log file for more info." -ForegroundColor Green
+}
+
+<########### L O G F I L E   F I L E ###############> # LOG- - Used in File System Files*
+Function Collect-LogFile {
+
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" > $null }
+
+    Write-Host "`t[+] Collecting `$LogFile file." -ForegroundColor Green
 
     try
     {
-        & $RAW_EXE /FileNamePath:"$Global:Source\`$LogFile" /OutputPath:"$Global:Destiny\$HOSTNAME\ROOT_FILES" /OutputName:"`$LogFile" > $null
+        & $RAW_EXE /FileNamePath:"$Global:Source\`$LogFile" /OutputPath:"$Global:Destiny\$HOSTNAME\FileSystemFiles" /OutputName:"`$LogFile" > $null
     }
     catch
     {
         Report-Error -evidence "`$LogFile file"
     }
-
 }
 
-<########### H I B E R F I L   P A G E F I L E   S W A P F I L E #################> # HPS
-Function Collect-Hiberfil-Pagefile-Swapfile {
+##########################################################################################################
 
-    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\ROOT_FILES\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\ROOT_FILES\" > $null }
+<########### M E M O R Y   S U P P O R T   F I L E S ###############################> # MSF*
+Function Collect-MemorySupportFiles {
+    
+    Write-Host "[+] Collecting Memory Support Files." -ForegroundColor Green
+
+    Collect-Hiberfil           # hiberfil.sys
+    Collect-Pagefile           # pagefile.sys
+    Collect-Swapfile           # swapfile.sys
+}
+
+<########### H I B E R F I L   F I L E ###############> # HIB- - Used in Memory Support Files*
+Function Collect-Hiberfil {
+    
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" > $null }
 
     # hiberfil.sys
-    Write-Host "[+] Collecting hiberfil.sys file. Check log file for more info." -ForegroundColor Green
+    Write-Host "`t[+] Collecting hiberfil.sys file." -ForegroundColor Green
 
     try
     {
-        & $RAW_EXE /FileNamePath:$Global:Source\hiberfil.sys /OutputPath:$Global:Destiny\$HOSTNAME\ROOT_FILES /OutputName:hiberfil.sys > $null
+        & $RAW_EXE /FileNamePath:$Global:Source\hiberfil.sys /OutputPath:$Global:Destiny\$HOSTNAME\MemorySupportFiles /OutputName:hiberfil.sys > $null
     }
     catch
     {
         Report-Error -evidence "hiberfil.sys file"
     }
+}
+
+<########### P A G E F I L E   F I L E ###############> # PGF- - Used in Memory Support Files*
+Function Collect-Pagefile {
+
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" > $null }
 
     # pagefile.sys
-    Write-Host "[+] Collecting pagefile.sys file. Check log file for more info." -ForegroundColor Green
+    Write-Host "`t[+] Collecting pagefile.sys file." -ForegroundColor Green
 
     try
     {
-        & $RAW_EXE /FileNamePath:$Global:Source\pagefile.sys /OutputPath:$Global:Destiny\$HOSTNAME\ROOT_FILES /OutputName:pagefile.sys > $null
+        & $RAW_EXE /FileNamePath:$Global:Source\pagefile.sys /OutputPath:$Global:Destiny\$HOSTNAME\MemorySupportFiles /OutputName:pagefile.sys > $null
     }
     catch
     {
         Report-Error -evidence "pagefile.sys file"
     }
 
+}
+
+<########### S W A P F I L E   F I L E ###############> # SWA- - Used in Memory Support Files*
+Function Collect-Swapfile {
+
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" > $null }
+
     # swapfile.sys
-    Write-Host "[+] Collecting swapfile.sys file. Check log file for more info." -ForegroundColor Green
+    Write-Host "`t[+] Collecting swapfile.sys file." -ForegroundColor Green
 
     try
     {
-        & $RAW_EXE /FileNamePath:"$Global:Source\swapfile.sys" /OutputPath:"$Global:Destiny\$HOSTNAME\ROOT_FILES" /OutputName:"swapfile.sys" > $null
+        & $RAW_EXE /FileNamePath:"$Global:Source\swapfile.sys" /OutputPath:"$Global:Destiny\$HOSTNAME\MemorySupportFiles" /OutputName:"swapfile.sys" > $null
     }
     catch
     {
@@ -2608,27 +2672,54 @@ Function Collect-Hiberfil-Pagefile-Swapfile {
     }
 }
 
+##########################################################################################################
+
 <########### D A N G E R O U S   E X T E N S I O N S #############################> # DEX <# TODO: Change letter C:\ for variable so it also works with offline file system. #>
-Function Collect-Dangerous-Extensions {
+Function Collect-Dangerous-Extensions1 {
     
     $extensions = "VB","VBS","PIF","BAT","CMD","JS","JSE","WS","WSF","WSC","WSH","PS1","PS1XML","PS2","PS2XML","PSC1","PSC2","MSH","MSH1","MSH2","MSHXML","MSH1XML","MSH2XML","SCF","LNK","INF","APPLICATION","GADGET","SCR","HTA","CPL", "MSI", "COM", "EXE"
 
-    Write-Host "[+] Collecting List of files with Dangerous extensions..." -ForegroundColor Green
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Extensions1 ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Extensions1 > $null }
+
+    Write-Host "[+] Collecting List of files with Dangerous extensions 1..." -ForegroundColor Green
 
     foreach ($extension in $extensions)
     {
         try
         {
-            if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Extensions ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Extensions > $null }
-            
-            Get-ChildItem "C:\" -File -Recurse "*.$extension" | ForEach-Object {        # +- 14 mins
-                $_.FullName >> "$Global:Destiny\$HOSTNAME\Extensions\$extension.txt"
+            Write-Host -n "`t└>$extension extension" -ForegroundColor Green
+
+            Get-ChildItem "C:\" -File -Recurse "*.$extension" 2> $null | ForEach-Object {        # +- 14 mins
+                $_.FullName >> "$Global:Destiny\$HOSTNAME\Extensions1\$extension.txt"
             }
-            if($extension -like "VB") {Write-Host -n "`t└>$extension" -ForegroundColor Green }
-            if($extension -notlike "VB" -or $extension -notlike "EXE") {Write-Host -n ", $extension" -ForegroundColor Green }
-            if($extension -like "EXE") {Write-Host ", $extension" -ForegroundColor Green }
+            #if($extension -like "VB") {Write-Host -n "`t└>$extension" -ForegroundColor Green }
+            #if($extension -notlike "VB" -or $extension -notlike "EXE") {Write-Host -n ", $extension" -ForegroundColor Green }
+            #if($extension -like "EXE") {Write-Host ", $extension" -ForegroundColor Green }
 
             # cmd.exe /c dir /T:C /S c:\*.$extension >> "$Global:Destiny\$HOSTNAME\Extensions\dir_$extension.txtdir" # - Alternative  +- 3mins
+        } 
+        catch 
+        {
+            Report-Error -evidence "List of Extension $extension"
+        }
+    }
+
+}
+
+Function Collect-Dangerous-Extensions2 {
+    
+    $extensions = "VB","VBS","PIF","BAT","CMD","JS","JSE","WS","WSF","WSC","WSH","PS1","PS1XML","PS2","PS2XML","PSC1","PSC2","MSH","MSH1","MSH2","MSHXML","MSH1XML","MSH2XML","SCF","LNK","INF","APPLICATION","GADGET","SCR","HTA","CPL", "MSI", "COM", "EXE"
+
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Extensions2 ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Extensions2 > $null }
+
+    Write-Host "[+] Collecting List of files with Dangerous extensions 2..." -ForegroundColor Green
+
+    foreach ($extension in $extensions)
+    {
+        try
+        {
+            
+            cmd.exe /c dir /T:C /S c:\*.$extension >> "$Global:Destiny\$HOSTNAME\Extensions2\dir_$extension.txtdir" # - Alternative  +- 3mins
         } 
         catch 
         {
@@ -3119,7 +3210,7 @@ Function Collect-Outlook-Files {
     # TODO: Check if it's reliable instead to search for the entire disk for OST and PST files, get their path and copy them
     #  Get-ChildItem C: -Recurse *.pst
     
-    Write-Host "[+] Collecting OUTLOOK files. Check log file for more info." -ForegroundColor Green
+    Write-Host "[+] Collecting OUTLOOK files." -ForegroundColor Green
 
     foreach($u in $USERS)
     {
@@ -3415,11 +3506,16 @@ Function Control-NOGUI{
     if ($All -or $Global:WSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Windows-Search ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # ??:??
     if ($All -or $Global:EET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-ETW-ETL ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # ??:??
     if ($All -or $Global:JLI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-JumpLists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if ($All -or $Global:THC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Thumcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if ($All -or $Global:ICO ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Iconcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if ($All -or $Global:MUL ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MFT-UsnJrnl-LogFile ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
-    if ($All -or $Global:HPS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Hiberfil-Pagefile-Swapfile ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }       # ??:??
-    if (         $Global:DEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
+    if ($All -or $Global:TIC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Thumcache-Iconcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
+    
+    if ($All -or $Global:FSF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-FileSystemFiles ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
+    if ($All -or $Global:MSF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MemorySupportFiles ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
+    
+    
+    if (         $Global:DEX1 ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions1 ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
+    if (         $Global:DEX2 ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions2 ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
+
+
     if ($All -or $Global:THA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-TextHarvester ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
     if ($All -or $Global:SRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-SRUM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
     if ($All -or $Global:CRE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Credentials ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
@@ -3457,8 +3553,8 @@ Function Control-GUI {
     Add-Type -AssemblyName System.Drawing
 
     $form = New-Object System.Windows.Forms.Form
-    $form.Text = 'Data Entry Form'
-    $form.Size = New-Object System.Drawing.Size(300,200)
+    $form.Text = "$APPName $APPVersion"
+    $form.Size = New-Object System.Drawing.Size(820,800)
     $form.StartPosition = 'CenterScreen'
 
     $OKButton = New-Object System.Windows.Forms.Button
@@ -3467,7 +3563,7 @@ Function Control-GUI {
     $OKButton.Text = 'OK'
     $OKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
     $form.AcceptButton = $OKButton
-    $form.Controls.Add($OKButton)
+    #$form.Controls.Add($OKButton)
 
     $CancelButton = New-Object System.Windows.Forms.Button
     $CancelButton.Location = New-Object System.Drawing.Point(150,120)
@@ -3475,18 +3571,45 @@ Function Control-GUI {
     $CancelButton.Text = 'Cancel'
     $CancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
     $form.CancelButton = $CancelButton
-    $form.Controls.Add($CancelButton)
+    #$form.Controls.Add($CancelButton)
 
     $label = New-Object System.Windows.Forms.Label
     $label.Location = New-Object System.Drawing.Point(10,20)
     $label.Size = New-Object System.Drawing.Size(280,20)
     $label.Text = 'Please enter the information in the space below:'
-    $form.Controls.Add($label)
+    #$form.Controls.Add($label)
 
     $textBox = New-Object System.Windows.Forms.TextBox
     $textBox.Location = New-Object System.Drawing.Point(10,40)
     $textBox.Size = New-Object System.Drawing.Size(260,20)
-    $form.Controls.Add($textBox)
+    #$form.Controls.Add($textBox)
+
+    $Banner = New-Object System.Windows.Forms.RichTextBox
+    $Banner.location = New-Object System.Drawing.Point(50, 50);
+    $Banner.Name = "Banner";
+    $Banner.Size = New-Object System.Drawing.Size(710, 225);
+    $Banner.Font = New-Object System.Drawing.Font("Lucida Console", "9");
+    $Banner.Multiline = $True;
+    $Banner.Text += "`n"
+    $Banner.Text += "  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒`n"
+    $Banner.Text += "  ▓                                                                                              ▒`n"
+    $Banner.Text += "  ▓    ######\                               ##\           ##\   ##\                             ▒`n"
+    $Banner.Text += "  ▓    \_##  _|                              \__|          \__|  ## |                            ▒`n"
+    $Banner.Text += "  ▓      ## |  #######\   ######\  ##\   ##\ ##\  #######\ ##\ ######\    ######\   ######\      ▒`n"
+    $Banner.Text += "  ▓      ## |  ##  __##\ ##  __##\ ## |  ## |## |##  _____|## |\_##  _|  ##  __##\ ##  __##\     ▒`n"
+    $Banner.Text += "  ▓      ## |  ## |  ## |## /  ## |## |  ## |## |\######\  ## |  ## |    ## /  ## |## |  \__|    ▒`n"
+    $Banner.Text += "  ▓      ## |  ## |  ## |## |  ## |## |  ## |## | \____##\ ## |  ## |##\ ## |  ## |## |          ▒`n"
+    $Banner.Text += "  ▓    ######\ ## |  ## |\####### |\######  |## |#######  |## |  \####  |\######  |## |          ▒`n"
+    $Banner.Text += "  ▓    \______|\__|  \__| \____## | \______/ \__|\_______/ \__|   \____/  \______/ \__|          ▒`n"
+    $Banner.Text += "  ▓                            ## |                                                              ▒`n"
+    $Banner.Text += "  ▓                            ## |                                                              ▒`n"
+    $Banner.Text += "  ▓                            \__|                           By:      f4d0                      ▒`n"
+    $Banner.Text += "  ▓                                                           Version: 0.7                       ▒`n"
+    $Banner.Text += "  ▓                                                                                              ▒`n"
+    $Banner.Text += "  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒`n"
+    
+    $form.Controls.Add($Banner)
+
 
     $form.Topmost = $true
 
@@ -3600,29 +3723,29 @@ Function Show-Simple-Options-Resume {
         if ($Global:MRU ) {Write-Host "            • MRU"}
         if ($Global:SHI ) {Write-Host "            • SHI"}
         
-        if ($Global:BAM ) {Write-Host "            • BAM - BACKGROUND ACTIVITY MODERATOR"}
+        if ($Global:BAM ) {Write-Host "            • BAM - Background Activity Moderator."}
     
         if ($Global:TLH ) {Write-Host "            • TLH"}
         if ($Global:RAP ) {Write-Host "            • RAP"}
-        if ($Global:SYS ) {Write-Host "            • SYS - System Information"}
+        if ($Global:SYS ) {Write-Host "            • SYS - System Information."}
 
-        if ($Global:LAC ) {Write-Host "            • LAC - Last Activity"}
+        if ($Global:LAC ) {Write-Host "            • LAC - Last Activity."}
 
         if ($Global:LSE ) {Write-Host "            • LSE"}
         if ($Global:PWD ) {Write-Host "            • PWD"}
 
         # OFFLINE
-        if ($Global:HIV ) {Write-Host "            • HIV - HIVES"}
-        if ($Global:EVT ) {Write-Host "            • EVT - Windows Event Files"}
-        if ($Global:FIL ) {Write-Host "            • FIL"}
+        if ($Global:HIV ) {Write-Host "            • HIV - HIVES."}
+        if ($Global:EVT ) {Write-Host "            • EVT - Windows Event Files."}
+        if ($Global:FIL ) {Write-Host "            • FIL - 3 sorted lists of all system files (Modification, Access, Creation). "}
         if ($Global:PRF ) {Write-Host "            • PRF - Prefetch Files"}
         if ($Global:WSE ) {Write-Host "            • WSE - Windows Search Engine file (Windows.edb) and conversion to CSV file."}
-        if ($Global:EET ) {Write-Host "            • EET - ETW (Event Tracing for Windows) and ETL (Event Trace Logs)"}
-        if ($Global:JLI ) {Write-Host "            • JLI - Automatic and Custom JumpLists"}
-        if ($Global:THC ) {Write-Host "            • THC - Thumbcache db files"}
-        if ($Global:ICO ) {Write-Host "            • ICO"}
-        if ($Global:MUL ) {Write-Host "            • MUL"}
-        if ($Global:HPS ) {Write-Host "            • HPS"}
+        if ($Global:EET ) {Write-Host "            • EET - ETW (Event Tracing for Windows) and ETL (Event Trace Logs)."}
+        if ($Global:JLI ) {Write-Host "            • JLI - Automatic and Custom JumpLists."}
+        if ($Global:TIC ) {Write-Host "            • TIC - Thumbcache and Iconcache db files. Extraction of images and icons inside each db file."}
+        if ($Global:FSF ) {Write-Host "            • FSF - File System Files: `$MFT, `$UsnJrnl, `$LogFile"}
+        if ($Global:MSF ) {Write-Host "            • MSF - Memory Support Files: Hiberfil.sys, Pagefile.sys and Swapfile.sys"}
+
         if ($Global:THA ) {Write-Host "            • THA"}
         if ($Global:SRU ) {Write-Host "            • SRU"}
         if ($Global:CRE ) {Write-Host "            • CRE"}
@@ -3813,6 +3936,8 @@ Start-Execution # STARTS THE EXECUTION OF THE PROGRAM
 <##################################################################################################################################>
 <#########################  FUTURE DEVELOPMENTS  ###########################################>
 <##################################################################################################################################>
+
+# http://www.nirsoft.net/utils/web_browser_password.html
 
 # C:\Windows\System32\WDI\LogFiles\StartupInfo
 # It has information about running processes with timestamp, can be an alternative way that anti-forensics don't delete.
@@ -4008,7 +4133,7 @@ Function Show-Help {
     Write-Host '▓                                           -PRF -> Prefetch                                                                       ▒'
     Write-Host '▓    -OUT -> Outlook                        -WS  -> Windows Search                                                                 ▒'
     Write-Host '▓                                           -EE  -> ETW & ETL                                                                      ▒'
-    Write-Host '▓    -COD -> Cloud - OneDrive               -THC -> Thumbcache                                                                     ▒'
+    Write-Host '▓    -COD -> Cloud - OneDrive               -TIC -> Thumbcache                                                                     ▒'
     Write-Host '▓    -CGD -> Cloud - Google Drive           -ICO -> Iconcache                                                                      ▒'
     Write-Host '▓    -CDB -> Cloud - Dropbox                -CPH -> CL & PS Command History                                                        ▒'
     Write-Host '▓                                           -SFO -> Shell Folders                                                                  ▒'
