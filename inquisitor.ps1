@@ -2676,10 +2676,8 @@ Function Collect-Swapfile {
 
 
 
-<########### T I M E L I N E   H I S T O R Y #######> # TLH 
+<########### T I M E L I N E   H I S T O R Y #####################################> # TLH*
 Function Collect-Timeline {
-
-    
 
     if($OS -eq "10")
     {
@@ -2687,7 +2685,6 @@ Function Collect-Timeline {
         
         foreach($u in $USERS)
         {
-            
             if(Test-Path "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform")
             {       
                 Get-Item  "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\*" | ForEach-Object {
@@ -2696,17 +2693,31 @@ Function Collect-Timeline {
                     {
                         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null }
                         
-                        Write-Host "`t[+] Timeline History from user $u..." -ForegroundColor Green
-                        & cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\$($_.Name)\*.*" "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null
+                        try
+                        {
+                            Write-Host "`t[+] Timeline History from user $u..." -ForegroundColor Green
+                            & cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\$($_.Name)\*.*" "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null
+                        }
+                        catch
+                        {
+                            Report-Error -evidence "Timeline History - copying files"
+                        }
 
-                        Write-Host "`t[+] Parsing Timeline History from user $u..." -ForegroundColor Green
-                        & cmd.exe /c "$SCRIPTPATH\bin\WxTCmd\WxTCmd.exe" -f "$Global:Destiny\$HOSTNAME\Timeline_History\$u\ActivitiesCache.db" --csv "$Global:Destiny\$HOSTNAME\Timeline_History\$u\Timeline_Parsed" > $null
+                        try
+                        {
+                            Write-Host "`t[+] Parsing Timeline History from user $u..." -ForegroundColor Green
+                            & cmd.exe /c "$SCRIPTPATH\bin\WxTCmd\WxTCmd.exe" -f "$Global:Destiny\$HOSTNAME\Timeline_History\$u\ActivitiesCache.db" --csv "$Global:Destiny\$HOSTNAME\Timeline_History\$u\Timeline_Parsed" > $null
+                        }
+                        catch
+                        {
+                            Report-Error -evidence "Timeline History - parsing files"
+                        }
                     }
                 }
             }
             else
             {
-                Write-Host "`t[-] Time Line not activated for user $u" -ForegroundColor Yellow
+                Write-Host "`t[-] Timeline not activated for user $u" -ForegroundColor Yellow
             }
         }
     }
@@ -2723,19 +2734,37 @@ Function Collect-TextHarvester { <# TODO: Have to activate this option in a OS a
         {
             if( Test-Path -Path "$Global:Source\Users\$u\AppData\Local\Microsoft\InputPersonalization\TextHarvester\WaitList.dat") 
             {
+                # Collect File
                 try 
                 {
-                    Write-Host "[+] Collecting TextHarvester for user $u..." -ForegroundColor DarkGreen
+                    Write-Host "`t[+] Collect for user $u..." -ForegroundColor DarkGreen
                 
                     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u" > $null }
                     
-                    # OLD & $RAW_EXE "$Global:Source\Users\$u\AppData\Local\Microsoft\InputPersonalization\TextHarvester\WaitList.dat" "$Global:Destiny\$HOSTNAME\TextHarvester\$u\." > $null
                     & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\InputPersonalization\TextHarvester\WaitList.dat" /OutputPath:"$Global:Destiny\$HOSTNAME\TextHarvester\$u" /OutputName:WaitList.dat > $null
                 } 
                 catch 
                 {
-                    Report-Error -evidence "TextHarvester"
+                    Report-Error -evidence "TextHarvester collection user $u"
                 }
+
+                # Parse file
+                try
+                {
+                    Write-Host "`t[+] Parse user $u..." -ForegroundColor DarkGreen
+
+                    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u\ParsedData" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u\ParsedData" > $null }
+
+                    & cmd.exe /c "$SCRIPTPATH\bin\wlripEXE-master\wlrip.exe" -c -x -f "$Global:Destiny\$HOSTNAME\TextHarvester\$u\WaitList.dat" -o "$Global:Destiny\$HOSTNAME\TextHarvester\$u\ParsedData" > $null
+                }
+                catch
+                {
+                    Report-Error -evidence "TextHarvester parsing user $u"
+                }
+            }
+            else
+            {
+                Write-Host "`t[-] Not activated for user $u" -ForegroundColor Yellow
             }
         }
     }
@@ -2855,7 +2884,6 @@ Function Collect-Credentials {
 
 }
 
-
 <########### S K Y P E ###########################################################> #SKY 
 Function Collect-Skype-History {
 
@@ -2936,6 +2964,56 @@ Function Collect-Skype-History {
             else
             {
                 Write-Host "`t[-] Skype is not installed for user $u" -ForegroundColor Yellow
+            }
+        }
+    }
+}
+
+<########### O U T L O O K ###################################> # OUT
+Function Collect-Outlook-Files {
+
+    # TODO: Check if it's reliable instead to search for the entire disk for OST and PST files, get their path and copy them
+    #  Get-ChildItem C: -Recurse *.pst
+    
+    Write-Host "[+] Collecting OUTLOOK files." -ForegroundColor Green
+
+    foreach($u in $USERS)
+    {
+        if( Test-Path -Path "$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\")
+        {
+            if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\OUTLOOK\$u ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\OUTLOOK\$u > $null }
+        
+            <# OST Files #>
+            Get-ChildItem "$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\" -Filter *.ost | ForEach-Object {
+                try
+                {
+                    $email_file = ($_.FullName).Split("\")[7]
+                    
+                    Write-Host "`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
+                    
+                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\OUTLOOK\$u" /OutputName:$email_file > $null
+                } 
+                catch 
+                {
+                    Report-Error -evidence "OUTLOOK OST File from $u"
+                }
+        
+            }
+
+            <# PST Files #>
+            Get-ChildItem "$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook" -Filter *.pst | ForEach-Object {
+                try
+                {
+                    $email_file = ($_.FullName).Split("\")[7]
+                    
+                    Write-Host "`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
+                    
+                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\OUTLOOK\$u" /OutputName:$email_file > $null
+                } 
+                catch 
+                {
+                    Report-Error -evidence "OUTLOOK PST File from $u"
+                }
             }
         }
     }
@@ -3153,59 +3231,6 @@ Function Collect-Opera-Data {
 Function Collect-Tor-Data {
     Write-Host "[+] Collecting TOR files (from Windows $OS system)..." -ForegroundColor Green
     Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-}
-
-
-<########### O U T L O O K #####################################################>
-
-<########### O U T L O O K ###################################> # OUT
-Function Collect-Outlook-Files {
-
-    # TODO: Check if it's reliable instead to search for the entire disk for OST and PST files, get their path and copy them
-    #  Get-ChildItem C: -Recurse *.pst
-    
-    Write-Host "[+] Collecting OUTLOOK files." -ForegroundColor Green
-
-    foreach($u in $USERS)
-    {
-        if( Test-Path -Path "$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\")
-        {
-            if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\OUTLOOK\$u ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\OUTLOOK\$u > $null }
-        
-            <# OST Files #>
-            Get-ChildItem "$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\" -Filter *.ost | ForEach-Object {
-                try
-                {
-                    $email_file = ($_.FullName).Split("\")[7]
-                    
-                    Write-Host "`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
-                    
-                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\OUTLOOK\$u" /OutputName:$email_file > $null
-                } 
-                catch 
-                {
-                    Report-Error -evidence "OUTLOOK OST File from $u"
-                }
-        
-            }
-
-            <# PST Files #>
-            Get-ChildItem "$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook" -Filter *.pst | ForEach-Object {
-                try
-                {
-                    $email_file = ($_.FullName).Split("\")[7]
-                    
-                    Write-Host "`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
-                    
-                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\OUTLOOK\$u" /OutputName:$email_file > $null
-                } 
-                catch 
-                {
-                    Report-Error -evidence "OUTLOOK PST File from $u"
-                }
-            }
-        }
-    }
 }
 
 
