@@ -39,6 +39,26 @@ Function Report-Error {
 
 ###################################################################
 
+Workflow Test-Workflow {
+    echo Nuno
+}
+
+
+$ws = New-PSWorkflowSession
+
+Invoke-Command -Session $ws {Test-Workflow}
+
+###################################################################
+
+$ScriptTime = [Diagnostics.Stopwatch]::StartNew();  
+Invoke-Command Collect-Dangerous-Extensions
+$ScriptTime.Stop(); 
+Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)"
+
+###################################################################
+
+
+<#
 Function Get-SIDUsername {
     
     param(
@@ -49,7 +69,7 @@ Function Get-SIDUsername {
     $NAME = $($N.Split("\")[2])
     return $NAME
 }
-
+#>
 
 
 <#

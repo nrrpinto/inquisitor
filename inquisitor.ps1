@@ -226,9 +226,7 @@ TIME CONSUMING: Depending on the computer and disk can go easly over 20 minutes.
     [switch]$MSF=$false,   
 
     <# Collects all the files from the system with "Dangerous" extensions #>
-    [switch]$DEX1=$false,          
-    <# Collects all the files from the system with "Dangerous" extensions #>
-    [switch]$DEX2=$false,  
+    [switch]$DEX=$false,          
 
     <# Collects info stored in the Text Harvester. #>
     [switch]$THA=$false,
@@ -319,7 +317,7 @@ $Global:PWD=$PWD
 
 ##### THIRD PARTY TOOLS    
 
-$Global:SFI=$SFI          
+      
 $Global:LAC=$LAC         
 $Global:AFI=$AFI       
         
@@ -336,8 +334,7 @@ $Global:TIC=$TIC
 $Global:FSF=$FSF         
 $Global:MSF=$MSF
           
-$Global:DEX1=$DEX1  
-$Global:DEX2=$DEX2  
+
 
         
 $Global:THA=$THA
@@ -360,6 +357,9 @@ $Global:COD=$COD
 $Global:CGD=$CGD
 $Global:CDB=$CDB
 
+
+$Global:SFI=$SFI    
+$Global:DEX=$DEX
 
 <##################################################################################################################################>
 <############  GENERAL CONFIGURATIONS AND SETUPS  ####################################>
@@ -2221,16 +2221,16 @@ Function Collect-EVTX-Files {
 <########### F I L E S   L I S T S ###############################################> # FIL*
 Function Collect-Files-Lists {
 
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\FILES ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\FILES > $null }
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\FilesLists ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\FilesLists > $null }
 
     try{
         Write-Host "[+] Collecting List of Files of the System ... " -ForegroundColor Green
         Write-Host "`t[+] List of Files sorted by Modification Date ... " -ForegroundColor Green
-        cmd.exe /c dir /t:w /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FILES\File_List_Sorted_Modification_Date.txt"
+        cmd.exe /c dir /t:w /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FilesLists\FileList_Sorted_Modification_Date.txt"
         Write-Host "`t[+] List of Files sorted by Last Access Date ... " -ForegroundColor Green
-        cmd.exe /c dir /t:a /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FILES\File_List_Sorted_Last_Access.txt"
+        cmd.exe /c dir /t:a /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FilesLists\FileList_Sorted_Last_Access.txt"
         Write-Host "`t[+] List of Files sorted by Creation Date ... " -ForegroundColor Green
-        cmd.exe /c dir /t:c /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FILES\File_List_Sorted_Creation_Date.txt"
+        cmd.exe /c dir /t:c /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FilesLists\FileList_Sorted_Creation_Date.txt"
     
     } catch {
         Report-Error -evidence "List of Files of the System"
@@ -2674,70 +2674,20 @@ Function Collect-Swapfile {
 
 ##########################################################################################################
 
-<########### D A N G E R O U S   E X T E N S I O N S #############################> # DEX <# TODO: Change letter C:\ for variable so it also works with offline file system. #>
-Function Collect-Dangerous-Extensions1 {
-    
-    $extensions = "VB","VBS","PIF","BAT","CMD","JS","JSE","WS","WSF","WSC","WSH","PS1","PS1XML","PS2","PS2XML","PSC1","PSC2","MSH","MSH1","MSH2","MSHXML","MSH1XML","MSH2XML","SCF","LNK","INF","APPLICATION","GADGET","SCR","HTA","CPL", "MSI", "COM", "EXE"
 
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Extensions1 ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Extensions1 > $null }
-
-    Write-Host "[+] Collecting List of files with Dangerous extensions 1..." -ForegroundColor Green
-
-    foreach ($extension in $extensions)
-    {
-        try
-        {
-            Write-Host -n "`t└>$extension extension" -ForegroundColor Green
-
-            Get-ChildItem "C:\" -File -Recurse "*.$extension" 2> $null | ForEach-Object {        # +- 14 mins
-                $_.FullName >> "$Global:Destiny\$HOSTNAME\Extensions1\$extension.txt"
-            }
-            #if($extension -like "VB") {Write-Host -n "`t└>$extension" -ForegroundColor Green }
-            #if($extension -notlike "VB" -or $extension -notlike "EXE") {Write-Host -n ", $extension" -ForegroundColor Green }
-            #if($extension -like "EXE") {Write-Host ", $extension" -ForegroundColor Green }
-
-            # cmd.exe /c dir /T:C /S c:\*.$extension >> "$Global:Destiny\$HOSTNAME\Extensions\dir_$extension.txtdir" # - Alternative  +- 3mins
-        } 
-        catch 
-        {
-            Report-Error -evidence "List of Extension $extension"
-        }
-    }
-
-}
-
-Function Collect-Dangerous-Extensions2 {
-    
-    $extensions = "VB","VBS","PIF","BAT","CMD","JS","JSE","WS","WSF","WSC","WSH","PS1","PS1XML","PS2","PS2XML","PSC1","PSC2","MSH","MSH1","MSH2","MSHXML","MSH1XML","MSH2XML","SCF","LNK","INF","APPLICATION","GADGET","SCR","HTA","CPL", "MSI", "COM", "EXE"
-
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Extensions2 ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Extensions2 > $null }
-
-    Write-Host "[+] Collecting List of files with Dangerous extensions 2..." -ForegroundColor Green
-
-    foreach ($extension in $extensions)
-    {
-        try
-        {
-            
-            cmd.exe /c dir /T:C /S c:\*.$extension >> "$Global:Destiny\$HOSTNAME\Extensions2\dir_$extension.txtdir" # - Alternative  +- 3mins
-        } 
-        catch 
-        {
-            Report-Error -evidence "List of Extension $extension"
-        }
-    }
-
-}
 
 <########### T I M E L I N E   H I S T O R Y #######> # TLH 
 Function Collect-Timeline {
 
-    Write-Host "[+] Collecting Timeline History ..." -ForegroundColor Green
+    
 
     if($OS -eq "10")
     {
+        Write-Host "[+] Collecting Timeline History ..." -ForegroundColor Green
+        
         foreach($u in $USERS)
         {
+            
             if(Test-Path "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform")
             {       
                 Get-Item  "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\*" | ForEach-Object {
@@ -2745,14 +2695,18 @@ Function Collect-Timeline {
                     if(Test-Path -Path $_.FullName -PathType Container) # if it's a folder
                     {
                         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null }
+                        
+                        Write-Host "`t[+] Timeline History from user $u..." -ForegroundColor Green
+                        & cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\$($_.Name)\*.*" "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null
 
-                        cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\$($_.Name)\*.*" "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null
+                        Write-Host "`t[+] Parsing Timeline History from user $u..." -ForegroundColor Green
+                        & cmd.exe /c "$SCRIPTPATH\bin\WxTCmd\WxTCmd.exe" -f "$Global:Destiny\$HOSTNAME\Timeline_History\$u\ActivitiesCache.db" --csv "$Global:Destiny\$HOSTNAME\Timeline_History\$u\Timeline_Parsed" > $null
                     }
                 }
             }
             else
             {
-                Write-Host "[-] Time Line not activated for user $u" -ForegroundColor Yellow
+                Write-Host "`t[-] Time Line not activated for user $u" -ForegroundColor Yellow
             }
         }
     }
@@ -3442,6 +3396,36 @@ Function Collect-Cloud-Dropbox-Logs {
     Remove-Item -Recurse -Path "$Global:Destiny\$HOSTNAME\z_temp"
 }
 
+<###############################################################################>
+<############  LIVE OR OFFLINE SYSTEM  /  NO VOLATILE  /  TIME CONSUMING  ######>
+<###############################################################################>
+
+<########### D A N G E R O U S   E X T E N S I O N S #############################> # DEX
+Function Collect-Dangerous-Extensions {
+    
+    $extensions = "VB","VBS","PIF","BAT","CMD","JS","JSE","WS","WSF","WSC","WSH","PS1","PS1XML","PS2","PS2XML","PSC1","PSC2","MSH","MSH1","MSH2","MSHXML","MSH1XML","MSH2XML","SCF","LNK","INF","APPLICATION","GADGET","SCR","HTA","CPL", "MSI", "COM", "EXE"
+
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\FilesLists ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\FilesLists > $null }
+
+    Write-Host "[+] Collecting List of files with Dangerous extensions..." -ForegroundColor Green
+
+    foreach ($extension in $extensions)
+    {
+        try
+        {
+            Write-Host "`t└>$extension extension" -ForegroundColor Green
+
+            Get-ChildItem "$Global:Source`\" -File -Recurse "*.$extension" 2> $null | ForEach-Object {        # +- 14 mins | c: != c:\ therefore the `\
+                $_.FullName >> "$Global:Destiny\$HOSTNAME\FilesLists\Extension_$extension.txt"
+            }
+        } 
+        catch 
+        {
+            Report-Error -evidence "List of Extension $extension"
+        }
+    }
+
+}
 
 <########### S I G N E D   F I L E S ######################> # SFI <# TIME CONSUMING - Not by Default#>
 Function Collect-Sign-Files {
@@ -3469,15 +3453,15 @@ Function Collect-Sign-Files {
 <# MANAGE NO GUI EXECUTION #>
 Function Control-NOGUI{
 
-    # LIVE                                                                                                                                                                                                                 # mm:ss
+    # LIVE                                                                                                                                                                                                                        # mm:ss
 
-    if ($true         ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Time ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # 00:00
+    if ($true         ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Time ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                                    # 00:00
     
     if (         $Global:RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
     if ($All -or $Global:NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:20
     if ($All -or $Global:SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 00:??
-    if ($All -or $Global:STA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # ??:??
-    if ($All -or $Global:CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PSCommand-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
+    if ($All -or $Global:STA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
+    if ($All -or $Global:CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PSCommand-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                # ??:??
     if ($All -or $Global:INS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Installed-Software ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
     if ($All -or $Global:UGR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Users-Groups ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
     if ($All -or $Global:PER ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Persistence ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
@@ -3490,11 +3474,11 @@ Function Control-NOGUI{
     
     if ($All -or $Global:BAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-BAM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                              # ??:??
     
-    if ($All -or $Global:TLH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Timeline ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
+    
     if ($All -or $Global:RAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-RecentApps ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
     if ($All -or $Global:SYS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-System-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
 
-    if (         $Global:SFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Sign-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
+    
     if ($All -or $Global:LAC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Last-Activity ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
     if (         $Global:AFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Autorun-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 05:40
 
@@ -3510,11 +3494,8 @@ Function Control-NOGUI{
     
     if ($All -or $Global:FSF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-FileSystemFiles ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
     if ($All -or $Global:MSF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MemorySupportFiles ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
-    
-    
-    if (         $Global:DEX1 ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions1 ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
-    if (         $Global:DEX2 ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions2 ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
 
+    if ($All -or $Global:TLH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Timeline ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
 
     if ($All -or $Global:THA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-TextHarvester ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
     if ($All -or $Global:SRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-SRUM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
@@ -3535,9 +3516,11 @@ Function Control-NOGUI{
     if ($All -or $Global:COD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-OneDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
     if ($All -or $Global:CGD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-GoogleDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # ??:??
     if ($All -or $Global:CDB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-Dropbox-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
-     
+    
+    # Offline - Time Consuming 
 
-
+    if (         $Global:SFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Sign-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
+    if (         $Global:DEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
 }
 
 <# MANAGE GUI EXECTION #> 
@@ -3609,8 +3592,7 @@ Function Control-GUI {
     $Banner.Text += "  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒`n"
     
     $form.Controls.Add($Banner)
-
-
+    
     $form.Topmost = $true
 
     $form.Add_Shown({$textBox.Select()})
@@ -3691,7 +3673,7 @@ Function Show-Simple-Options-Resume {
     Write-Host ""
     Write-Host "  ═══════════════════════════════════════════ "
     Write-Host "                                              "
-    Write-Host "    Input information:                        "
+    Write-Host "    Input resume:                             "
     Write-Host "                                              "
     Write-Host "        GUI:         $GUI                     "
     Write-Host "        Source:      $Global:Source           "
@@ -3702,70 +3684,67 @@ Function Show-Simple-Options-Resume {
     Write-Host "                                              "
     Write-Host "        Collect:                              "
     Write-Host " "
-    if ($Global:RAM ) {Write-Host "            • RAM - Random Access Memory"}
-    if ($Global:SFI ) {Write-Host "            • SFI - Signed Files for folders \Windows and \windows\system32 (Time Consuming)"}
-    if ($Global:AFI ) {Write-Host "            • AFI - All Autorun Files (Time Consuming)"}
-    if ($Global:DEX ) {Write-Host "            • DEX"}
-    if ($All) {Write-Host "            • ALL"}
-    else
-    {
-        if ($Global:NET ) {Write-Host "            • NET"}
-        if ($Global:SAP ) {Write-Host "            • SAP"}
-        if ($Global:STA ) {Write-Host "            • STA"}
-        if ($Global:CPH ) {Write-Host "            • CPH"}
-        if ($Global:INS ) {Write-Host "            • INS"}
-        if ($Global:UGR ) {Write-Host "            • UGR"}
-        if ($Global:PER ) {Write-Host "            • PER"}
-        if ($Global:USB ) {Write-Host "            • USB"}
-        if ($Global:DEV ) {Write-Host "            • DEV"}
-        if ($Global:SEC ) {Write-Host "            • SEC"}
+    if ($Global:RAM ) {Write-Host "            • RAM - Random Access Memory."}
+    if ($Global:SFI ) {Write-Host "            • SFI - Signed Files for folders %SystemDrive%\Windows and %SystemDrive%\\windows\system32. (Time Consuming)"}
+    if ($Global:AFI ) {Write-Host "            • AFI - All Autorun Files. (Time Consuming)"}
+    if ($Global:DEX ) {Write-Host "            • DEX - Collect list of files with potential dangerous extensions.(Time Consuming)"}
+    if ($All) {Write-Host "            • ALL:"}
 
-        if ($Global:MRU ) {Write-Host "            • MRU"}
-        if ($Global:SHI ) {Write-Host "            • SHI"}
+    if ($Global:NET ) {Write-Host "            • NET - Network Information."}
+    if ($Global:SAP ) {Write-Host "            • SAP"}
+    if ($Global:STA ) {Write-Host "            • STA"}
+    if ($Global:CPH ) {Write-Host "            • CPH"}
+    if ($Global:INS ) {Write-Host "            • INS"}
+    if ($Global:UGR ) {Write-Host "            • UGR"}
+    if ($Global:PER ) {Write-Host "            • PER"}
+    if ($Global:USB ) {Write-Host "            • USB"}
+    if ($Global:DEV ) {Write-Host "            • DEV"}
+    if ($Global:SEC ) {Write-Host "            • SEC"}
+
+    if ($Global:MRU ) {Write-Host "            • MRU"}
+    if ($Global:SHI ) {Write-Host "            • SHI"}
         
-        if ($Global:BAM ) {Write-Host "            • BAM - Background Activity Moderator."}
+    if ($Global:BAM ) {Write-Host "            • BAM - Background Activity Moderator."}
     
-        if ($Global:TLH ) {Write-Host "            • TLH"}
-        if ($Global:RAP ) {Write-Host "            • RAP"}
-        if ($Global:SYS ) {Write-Host "            • SYS - System Information."}
-
-        if ($Global:LAC ) {Write-Host "            • LAC - Last Activity."}
-
-        if ($Global:LSE ) {Write-Host "            • LSE"}
-        if ($Global:PWD ) {Write-Host "            • PWD"}
-
-        # OFFLINE
-        if ($Global:HIV ) {Write-Host "            • HIV - HIVES."}
-        if ($Global:EVT ) {Write-Host "            • EVT - Windows Event Files."}
-        if ($Global:FIL ) {Write-Host "            • FIL - 3 sorted lists of all system files (Modification, Access, Creation). "}
-        if ($Global:PRF ) {Write-Host "            • PRF - Prefetch Files"}
-        if ($Global:WSE ) {Write-Host "            • WSE - Windows Search Engine file (Windows.edb) and conversion to CSV file."}
-        if ($Global:EET ) {Write-Host "            • EET - ETW (Event Tracing for Windows) and ETL (Event Trace Logs)."}
-        if ($Global:JLI ) {Write-Host "            • JLI - Automatic and Custom JumpLists."}
-        if ($Global:TIC ) {Write-Host "            • TIC - Thumbcache and Iconcache db files. Extraction of images and icons inside each db file."}
-        if ($Global:FSF ) {Write-Host "            • FSF - File System Files: `$MFT, `$UsnJrnl, `$LogFile"}
-        if ($Global:MSF ) {Write-Host "            • MSF - Memory Support Files: Hiberfil.sys, Pagefile.sys and Swapfile.sys"}
-
-        if ($Global:THA ) {Write-Host "            • THA"}
-        if ($Global:SRU ) {Write-Host "            • SRU"}
-        if ($Global:CRE ) {Write-Host "            • CRE"}
     
-        if ($Global:SKY ) {Write-Host "            • SKY"}
+    if ($Global:RAP ) {Write-Host "            • RAP"}
+    if ($Global:SYS ) {Write-Host "            • SYS - System Information."}
 
-        if ($Global:CHR ) {Write-Host "            • CHR"}
-        if ($Global:MFI ) {Write-Host "            • MFI"}
-        if ($Global:IEX ) {Write-Host "            • IEX"}
-        if ($Global:EDG ) {Write-Host "            • EDG"}
-        if ($Global:SAF ) {Write-Host "            • SAF"}
-        if ($Global:OPE ) {Write-Host "            • OPE"}
-        if ($Global:TOR ) {Write-Host "            • TOR"}
+    if ($Global:LAC ) {Write-Host "            • LAC - Last Activity."}
 
-        if ($Global:OUT ) {Write-Host "            • OUT"}
+    # OFFLINE
+    if ($Global:HIV ) {Write-Host "            • HIV - HIVE files."}
+    if ($Global:EVT ) {Write-Host "            • EVT - Windows Event Files."}
+    if ($Global:FIL ) {Write-Host "            • FIL - 3 sorted lists of all system files (Modification, Access, Creation). "}
+    if ($Global:PRF ) {Write-Host "            • PRF - Prefetch Files"}
+    if ($Global:WSE ) {Write-Host "            • WSE - Windows Search Engine file (Windows.edb) and conversion to CSV file."}
+    if ($Global:EET ) {Write-Host "            • EET - ETW (Event Tracing for Windows) and ETL (Event Trace Logs)."}
+    if ($Global:JLI ) {Write-Host "            • JLI - Automatic and Custom JumpLists."}
+    if ($Global:TIC ) {Write-Host "            • TIC - Thumbcache and Iconcache db files. Extraction of images and icons inside each db file."}
+    if ($Global:FSF ) {Write-Host "            • FSF - File System Files: `$MFT, `$UsnJrnl, `$LogFile"}
+    if ($Global:MSF ) {Write-Host "            • MSF - Memory Support Files: Hiberfil.sys, Pagefile.sys and Swapfile.sys"}
+    if ($Global:TLH ) {Write-Host "            • TLH - Timeline History.(Windows 10 only)"}
 
-        if ($Global:COD ) {Write-Host "            • COD"}
-        if ($Global:CGD ) {Write-Host "            • CGD"}
-        if ($Global:CDB ) {Write-Host "            • CDB"}
-    }
+    if ($Global:THA ) {Write-Host "            • THA"}
+    if ($Global:SRU ) {Write-Host "            • SRU"}
+    if ($Global:CRE ) {Write-Host "            • CRE"}
+    
+    if ($Global:SKY ) {Write-Host "            • SKY"}
+
+    if ($Global:CHR ) {Write-Host "            • CHR"}
+    if ($Global:MFI ) {Write-Host "            • MFI"}
+    if ($Global:IEX ) {Write-Host "            • IEX"}
+    if ($Global:EDG ) {Write-Host "            • EDG"}
+    if ($Global:SAF ) {Write-Host "            • SAF"}
+    if ($Global:OPE ) {Write-Host "            • OPE"}
+    if ($Global:TOR ) {Write-Host "            • TOR"}
+
+    if ($Global:OUT ) {Write-Host "            • OUT"}
+
+    if ($Global:COD ) {Write-Host "            • COD"}
+    if ($Global:CGD ) {Write-Host "            • CGD"}
+    if ($Global:CDB ) {Write-Host "            • CDB"}
+    
     Write-Host "  ═══════════════════════════════════════════"
     Write-Host ""
     $result = Read-Host "Please click <ENTER> to continue."
