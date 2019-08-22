@@ -2723,12 +2723,12 @@ Function Collect-Timeline {
     }
 }
 
-<########### T E X T   H A R V E S T E R #########################################> # THA
+<########### T E X T   H A R V E S T E R #########################################> # THA*
 Function Collect-TextHarvester { <# TODO: Have to activate this option in a OS an try it. #>
 
     Write-Host "[+] Collecting Text Harvester ..." -ForegroundColor Green
 
-    if( ($OS -like "8") -or ($OS -eq "10") ) 
+    if( ($OS -like "8*") -or ($OS -eq "10") ) 
     {
         foreach($u in $USERS)
         {
@@ -2770,17 +2770,18 @@ Function Collect-TextHarvester { <# TODO: Have to activate this option in a OS a
     }
 } 
 
-<########### S R U M #############################################################> # SRU
+<########### S R U M #############################################################> # SRU*
 Function Collect-SRUM {
 
     # SRUM - SYSTEM RESOURCE USAGE MONITOR 
+    Write-Host "[+] SRUM - System Resource Usage Monitor ..." -ForegroundColor Green
 
     if( Test-Path -Path "$Global:Source\Windows\System32\sru\SRUDB.dat") 
     {
-        # COLLECT THE RAW INFORMATION/EVIDENCE
+        # COLLECT THE RAW INFORMATION/EVIDENCE/ARTIFACT
         try 
         {
-            Write-Host "[+] Collecting - System Resource Usage Monitor (SRUM) ..." -ForegroundColor Green
+            Write-Host "`t[+] Collecting Data ..." -ForegroundColor Green
                 
             if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\SRUM\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\SRUM" > $null }
 
@@ -2788,14 +2789,12 @@ Function Collect-SRUM {
         } 
         catch 
         {
-            Report-Error -evidence "Collecting - System Resource Usage Monitor (SRUM)"
+            Report-Error -evidence "Collecting Data - System Resource Usage Monitor (SRUM)"
         }
 
-        # TREAT THE INFORMATION/EVIDENCE
+        # PARSE THE INFORMATION/EVIDENCE/ARTIFACT
         try
         {
-            Write-Host "[+] Treating - System Resource Usage Monitor (SRUM) ..." -ForegroundColor Green
-                
             if( -Not (Test-Path -Path "$Global:Destiny\$HOSTNAME\HIVES\SOFTWARE") ) # Collect HIVE SOFTWARE in case it was not collected yet
             {
                 Write-Host "`t[*] Collecting HIVE SOFTWARE ..." -ForegroundColor Yellow
@@ -2805,86 +2804,99 @@ Function Collect-SRUM {
                 & $RAW_EXE /FileNamePath:"$Global:Source\Windows\System32\config\SOFTWARE" /OutputPath:"$Global:Destiny\$HOSTNAME\HIVES" /OutputName:SOFTWARE > $null
             }
             
-            if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\SRUM\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\SRUM" > $null }
+            if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\SRUM\ParsedData" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\SRUM\ParsedData" > $null }
 
-            cmd.exe /c $SCRIPTPATH\bin\srum-dump\srum_dump.exe --SRUM_INFILE "$Global:Destiny\$HOSTNAME\SRUM\srudb.dat" --XLSX_OUTFILE "$Global:Destiny\$HOSTNAME\SRUM\SRUM.xlsx" --XLSX_TEMPLATE $SCRIPTPATH\bin\srum-dump\SRUM_TEMPLATE.xlsx --REG_HIVE "$Global:Destiny\$HOSTNAME\HIVES\SOFTWARE" > $null
-            cmd.exe /c $SCRIPTPATH\bin\srum-dump\srum_dump_csv.exe --SRUM_INFILE "$Global:Destiny\$HOSTNAME\SRUM\srudb.dat" --OUT_PATH "$Global:Destiny\$HOSTNAME\SRUM" --XLSX_TEMPLATE $SCRIPTPATH\bin\srum-dump\SRUM_TEMPLATE.xlsx --REG_HIVE "$Global:Destiny\$HOSTNAME\HIVES\SOFTWARE"  > $null
+            Write-Host "`t[+] Parsing Data ..." -ForegroundColor Green
+
+            cmd.exe /c $SCRIPTPATH\bin\srum-dump\srum_dump.exe --SRUM_INFILE "$Global:Destiny\$HOSTNAME\SRUM\srudb.dat" --XLSX_OUTFILE "$Global:Destiny\$HOSTNAME\SRUM\ParsedData\SRUM.xlsx" --XLSX_TEMPLATE $SCRIPTPATH\bin\srum-dump\SRUM_TEMPLATE.xlsx --REG_HIVE "$Global:Destiny\$HOSTNAME\HIVES\SOFTWARE" > $null
+            cmd.exe /c $SCRIPTPATH\bin\srum-dump\srum_dump_csv.exe --SRUM_INFILE "$Global:Destiny\$HOSTNAME\SRUM\srudb.dat" --OUT_PATH "$Global:Destiny\$HOSTNAME\SRUM\ParsedData" --XLSX_TEMPLATE $SCRIPTPATH\bin\srum-dump\SRUM_TEMPLATE.xlsx --REG_HIVE "$Global:Destiny\$HOSTNAME\HIVES\SOFTWARE"  > $null
+            
+            echo "" > $null
         }
         catch
         {
-            Report-Error -evidence "Treating - System Resource Usage Monitor (SRUM)"
+            Report-Error -evidence "Parsing Data - System Resource Usage Monitor (SRUM)"
         }
-
     }
     else
     {
         Write-Host "[-] No System Resource Usage Monitor (SRUM) found in the system ..." -ForegroundColor Yellow
     }
-
 }
 
-<########### C R E D E N T I A L S ###############################################> # CRE
+<########### C R E D E N T I A L S ###############################################> # CRE*
 Function Collect-Credentials {
 
-    # Credentials
+    Write-Host "[+] Credentials Stored in File System ..." -ForegroundColor Green
 
     foreach($u in $USERS)
     {
+        Write-Host "`t[+] User $u ..." -ForegroundColor Green
+        
         # COLLECT THE RAW INFORMATION/EVIDENCE
         try 
         {
-            Write-Host "[+] Collecting - Credentials Stored in File System ..." -ForegroundColor Green
-
+            Write-Host "`t`t[+] Collecting ..." -ForegroundColor Green
 
             # "C:\Users\<user>\AppData\Roaming\Microsoft\Credentials"
-            if("$Global:Source\Users\$u\AppData\Roaming\Microsoft\Credentials")
+            if(Test-Path -Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Credentials")
             {
                 if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Roaming" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Roaming" > $null }
 
-                $tempFileList1 = Get-ChildItem -Force "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Credentials" | ForEach-Object { $_.Name }
+                $tempFileList1 = Get-ChildItem -Force "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Credentials" 2> $null | ForEach-Object { $_.Name }
                 
                 foreach($file in $tempFileList1)
                 {
                     & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Roaming\Microsoft\Credentials\$file" /OutputPath:"$Global:Destiny\$HOSTNAME\Credentials\$u\Roaming" /OutputName:$file > $null
                 }
             }
+            else
+            {
+                Write-Host "`t`t`t[-] This user does not have Roaming Credentials ..." -ForegroundColor Yellow
+            }
 
             # "C:\Users\<user>\AppData\Local\Microsoft\Credentials"
-            if("$Global:Source\Users\$u\AppData\Local\Microsoft\Credentials")
+            if(Test-Path -Path "$Global:Source\Users\$u\AppData\Local\Microsoft\Credentials")
             {
                 if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Local" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Local" > $null }
 
-                $tempFileList2 = Get-ChildItem -Force "$Global:Source\Users\$u\AppData\Local\Microsoft\Credentials" | ForEach-Object { $_.Name }
+                $tempFileList2 = Get-ChildItem -Force "$Global:Source\Users\$u\AppData\Local\Microsoft\Credentials" 2> $null | ForEach-Object { $_.Name }
                 
                 foreach($file in $tempFileList2)
                 {
                     & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Credentials\$file" /OutputPath:"$Global:Destiny\$HOSTNAME\Credentials\$u\Local" /OutputName:$file  > $null
                 }
             }
-
+            else
+            {
+                Write-Host "`t`t`t[-] This user does not have Local Credentials ..." -ForegroundColor Yellow
+            }
         } 
         catch 
         {
             Report-Error -evidence "Collecting - Credentials Stored in File System"
         }
 
-        # TREAT THE INFORMATION/EVIDENCE
-        try
+        if(Test-Path -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\")
         {
-            Write-Host "[+] Treating - Credentials Stored in File System  ..." -ForegroundColor Green
-            Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-
+            # PARSE THE INFORMATION/EVIDENCE
+            try
+            {
+                if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Parsed" > $null }
+            
+                Write-Host "`t`t[+] Parsing ..." -ForegroundColor Green
+                Invoke-WCMDump | Out-File -FilePath "$Global:Destiny\$HOSTNAME\Credentials\$u\Parsed\Credentials.txt" 2> $null #TODO: if(LIVE)
+                # Write-Host " [DEVELOPING] ..." -ForegroundColor Yellow
+            }
+            catch
+            {
+                Report-Error -evidence "Treating - Credentials Stored in File System"
+            }
         }
-        catch
-        {
-            Report-Error -evidence "Treating - Credentials Stored in File System"
-        }
-
     }
-
 }
 
-<########### S K Y P E ###########################################################> #SKY 
+<########### S K Y P E ###########################################################> # SKY 
 Function Collect-Skype-History {
 
     $blacklist = "Content","DataRv","logs","RootTools"
@@ -3741,18 +3753,18 @@ Function Show-Simple-Options-Resume {
     if ($Global:HIV ) {Write-Host "            • HIV - HIVE files."}
     if ($Global:EVT ) {Write-Host "            • EVT - Windows Event Files."}
     if ($Global:FIL ) {Write-Host "            • FIL - 3 sorted lists of all system files (Modification, Access, Creation). "}
-    if ($Global:PRF ) {Write-Host "            • PRF - Prefetch Files"}
+    if ($Global:PRF ) {Write-Host "            • PRF - Prefetch Files."}
     if ($Global:WSE ) {Write-Host "            • WSE - Windows Search Engine file (Windows.edb) and conversion to CSV file."}
     if ($Global:EET ) {Write-Host "            • EET - ETW (Event Tracing for Windows) and ETL (Event Trace Logs)."}
     if ($Global:JLI ) {Write-Host "            • JLI - Automatic and Custom JumpLists."}
     if ($Global:TIC ) {Write-Host "            • TIC - Thumbcache and Iconcache db files. Extraction of images and icons inside each db file."}
-    if ($Global:FSF ) {Write-Host "            • FSF - File System Files: `$MFT, `$UsnJrnl, `$LogFile"}
-    if ($Global:MSF ) {Write-Host "            • MSF - Memory Support Files: Hiberfil.sys, Pagefile.sys and Swapfile.sys"}
+    if ($Global:FSF ) {Write-Host "            • FSF - File System Files: `$MFT, `$UsnJrnl, `$LogFile."}
+    if ($Global:MSF ) {Write-Host "            • MSF - Memory Support Files: Hiberfil.sys, Pagefile.sys and Swapfile.sys."}
     if ($Global:TLH ) {Write-Host "            • TLH - Timeline History.(Windows 10 only)"}
 
-    if ($Global:THA ) {Write-Host "            • THA"}
-    if ($Global:SRU ) {Write-Host "            • SRU"}
-    if ($Global:CRE ) {Write-Host "            • CRE"}
+    if ($Global:THA ) {Write-Host "            • THA - TextHarvester (WaitList.dat)."}
+    if ($Global:SRU ) {Write-Host "            • SRU - System Resource Usage Monitor."}
+    if ($Global:CRE ) {Write-Host "            • CRE - Web and Windows Credentials stored in Credentials Manager."}
     
     if ($Global:SKY ) {Write-Host "            • SKY"}
 
@@ -3809,6 +3821,271 @@ Function Test-RegistryValue {
     $regvalue = Get-ItemProperty $Path $Value -ErrorAction SilentlyContinue
 
     return ($? -and ($regvalue -ne $null))
+}
+
+Function Invoke-WCMDump{
+      
+      <#
+      .SYNOPSIS
+         Dumps Windows credentials from the Windows Credential Manager for the current user.
+         Author:  Barrett Adams (@peewpw)
+      .DESCRIPTION
+        Enumerates Windows credentials in the Credential Manager and then extracts available
+        information about each one. Passwords can be retrieved for "Generic" type credentials,
+        but not for "Domain" type credentials.
+      .EXAMPLE
+        PS>Import-Module .\Invoke-WCMDump.ps1
+        PS>Invoke-WCMDump
+            Username         : testusername
+            Password         : P@ssw0rd!
+            Target           : TestApplication
+            Description      :
+            LastWriteTime    : 12/9/2017 4:46:50 PM
+            LastWriteTimeUtc : 12/9/2017 9:46:50 PM
+            Type             : Generic
+            PersistenceType  : Enterprise
+      #>
+
+    $source = @"
+    // C# modified from https://github.com/spolnik/Simple.CredentialsManager
+
+    using Microsoft.Win32.SafeHandles;
+    using System;
+    using System.Collections.Generic;
+    using System.Runtime.InteropServices;
+    using System.Security.Permissions;
+
+    public class Credential : IDisposable
+    {
+        private static readonly object LockObject = new object();
+        private static readonly SecurityPermission UnmanagedCodePermission;
+        private string description;
+        private DateTime lastWriteTime;
+        private string password;
+        private PersistenceType persistenceType;
+        private string target;
+        private CredentialType type;
+        private string username;
+        static Credential()
+        {
+            lock (LockObject)
+            {
+                UnmanagedCodePermission = new SecurityPermission(SecurityPermissionFlag.UnmanagedCode);
+            }
+        }
+
+        public Credential(string username, string password, string target, CredentialType type)
+        {
+            Username = username;
+            Password = password;
+            Target = target;
+            Type = type;
+            PersistenceType = PersistenceType.Session;
+            lastWriteTime = DateTime.MinValue;
+        }
+
+        public string Username
+        {
+            get { return username; }
+            set { username = value; }
+        }
+
+        public string Password
+        {
+            get { return password; }
+            set { password = value; }
+        }
+
+        public string Target
+        {
+            get { return target; }
+            set { target = value; }
+        }
+
+        public string Description
+        {
+            get { return description; }
+            set { description = value; }
+        }
+
+        public DateTime LastWriteTime
+        {
+            get { return LastWriteTimeUtc.ToLocalTime(); }
+        }
+
+        public DateTime LastWriteTimeUtc
+        {
+            get { return lastWriteTime; }
+            private set { lastWriteTime = value; }
+        }
+
+        public CredentialType Type
+        {
+            get { return type; }
+            set { type = value; }
+        }
+
+        public PersistenceType PersistenceType
+        {
+            get { return persistenceType; }
+            set { persistenceType = value; }
+        }
+
+        public void Dispose() { }
+
+        public bool Load()
+        {
+            UnmanagedCodePermission.Demand();
+
+            IntPtr credPointer;
+
+            Boolean result = NativeMethods.CredRead(Target, Type, 0, out credPointer);
+            if (!result)
+                return false;
+
+            using (NativeMethods.CriticalCredentialHandle credentialHandle = new NativeMethods.CriticalCredentialHandle(credPointer))
+            {
+                LoadInternal(credentialHandle.GetCredential());
+            }
+
+            return true;
+        }
+
+        public static IEnumerable<Credential> LoadAll()
+        {
+            UnmanagedCodePermission.Demand();
+            
+            IEnumerable<NativeMethods.CREDENTIAL> creds = NativeMethods.CredEnumerate();
+            List<Credential> credlist = new List<Credential>();
+            
+            foreach (NativeMethods.CREDENTIAL cred in creds)
+            {
+                Credential fullCred = new Credential(cred.UserName, null, cred.TargetName, (CredentialType)cred.Type);
+                if (fullCred.Load())
+                    credlist.Add(fullCred);
+            }
+
+            return credlist;
+        }
+
+        internal void LoadInternal(NativeMethods.CREDENTIAL credential)
+        {
+            Username = credential.UserName;
+
+            if (credential.CredentialBlobSize > 0)
+            {
+                Password = Marshal.PtrToStringUni(credential.CredentialBlob, credential.CredentialBlobSize / 2);
+            }
+
+            Target = credential.TargetName;
+            Type = (CredentialType)credential.Type;
+            PersistenceType = (PersistenceType)credential.Persist;
+            Description = credential.Comment;
+            LastWriteTimeUtc = DateTime.FromFileTimeUtc(credential.LastWritten);
+        }
+    }
+
+    public class NativeMethods
+    {
+        [DllImport("Advapi32.dll", EntryPoint = "CredReadW", CharSet = CharSet.Unicode, SetLastError = true)]
+        internal static extern bool CredRead(string target, CredentialType type, int reservedFlag, out IntPtr credentialPtr);
+
+        [DllImport("Advapi32.dll", EntryPoint = "CredFree", SetLastError = true)]
+        internal static extern void CredFree([In] IntPtr cred);
+
+        [DllImport("Advapi32.dll", EntryPoint = "CredEnumerate", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool CredEnumerate(string filter, int flag, out int count, out IntPtr pCredentials);
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct CREDENTIAL
+        {
+            public int Flags;
+            public int Type;
+            [MarshalAs(UnmanagedType.LPWStr)] public string TargetName;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Comment;
+            public long LastWritten;
+            public int CredentialBlobSize;
+            public IntPtr CredentialBlob;
+            public int Persist;
+            public int AttributeCount;
+            public IntPtr Attributes;
+            [MarshalAs(UnmanagedType.LPWStr)] public string TargetAlias;
+            [MarshalAs(UnmanagedType.LPWStr)] public string UserName;
+        }
+
+        internal static IEnumerable<CREDENTIAL> CredEnumerate()
+        {
+            int count;
+            IntPtr pCredentials;
+            Boolean ret = CredEnumerate(null, 0, out count, out pCredentials);
+
+            if (ret == false)
+                throw new Exception("Failed to enumerate credentials");
+
+            List<CREDENTIAL> credlist = new List<CREDENTIAL>();
+            IntPtr credential = new IntPtr();
+            for (int n = 0; n < count; n++)
+            {
+                credential = Marshal.ReadIntPtr(pCredentials, n * Marshal.SizeOf(typeof(IntPtr)));
+                credlist.Add((CREDENTIAL)Marshal.PtrToStructure(credential, typeof(CREDENTIAL)));
+            }
+
+            return credlist;
+        }
+
+        internal sealed class CriticalCredentialHandle : CriticalHandleZeroOrMinusOneIsInvalid
+        {
+            internal CriticalCredentialHandle(IntPtr preexistingHandle)
+            {
+                SetHandle(preexistingHandle);
+            }
+
+            internal CREDENTIAL GetCredential()
+            {
+                if (!IsInvalid)
+                {
+                    return (CREDENTIAL)Marshal.PtrToStructure(handle, typeof(CREDENTIAL));
+                }
+
+                throw new InvalidOperationException("Invalid CriticalHandle!");
+            }
+
+            protected override bool ReleaseHandle()
+            {
+                if (!IsInvalid)
+                {
+                    CredFree(handle);
+                    SetHandleAsInvalid();
+                    return true;
+                }
+                return false;
+            }
+        }
+    }
+
+    public enum CredentialType : uint
+    {
+        None = 0,
+        Generic = 1,
+        DomainPassword = 2,
+        DomainCertificate = 3,
+        DomainVisiblePassword = 4,
+        GenericCertificate = 5,
+        DomainExtended = 6,
+        Maximum = 7,
+        CredTypeMaximum = Maximum+1000
+    }
+
+    public enum PersistenceType : uint
+    {
+        Session = 1,
+        LocalComputer = 2,
+        Enterprise = 3
+    }
+"@
+    $add = Add-Type -TypeDefinition $source -Language CSharp -PassThru
+    $loadAll = [Credential]::LoadAll()
+    Write-Output $loadAll
 }
 
 <##################################################################################################################################>

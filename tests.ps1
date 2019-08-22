@@ -39,19 +39,17 @@ Function Report-Error {
 
 ###################################################################
 
-Workflow Test-Workflow {
-    echo Nuno
-}
 
 
-$ws = New-PSWorkflowSession
+            Write-Host "`t`t[+] Parsing ..." -ForegroundColor Green
+            Import-Module "$SCRIPTPATH\bin\Invoke-WCMDump-master\Invoke-WCMDump.ps1"
+            Invoke-WCMDump > "$Global:Destiny\$HOSTNAME\Credentials\$u\Parsed\Credentials.txt" 2> $null #TODO: if(LIVE)
 
-Invoke-Command -Session $ws {Test-Workflow}
 
 ###################################################################
 
 $ScriptTime = [Diagnostics.Stopwatch]::StartNew();  
-Invoke-Command Collect-Dangerous-Extensions
+
 $ScriptTime.Stop(); 
 Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)"
 
