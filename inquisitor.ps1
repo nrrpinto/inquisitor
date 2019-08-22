@@ -241,6 +241,9 @@ TIME CONSUMING: Depending on the computer and disk can go easly over 20 minutes.
     <# Collects Data from conversations using SKYPE. #>
     [switch]$SKY=$false,
 
+    
+    <# Collects emails storage file from OUTLOOK. #>
+    [switch]$EMA=$false,
 
     <# Collects Browsing data from Chrome Web Browser. #>
     [switch]$CHR=$false,
@@ -264,8 +267,6 @@ TIME CONSUMING: Depending on the computer and disk can go easly over 20 minutes.
     [switch]$TOR=$false,
 
 
-    <# Collects emails storage file from OUTLOOK. #>
-    [switch]$OUT=$false,
 
 
     <# Collects logs from OneDrive cloud app. #>
@@ -316,7 +317,6 @@ $Global:LSE=$LSE
 $Global:PWD=$PWD  
 
 ##### THIRD PARTY TOOLS    
-
       
 $Global:LAC=$LAC         
 $Global:AFI=$AFI       
@@ -333,15 +333,13 @@ $Global:TIC=$TIC
 
 $Global:FSF=$FSF         
 $Global:MSF=$MSF
-          
-
-
         
 $Global:THA=$THA
 $Global:SRU=$SRU
 $Global:CRE=$CRE
 
 $Global:SKY=$SKY
+$Global:EMA=$EMA
 
 $Global:CHR=$CHR
 $Global:MFI=$MFI
@@ -350,8 +348,6 @@ $Global:EDG=$EDG
 $Global:SAF=$SAF
 $Global:OPE=$OPE
 $Global:TOR=$TOR
-
-$Global:OUT=$OUT
 
 $Global:COD=$COD
 $Global:CGD=$CGD
@@ -2103,7 +2099,6 @@ Function Collect-Autorun-Files {
 <##################################################################################################################################>
 
 
-
 <########### H I V E S ###########################################################> # HIV*
 Function Collect-Hives {
 
@@ -2896,7 +2891,7 @@ Function Collect-Credentials {
     }
 }
 
-<########### S K Y P E ###########################################################> # SKY 
+<########### S K Y P E ###########################################################> # SKY*
 Function Collect-Skype-History {
 
     $blacklist = "Content","DataRv","logs","RootTools"
@@ -2981,29 +2976,31 @@ Function Collect-Skype-History {
     }
 }
 
-<########### O U T L O O K ###################################> # OUT
-Function Collect-Outlook-Files {
+<########### O U T L O O K #######################################################> # EMA*
+Function Collect-Email-Files {
 
-    # TODO: Check if it's reliable instead to search for the entire disk for OST and PST files, get their path and copy them
-    #  Get-ChildItem C: -Recurse *.pst
-    
-    Write-Host "[+] Collecting OUTLOOK files." -ForegroundColor Green
+    Write-Host "[+] Collecting Email files." -ForegroundColor Green
+
+    $existingEmails = ""
+
+    Write-Host "`t[+] OUTLOOK folders." -ForegroundColor Green
 
     foreach($u in $USERS)
     {
         if( Test-Path -Path "$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\")
         {
-            if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\OUTLOOK\$u ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\OUTLOOK\$u > $null }
+            if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\EmailFiles\$u ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\EmailFiles\$u > $null }
         
             <# OST Files #>
             Get-ChildItem "$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\" -Filter *.ost | ForEach-Object {
                 try
                 {
                     $email_file = ($_.FullName).Split("\")[7]
+                    $existingEmails += $email_file
+
+                    Write-Host "`t`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
                     
-                    Write-Host "`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
-                    
-                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\OUTLOOK\$u" /OutputName:$email_file > $null
+                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\EmailFiles\$u" /OutputName:$email_file > $null
                 } 
                 catch 
                 {
@@ -3017,10 +3014,11 @@ Function Collect-Outlook-Files {
                 try
                 {
                     $email_file = ($_.FullName).Split("\")[7]
+                    $existingEmails += $email_file
+
+                    Write-Host "`t`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
                     
-                    Write-Host "`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
-                    
-                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\OUTLOOK\$u" /OutputName:$email_file > $null
+                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\EmailFiles\$u" /OutputName:$email_file > $null
                 } 
                 catch 
                 {
@@ -3028,6 +3026,49 @@ Function Collect-Outlook-Files {
                 }
             }
         }
+    }
+
+    # Find PST files in other locations
+    try
+    {
+        Write-Host "`t[+] Searching other PST files ..." -ForegroundColor Green
+
+        Get-ChildItem "$Global:Source`\" -Recurse *.pst 2> $null | ForEach-Object {
+            if (-not ($_.Name -in $existingEmails))
+            {
+                Write-Host "`t`t[+] Found one $($_.FullName) ..." -ForegroundColor Green
+
+                if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles > $null }
+                
+                & $RAW_EXE /FileNamePath:"$($_.FullName)" /OutputPath:"$Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles" /OutputName:"$($_.Name)" > $null
+            }
+        }
+        
+    }
+    catch
+    {
+        Report-Error -evidence "Lost PST email file."
+    }
+
+    # Find OST files in other locations
+    try
+    {
+        Write-Host "`t[+] Searching other OST files ..." -ForegroundColor Green
+
+        Get-ChildItem "$Global:Source`\" -Recurse *.ost 2> $null | ForEach-Object {
+            if (-not ($_.Name -in $existingEmails))
+            {
+                Write-Host "`t`t[+] Found one $_.FullName ..." -ForegroundColor Green
+
+                if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles > $null }
+                
+                & $RAW_EXE /FileNamePath:"$($_.FullName)" /OutputPath:"$Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles" /OutputName:"$($_.Name)" > $null
+            }
+        }
+    }
+    catch
+    {
+        Report-Error -evidence "Lost OST email file."
     }
 }
 
@@ -3539,6 +3580,8 @@ Function Control-NOGUI{
     if ($All -or $Global:CRE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Credentials ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
     
     if ($All -or $Global:SKY ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Skype-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
+    if ($All -or $Global:EMA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Email-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 04:00
+
 
     if ($All -or $Global:CHR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Chrome-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
     if ($All -or $Global:MFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firefox-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
@@ -3548,7 +3591,7 @@ Function Control-NOGUI{
     if ($All -or $Global:OPE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Opera-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
     if ($All -or $Global:TOR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Tor-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
 
-    if ($All -or $Global:OUT ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Outlook-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
+    
 
     if ($All -or $Global:COD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-OneDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
     if ($All -or $Global:CGD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-GoogleDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # ??:??
@@ -3766,7 +3809,9 @@ Function Show-Simple-Options-Resume {
     if ($Global:SRU ) {Write-Host "            • SRU - System Resource Usage Monitor."}
     if ($Global:CRE ) {Write-Host "            • CRE - Web and Windows Credentials stored in Credentials Manager."}
     
-    if ($Global:SKY ) {Write-Host "            • SKY"}
+    if ($Global:SKY ) {Write-Host "            • SKY - Skype conversations."}
+    if ($Global:OUT ) {Write-Host "            • EMA - Email files. (Outlook folders and from everywhere else in the system)."}
+
 
     if ($Global:CHR ) {Write-Host "            • CHR"}
     if ($Global:MFI ) {Write-Host "            • MFI"}
@@ -3776,7 +3821,7 @@ Function Show-Simple-Options-Resume {
     if ($Global:OPE ) {Write-Host "            • OPE"}
     if ($Global:TOR ) {Write-Host "            • TOR"}
 
-    if ($Global:OUT ) {Write-Host "            • OUT"}
+    
 
     if ($Global:COD ) {Write-Host "            • COD"}
     if ($Global:CGD ) {Write-Host "            • CGD"}

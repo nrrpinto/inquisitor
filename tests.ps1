@@ -41,15 +41,17 @@ Function Report-Error {
 
 
 
-            Write-Host "`t`t[+] Parsing ..." -ForegroundColor Green
-            Import-Module "$SCRIPTPATH\bin\Invoke-WCMDump-master\Invoke-WCMDump.ps1"
-            Invoke-WCMDump > "$Global:Destiny\$HOSTNAME\Credentials\$u\Parsed\Credentials.txt" 2> $null #TODO: if(LIVE)
 
 
 ###################################################################
 
 $ScriptTime = [Diagnostics.Stopwatch]::StartNew();  
+Get-ChildItem C:\ -Recurse *.pst 2> $null
+$ScriptTime.Stop(); 
+Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)"
 
+$ScriptTime = [Diagnostics.Stopwatch]::StartNew();  
+Get-ChildItem C:\ -Recurse *.ost 2> $null
 $ScriptTime.Stop(); 
 Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)"
 
