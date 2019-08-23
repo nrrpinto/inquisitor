@@ -43,7 +43,7 @@ $ScriptTime = [Diagnostics.Stopwatch]::StartNew();
 
 
 Get-ChildItem "C:\Users\Nuno Pinto\AppData\Local\Google\Chrome\User Data" | ForEach-Object {
-    if($_.Name -contains "Profile") { Write-Host "THIS IS ONE: $($_.Name)"}
+    if($_.Name -match "Profile") { Write-Host "THIS IS ONE: $($_.Name)"}
 }
 
 

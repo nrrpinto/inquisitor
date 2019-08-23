@@ -1270,7 +1270,7 @@ Function Collect-MRUs {
 <########### MUI CACHE #############################> # N/A - Used with MRUs*
 Function Collect-MUICache {
     
-    Write-Host "`t[+] Collecting MUICACHE" -ForegroundColor Green
+    Write-Host "`t○ Collecting MUICACHE" -ForegroundColor Green
     try
     {
         & "$SCRIPTPATH\bin\muicacheview\MUICacheView.exe" /shtml "$Global:Destiny\$HOSTNAME\MRUs\MuiCache.html"
@@ -1284,7 +1284,7 @@ Function Collect-MUICache {
 <########### RECENT DOCS - Third Party #############> # N/A - Used with MRUs*
 Function Collect-RecentDocs1 {
     
-    Write-Host "`t[+] Collecting RECENT DOCS - Third Party Tool" -ForegroundColor Green
+    Write-Host "`t○ Collecting RECENT DOCS - Third Party Tool" -ForegroundColor Green
     try
     {
         & "$SCRIPTPATH\bin\recentfilesview\RecentFilesView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\RecentDocs.html"
@@ -1309,7 +1309,7 @@ Function Collect-RecentDocs2 {
 
             if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
             
-            Write-Host "`t[+] Collecting RECENT DOCS from $NAME - From Registry" -ForegroundColor Green
+            Write-Host "`t○ Collecting RECENT DOCS from $NAME - From Registry" -ForegroundColor Green
 
             echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
             echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
@@ -1395,7 +1395,7 @@ Function Collect-CIDSizeMRU {
 
             if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
             
-            Write-Host "`t[+] CIDSizeMRU from $NAME" -ForegroundColor Green
+            Write-Host "`t○ CIDSizeMRU from $NAME" -ForegroundColor Green
 
             echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
             echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
@@ -1459,7 +1459,7 @@ Function Collect-CIDSizeMRU {
 <########### USER ASSIST ###########################> # N/A - Used with MRUs*
 Function Collect-OpenSavePidlMRU {
     
-    Write-Host "`t[+] Collecting OpenSavePidlMRU" -ForegroundColor Green
+    Write-Host "`t○ Collecting OpenSavePidlMRU" -ForegroundColor Green
     try
     {
         & $OPEN_SAVED_FILES_VIEW /shtml "$Global:Destiny\$HOSTNAME\MRUs\OpenSavePidlMRU.html"
@@ -1473,7 +1473,7 @@ Function Collect-OpenSavePidlMRU {
 <########### USER ASSIST ###########################> # N/A - Used with MRUs*
 Function Collect-UserAssist {
     
-    Write-Host "`t[+] Collecting User Assist ..." -ForegroundColor Green
+    Write-Host "`t○ Collecting User Assist ..." -ForegroundColor Green
     try
     {
         & "$SCRIPTPATH\bin\userassistview\UserAssistView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\User_Assist.html"
@@ -1487,7 +1487,7 @@ Function Collect-UserAssist {
 <########### SHELLBAGS #############################> # N/A - Used with MRUs*
 Function Collect-ShellBags {
     
-    Write-Host "`t[+] Collecting ShellBags ..." -ForegroundColor Green
+    Write-Host "`t○ Collecting ShellBags ..." -ForegroundColor Green
     try
     {
         & "$SCRIPTPATH\bin\shellbagsview\ShellBagsView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\ShellBags.html"
@@ -1510,7 +1510,7 @@ Function Collect-COMDLG32-LastVisitedPidlMRU {
 
             if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
 
-            Write-Host "`t[+] LastVisitedPidlMRU from $NAME" -ForegroundColor Green
+            Write-Host "`t○ LastVisitedPidlMRU from $NAME" -ForegroundColor Green
 
             echo " "                                                                                                                 >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
             echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU"                    >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_LastVisitedPidMRU.txt"
@@ -1587,7 +1587,7 @@ Function Collect-RunDialogBoxMRU {
             if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
 
             # RUN MRU
-            Write-Host "`t[+] RunMRU from $NAME" -ForegroundColor Green
+            Write-Host "`t○ RunMRU from $NAME" -ForegroundColor Green
 
             echo " "                                                                                                    > "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
             echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU"                           >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
@@ -1627,7 +1627,7 @@ Function Collect-RunDialogBoxMRU {
 Function Collect-Shimcache {
     #  [System.Text.Encoding]::Default.GetString((Get-ItemPropertyValue "REGISTRY::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\AppCompatCache" -Name AppCompatCache))
 
-    Write-Host "`t[+] Collecting Shimcache Information ... " -ForegroundColor Green
+    Write-Host "`t○ Collecting Shimcache Information ... " -ForegroundColor Green
 
     if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\" > $null }
 
@@ -1921,7 +1921,7 @@ Function Collect-RecentApps {
                 $NAME = $($N.Split("\")[2])
 
                 if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$NAME" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$NAME" > $null }
-                Write-Host "`t[+] Collecting Recent Apps info from $NAME" -ForegroundColor Green
+                Write-Host "`t○ Collecting Recent Apps info from $NAME" -ForegroundColor Green
 
                 if( Test-Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Search\RecentApps\")
                 {
@@ -2042,7 +2042,7 @@ Function Collect-System-Info {
     }
 
     # https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables?view=powershell-6
-    Write-Host "`t[+] Environment Variables ..." -ForegroundColor Green
+    Write-Host "`t○ Environment Variables ..." -ForegroundColor Green
     try
     {
         echo ""                                    > "$Global:Destiny\$HOSTNAME\System_Info\Environment_Variables.txt"
@@ -2220,11 +2220,11 @@ Function Collect-Files-Lists {
 
     try{
         Write-Host "[+] Collecting List of Files of the System ... " -ForegroundColor Green
-        Write-Host "`t[+] List of Files sorted by Modification Date ... " -ForegroundColor Green
+        Write-Host "`t○ List of Files sorted by Modification Date ... " -ForegroundColor Green
         cmd.exe /c dir /t:w /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FilesLists\FileList_Sorted_Modification_Date.txt"
-        Write-Host "`t[+] List of Files sorted by Last Access Date ... " -ForegroundColor Green
+        Write-Host "`t○ List of Files sorted by Last Access Date ... " -ForegroundColor Green
         cmd.exe /c dir /t:a /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FilesLists\FileList_Sorted_Last_Access.txt"
-        Write-Host "`t[+] List of Files sorted by Creation Date ... " -ForegroundColor Green
+        Write-Host "`t○ List of Files sorted by Creation Date ... " -ForegroundColor Green
         cmd.exe /c dir /t:c /a /s /o:d $Global:Source\ > "$Global:Destiny\$HOSTNAME\FilesLists\FileList_Sorted_Creation_Date.txt"
     
     } catch {
@@ -2265,7 +2265,7 @@ Function Collect-Windows-Search {
             Report-Error -evidence "Collecting Windows Search File windows.edb"
         }
         
-        Write-Host "`t[+] Converting Windows Search File windows.edb to CSV file ... " -ForegroundColor Green
+        Write-Host "`t○ Converting Windows Search File windows.edb to CSV file ... " -ForegroundColor Green
         try
         {
             if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Windows_Search\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Windows_Search\ > $null }
@@ -2343,7 +2343,7 @@ Function Collect-JumpLists {
             # Automatic Destinations
             if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\AutomaticDestinations")
             {
-                Write-Host "`t[+] Collecting Automatic Jump Lists for user $u ..." -ForegroundColor Green
+                Write-Host "`t○ Collecting Automatic Jump Lists for user $u ..." -ForegroundColor Green
 
                 # Copies Automatic Destinations
                 if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_AutomaticDestinations" > $null }    
@@ -2360,7 +2360,7 @@ Function Collect-JumpLists {
                 # Treating Automatic Destinations
                 if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u" > $null }    
 
-                Write-Host "`t[+] Parsing Automatic Jump Lists for user $u ..." -ForegroundColor Green
+                Write-Host "`t○ Parsing Automatic Jump Lists for user $u ..." -ForegroundColor Green
                 
                 echo "File Name, Full Path, Last Modified, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Entry ID, Pos. MRU, Appication ID, Application Name, Mac Address, File Extension, Computer Name, Network Share Name, Drive Type, Volume Label, Volume SN, Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Auto.csv"
 
@@ -2413,7 +2413,7 @@ Function Collect-JumpLists {
             # Custom Destinations
             if( Test-Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\Recent\CustomDestinations")
             {
-                Write-Host "`t[+] Collecting Custom Jump Lists for user $u ..." -ForegroundColor Green
+                Write-Host "`t○ Collecting Custom Jump Lists for user $u ..." -ForegroundColor Green
 
                 # Copies Custom Destinations
                 if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u\JumpLists_CustomDestinations" > $null }    
@@ -2430,7 +2430,7 @@ Function Collect-JumpLists {
                 # Treating Custom Destinations
                 if( -not (Test-Path "$Global:Destiny\$HOSTNAME\MRUs\$u") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\MRUs\$u" > $null }
                 
-                Write-Host "`t[+] Parsing Custom Jump Lists for user $u ..." -ForegroundColor Green
+                Write-Host "`t○ Parsing Custom Jump Lists for user $u ..." -ForegroundColor Green
                 
                 echo "App ID, App Name, Creation Date, Accessed Date, Modification date, File Attributes, File Size, Network Share Name, Drive Type, Volume Label, Volume SN , Jump List Filename " > "$Global:Destiny\$HOSTNAME\MRUs\$u\JumplLists_Custom.csv"
 
@@ -2480,7 +2480,7 @@ Function Collect-Thumcache-Iconcache {
     foreach($u in $USERS)
     {
         # THUMBCACHE
-        Write-Host "`t[+] Thumbcache files from user $u." -ForegroundColor Green
+        Write-Host "`t○ Thumbcache files from user $u." -ForegroundColor Green
         New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Thumbcache" > $null
         
         try
@@ -2492,7 +2492,7 @@ Function Collect-Thumcache-Iconcache {
             Report-Error -evidence "Thumbcache and Iconcache files"
         }
 
-        Write-Host "`t[+] Extracting images from Thumbcache files from user $u." -ForegroundColor Green
+        Write-Host "`t○ Extracting images from Thumbcache files from user $u." -ForegroundColor Green
         
         New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\Images_Thumbcache" > $null
         
@@ -2508,7 +2508,7 @@ Function Collect-Thumcache-Iconcache {
         }
 
         # ICONCACHE
-        Write-Host "`t[+] Iconcache files from user $u." -ForegroundColor Green
+        Write-Host "`t○ Iconcache files from user $u." -ForegroundColor Green
         New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\DB_Iconcache" > $null
 
         try
@@ -2520,7 +2520,7 @@ Function Collect-Thumcache-Iconcache {
             Report-Error -evidence "Thumbcache and Iconcache files"
         }
         
-        Write-Host "`t[+] Extracting icons from Iconcache files from user $u." -ForegroundColor Green
+        Write-Host "`t○ Extracting icons from Iconcache files from user $u." -ForegroundColor Green
         New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Thumbcache_Iconcache\$u\Images_Iconcache" > $null
 
         try
@@ -2553,7 +2553,7 @@ Function Collect-MFT {
     
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" > $null }
 
-    Write-Host "`t[+] Collecting `$MFT file. " -ForegroundColor Green
+    Write-Host "`t○ Collecting `$MFT file. " -ForegroundColor Green
 
     try
     {
@@ -2570,7 +2570,7 @@ Function Collect-UsnJrnl {
 
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" > $null }
 
-    Write-Host "`t[+] Collecting `$UsnJrnl file." -ForegroundColor Green
+    Write-Host "`t○ Collecting `$UsnJrnl file." -ForegroundColor Green
 
     try
     {
@@ -2588,7 +2588,7 @@ Function Collect-LogFile {
 
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\FileSystemFiles\" > $null }
 
-    Write-Host "`t[+] Collecting `$LogFile file." -ForegroundColor Green
+    Write-Host "`t○ Collecting `$LogFile file." -ForegroundColor Green
 
     try
     {
@@ -2618,7 +2618,7 @@ Function Collect-Hiberfil {
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" > $null }
 
     # hiberfil.sys
-    Write-Host "`t[+] Collecting hiberfil.sys file." -ForegroundColor Green
+    Write-Host "`t○ Collecting hiberfil.sys file." -ForegroundColor Green
 
     try
     {
@@ -2636,7 +2636,7 @@ Function Collect-Pagefile {
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" > $null }
 
     # pagefile.sys
-    Write-Host "`t[+] Collecting pagefile.sys file." -ForegroundColor Green
+    Write-Host "`t○ Collecting pagefile.sys file." -ForegroundColor Green
 
     try
     {
@@ -2655,7 +2655,7 @@ Function Collect-Swapfile {
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MemorySupportFiles\" > $null }
 
     # swapfile.sys
-    Write-Host "`t[+] Collecting swapfile.sys file." -ForegroundColor Green
+    Write-Host "`t○ Collecting swapfile.sys file." -ForegroundColor Green
 
     try
     {
@@ -2690,7 +2690,7 @@ Function Collect-Timeline {
                         
                         try
                         {
-                            Write-Host "`t[+] Timeline History from user $u..." -ForegroundColor Green
+                            Write-Host "`t○ Timeline History from user $u..." -ForegroundColor Green
                             & cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\ConnectedDevicesPlatform\$($_.Name)\*.*" "$Global:Destiny\$HOSTNAME\Timeline_History\$u" > $null
                         }
                         catch
@@ -2700,7 +2700,7 @@ Function Collect-Timeline {
 
                         try
                         {
-                            Write-Host "`t[+] Parsing Timeline History from user $u..." -ForegroundColor Green
+                            Write-Host "`t○ Parsing Timeline History from user $u..." -ForegroundColor Green
                             & cmd.exe /c "$SCRIPTPATH\bin\WxTCmd\WxTCmd.exe" -f "$Global:Destiny\$HOSTNAME\Timeline_History\$u\ActivitiesCache.db" --csv "$Global:Destiny\$HOSTNAME\Timeline_History\$u\Timeline_Parsed" > $null
                         }
                         catch
@@ -2732,7 +2732,7 @@ Function Collect-TextHarvester { <# TODO: Have to activate this option in a OS a
                 # Collect File
                 try 
                 {
-                    Write-Host "`t[+] Collect for user $u..." -ForegroundColor DarkGreen
+                    Write-Host "`t○ Collect for user $u..." -ForegroundColor DarkGreen
                 
                     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u" > $null }
                     
@@ -2746,7 +2746,7 @@ Function Collect-TextHarvester { <# TODO: Have to activate this option in a OS a
                 # Parse file
                 try
                 {
-                    Write-Host "`t[+] Parse user $u..." -ForegroundColor DarkGreen
+                    Write-Host "`t○ Parse user $u..." -ForegroundColor DarkGreen
 
                     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u\ParsedData" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u\ParsedData" > $null }
 
@@ -2776,7 +2776,7 @@ Function Collect-SRUM {
         # COLLECT THE RAW INFORMATION/EVIDENCE/ARTIFACT
         try 
         {
-            Write-Host "`t[+] Collecting Data ..." -ForegroundColor Green
+            Write-Host "`t○ Collecting Data ..." -ForegroundColor Green
                 
             if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\SRUM\" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\SRUM" > $null }
 
@@ -2801,7 +2801,7 @@ Function Collect-SRUM {
             
             if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\SRUM\ParsedData" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\SRUM\ParsedData" > $null }
 
-            Write-Host "`t[+] Parsing Data ..." -ForegroundColor Green
+            Write-Host "`t○ Parsing Data ..." -ForegroundColor Green
 
             cmd.exe /c $SCRIPTPATH\bin\srum-dump\srum_dump.exe --SRUM_INFILE "$Global:Destiny\$HOSTNAME\SRUM\srudb.dat" --XLSX_OUTFILE "$Global:Destiny\$HOSTNAME\SRUM\ParsedData\SRUM.xlsx" --XLSX_TEMPLATE $SCRIPTPATH\bin\srum-dump\SRUM_TEMPLATE.xlsx --REG_HIVE "$Global:Destiny\$HOSTNAME\HIVES\SOFTWARE" > $null
             cmd.exe /c $SCRIPTPATH\bin\srum-dump\srum_dump_csv.exe --SRUM_INFILE "$Global:Destiny\$HOSTNAME\SRUM\srudb.dat" --OUT_PATH "$Global:Destiny\$HOSTNAME\SRUM\ParsedData" --XLSX_TEMPLATE $SCRIPTPATH\bin\srum-dump\SRUM_TEMPLATE.xlsx --REG_HIVE "$Global:Destiny\$HOSTNAME\HIVES\SOFTWARE"  > $null
@@ -2826,12 +2826,12 @@ Function Collect-Credentials {
 
     foreach($u in $USERS)
     {
-        Write-Host "`t[+] User $u ..." -ForegroundColor Green
+        Write-Host "`t○ User $u ..." -ForegroundColor Green
         
         # COLLECT THE RAW INFORMATION/EVIDENCE
         try 
         {
-            Write-Host "`t`t[+] Collecting ..." -ForegroundColor Green
+            Write-Host "`t`t○ Collecting ..." -ForegroundColor Green
 
             # "C:\Users\<user>\AppData\Roaming\Microsoft\Credentials"
             if(Test-Path -Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Credentials")
@@ -2879,7 +2879,7 @@ Function Collect-Credentials {
             {
                 if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Parsed" > $null }
             
-                Write-Host "`t`t[+] Parsing ..." -ForegroundColor Green
+                Write-Host "`t`t○ Parsing ..." -ForegroundColor Green
                 Invoke-WCMDump | Out-File -FilePath "$Global:Destiny\$HOSTNAME\Credentials\$u\Parsed\Credentials.txt" 2> $null #TODO: if(LIVE)
                 # Write-Host " [DEVELOPING] ..." -ForegroundColor Yellow
             }
@@ -2902,7 +2902,7 @@ Function Collect-Skype-History {
     {
         foreach($u in $USERS)
         {
-            Write-Host "`t[+] User $u ... " -ForegroundColor Green
+            Write-Host "`t○ User $u ... " -ForegroundColor Green
             
             if(Test-Path "$Global:Source\Documents and Settings\$u\Application\Skype\")
             {       
@@ -2940,7 +2940,7 @@ Function Collect-Skype-History {
     {
         foreach($u in $USERS)
         {
-            Write-Host "`t[+] User $u ... " -ForegroundColor Green
+            Write-Host "`t○ User $u ... " -ForegroundColor Green
             
             if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Skype\")
             {       
@@ -2983,7 +2983,7 @@ Function Collect-Email-Files {
 
     $existingEmails = ""
 
-    Write-Host "`t[+] OUTLOOK folders." -ForegroundColor Green
+    Write-Host "`t○ OUTLOOK folders." -ForegroundColor Green
 
     foreach($u in $USERS)
     {
@@ -2998,7 +2998,7 @@ Function Collect-Email-Files {
                     $email_file = ($_.FullName).Split("\")[7]
                     $existingEmails += $email_file
 
-                    Write-Host "`t`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
+                    Write-Host "`t`t○ Collecting `"$email_file`" from user $u." -ForegroundColor Green
                     
                     & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\EmailFiles\$u" /OutputName:$email_file > $null
                 } 
@@ -3016,7 +3016,7 @@ Function Collect-Email-Files {
                     $email_file = ($_.FullName).Split("\")[7]
                     $existingEmails += $email_file
 
-                    Write-Host "`t`t[+] Collecting `"$email_file`" from user $u." -ForegroundColor Green
+                    Write-Host "`t`t○ Collecting `"$email_file`" from user $u." -ForegroundColor Green
                     
                     & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Outlook\$email_file" /OutputPath:"$Global:Destiny\$HOSTNAME\EmailFiles\$u" /OutputName:$email_file > $null
                 } 
@@ -3031,12 +3031,12 @@ Function Collect-Email-Files {
     # Find PST files in other locations
     try
     {
-        Write-Host "`t[+] Searching other PST files ..." -ForegroundColor Green
+        Write-Host "`t○ Searching other PST files ..." -ForegroundColor Green
 
         Get-ChildItem "$Global:Source`\" -Recurse *.pst 2> $null | ForEach-Object {
             if (-not ($_.Name -in $existingEmails))
             {
-                Write-Host "`t`t[+] Found one $($_.FullName) ..." -ForegroundColor Green
+                Write-Host "`t`t○ Found one $($_.FullName) ..." -ForegroundColor Green
 
                 if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles > $null }
                 
@@ -3053,12 +3053,12 @@ Function Collect-Email-Files {
     # Find OST files in other locations
     try
     {
-        Write-Host "`t[+] Searching other OST files ..." -ForegroundColor Green
+        Write-Host "`t○ Searching other OST files ..." -ForegroundColor Green
 
         Get-ChildItem "$Global:Source`\" -Recurse *.ost 2> $null | ForEach-Object {
             if (-not ($_.Name -in $existingEmails))
             {
-                Write-Host "`t`t[+] Found one $_.FullName ..." -ForegroundColor Green
+                Write-Host "`t`t○ Found one $_.FullName ..." -ForegroundColor Green
 
                 if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles > $null }
                 
@@ -3076,9 +3076,14 @@ Function Collect-Email-Files {
 
 <########### C H R O M E   W E B   B R O W S E R #################################> # CHR*
 Function Collect-Chrome-Data {
+    
+    Write-Host "[+] Collecting Chrome files ..." -ForegroundColor Green
+
+    $filesToDownload = "Cookies","Favicons","History","Login Data","Network Action Predictor","QuotaManager","Shortcuts","Top sites","Web Data"
+
     foreach($u in $USERS){
     
-        $filesToDownload = "Cookies","Favicons","History","Login Data","Network Action Predictor","QuotaManager","Shortcuts","Top sites","Web Data"
+        Write-Host "`t○ for user $u ..." -ForegroundColor Green
 
         if($OS -eq "XP")
         {
@@ -3086,20 +3091,18 @@ Function Collect-Chrome-Data {
             {
                 try
                 {
-                    Write-Host "[+] Collecting Chrome files ..." -ForegroundColor Green
-                    
                     # In case Default profile exists
                     if(Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\Default")
                     {
-                        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default" > $null }
+                        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default" > $null }
 
-                        Write-Host "`t[+] Default profile found ..." -ForegroundColor Green
+                        Write-Host "`t`t○ `"Default profile`" found ..." -ForegroundColor Green
 
                         foreach($file in $filesToDownload)
                         {
                             if (Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\Default\$file")
                             {
-                                copy "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\Default\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default"
+                                copy "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\Default\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default"
                             }
                         }
                     }
@@ -3111,15 +3114,15 @@ Function Collect-Chrome-Data {
                         {
                             if(Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\$($_.Name)")
                             {
-                                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)" > $null }
+                                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)" > $null }
 
-                                Write-Host "`t[+] $($_.Name) found ..." -ForegroundColor Green
+                                Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
                                 foreach($file in $filesToDownload)
                                 {
                                     if (Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\$($_.Name)\$file")
                                     {
-                                        copy "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)"
+                                        copy "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)"
                                     }
                                 }
                             }
@@ -3134,24 +3137,22 @@ Function Collect-Chrome-Data {
         }
         else # all other windows versions after VISTA
         {
-            if(Test-Path "C:\Users\$u\AppData\Local\Google\Chrome\User data")
+            if(Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User data")
             {
                 try
                 {
-                    Write-Host "[+] Collecting Chrome files ..." -ForegroundColor Green
-                    
                     # In case Default profile exists
                     if(Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default")
                     {
-                        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default" > $null }
+                        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default" > $null }
 
-                        Write-Host "`t[+] Default profile found ..." -ForegroundColor Green
+                        Write-Host "`t`t○ `"Default profile`" found ..." -ForegroundColor Green
 
                         foreach($file in $filesToDownload)
                         {
                             if (Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\$file")
                             {
-                                copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default"
+                                copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default"
                             }
                         }
                     }
@@ -3163,15 +3164,15 @@ Function Collect-Chrome-Data {
                         {
                             if(Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)")
                             {
-                                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)" > $null }
+                                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)" > $null }
 
-                                Write-Host "`t[+] $($_.Name) found ..." -ForegroundColor Green
+                                Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
                                 foreach($file in $filesToDownload)
                                 {
                                     if (Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)\$file")
                                     {
-                                        copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)"
+                                        copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)"
                                     }
                                 }
                             }
@@ -3186,7 +3187,7 @@ Function Collect-Chrome-Data {
         }
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\")){
-            Write-Host "`t[i] There is no Chrome Browser in the System ..." -ForegroundColor Yellow
+            Write-Host "`t[i] There is no Chrome Browser in the System for user $u ..." -ForegroundColor Yellow
         }
     }
 }
@@ -3194,7 +3195,11 @@ Function Collect-Chrome-Data {
 <########### F I R E F O X   W E B   B R O W S E R ###############################> # MFI*
 Function Collect-Firefox-Data {
     
+    Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
+
     foreach($u in $USERS){
+
+        Write-Host "`t○ for user $u ..." -ForegroundColor Green
     
         $filesToDownload = "content-prefs.sqlite","cookies.sqlite","favicons.sqlite","formhistory.sqlite","permissions.sqlite","places.sqlite","storage.sqlite","storage-sync.sqlite","webappsstore.sqlite"
 
@@ -3204,22 +3209,20 @@ Function Collect-Firefox-Data {
             {
                 try
                 {
-                    Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
-
                     # Search for profiles                
                     Get-ChildItem "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles" | ForEach-Object {
                         
                         if(Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)")
                         {
-                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)" > $null }
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)" > $null }
 
-                            Write-Host "`t[+] $($_.Name) found ..." -ForegroundColor Green
+                            Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
                             foreach($file in $filesToDownload)
                             {
                                 if (Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)\$file")
                                 {
-                                    copy "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)"
+                                    copy "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)"
                                 }
                             }
                         }
@@ -3238,22 +3241,20 @@ Function Collect-Firefox-Data {
             {
                 try
                 {
-                    Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
-
                     # Search for profiles                
                     Get-ChildItem "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles" | ForEach-Object {
                         
                         if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)")
                         {
-                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)" > $null }
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)" > $null }
 
-                            Write-Host "`t[+] $($_.Name) found ..." -ForegroundColor Green
+                            Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
                             foreach($file in $filesToDownload)
                             {
                                 if (Test-Path "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)\$file")
                                 {
-                                    copy "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)"
+                                    copy "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)"
                                 }
                             }
                         }
@@ -3268,28 +3269,40 @@ Function Collect-Firefox-Data {
         }
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\")){
-            Write-Host "`t[i] There is no Firefox Browser in the System ..." -ForegroundColor Yellow
+            Write-Host "`t[i] There is no Firefox Browser in the System for user $u ..." -ForegroundColor Yellow
         }
     }
 }
 
-<########### I E   W E B   B R O W S E R #####################> # IEX
+<########### I E   W E B   B R O W S E R #########################################> # IEX
 Function Collect-IE-Data {
     # TODO: see if it adds something new -> Extracts cache inf0rmation from IE - http://www.nirsoft.net/utils/ie_cache_viewer.html
     # TODO: Computer\HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\TypedURLs
+    
+    Write-Host "[+] Collecting IE Artifacts ..." -ForegroundColor Green
+    
+    if(-not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\IE")) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\IE" > $null }
+
+    # TODO: Cross with the time:. HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\TypedURLsTime
+    echo ""                                                                                          > "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\Registry_TypedURLs.txt" 2> $null
+    echo "Registry Key: Computer\HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\TypedURLs"  >> "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\Registry_TypedURLs.txt" 2> $null
+    echo "Info: Date - HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\TypedURLsTime"        >> "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\Registry_TypedURLs.txt" 2> $null
+    echo ""                                                                                         >> "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\Registry_TypedURLs.txt" 2> $null
+    Get-ItemProperty "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\TypedURLs"   >> "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\Registry_TypedURLs.txt" 2> $null
+
     foreach($u in $USERS)
     {
+        Write-Host "`t○ for user: $u ... " -ForegroundColor Green
+
         if($OS -eq "XP")
         {
             if(Test-Path -Path "$Global:Source\Documents and Settings\$u\Local Settings\Temporary Internet Files\")
             {
                 try
                 {
-                    Write-Host "[+] Collecting IE files ..." -ForegroundColor Green
+                    if(-not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\$u")) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\$u" > $null }
                     
-                    New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\IE\$u > $null
-                    
-                    cmd.exe /c copy "$Global:Source\Documents and Settings\$u\Local Settings\Temporary Internet Files\" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\IE\$u\."> $null
+                    cmd.exe /c copy "$Global:Source\Documents and Settings\$u\Local Settings\Temporary Internet Files\" "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\$u\."> $null
                 } 
                 catch 
                 {
@@ -3304,11 +3317,9 @@ Function Collect-IE-Data {
             {
                 try
                 {
-                    Write-Host "[+] Collecting IE files, user: $u ... " -ForegroundColor Green
-
-                    New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\IE\$u > $null
+                    if(-not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\$u")) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\$u" > $null }
                     
-                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\WebCache\WebCacheV01.dat" /OutputPath:"$Global:Destiny\$HOSTNAME\WEB_BROWSERS\IE\$u" /OutputName:WebCacheV01.dat > $null
+                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\WebCache\WebCacheV01.dat" /OutputPath:"$Global:Destiny\$HOSTNAME\WebBrowsers\IE\$u" /OutputName:WebCacheV01.dat > $null
 
                     # Coockies folder: C:\Users\f4d0\AppData\Roaming\Microsoft\Windows\Cookies\low
                     # History Folder: C:\Users\f4d0\AppData\Local\Microsoft\Windows\History
@@ -3320,25 +3331,25 @@ Function Collect-IE-Data {
             }
         }
 
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\IE\"))
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\IE\"))
         {
-            Write-Host "`t[i] There is no IE Browser in the System ..." -ForegroundColor Yellow
+            Write-Host "`t[i] There is no IE Browser in the System for user $u ..." -ForegroundColor Yellow
         }
     }
 }
 
-<########### E D G E   W E B   B R O W S E R #################> # EDG
+<########### E D G E   W E B   B R O W S E R #####################################> # EDG
 Function Collect-EDGE-Data {
     
-    #https://www.dataforensics.org/microsoft-edge-browser-forensics/
-    #Cache: \users\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxx\AC\#!001\MicrosoftEdge\Cache
-    #Bookmark: %LocalAppData%\packages\microsoft.windows.spartan_{PackageID}\AC\Spartan\User\Default\Favorites
-    #Last Browse Session: \User\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxx\AC\MicrosoftEdge\User\Default\Recovery\Active\
-    #History: \Users\user_name\AppData\Local\Microsoft\Windows\WebCache\WebCacheV01.dat
-    #Web Note: %LocalAppData%\packages\microsoft.windows.spartan_{PackageID}\AC\Spartan\User\Default\favorites
-    #InPrivateBrowsing: \users\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxxx\AC\MicrosoftEdge\User\Default\Recovery\Active\{browsing-session-ID}.dat
+    # TODO: REVIEW THE BELOW PATHS
+    # https://www.dataforensics.org/microsoft-edge-browser-forensics/
+    # Cache: \users\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxx\AC\#!001\MicrosoftEdge\Cache
+    # Last Browse Session: \User\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxx\AC\MicrosoftEdge\User\Default\Recovery\Active\
+    # History: \Users\user_name\AppData\Local\Microsoft\Windows\WebCache\WebCacheV01.dat
+    # Web Note: %LocalAppData%\packages\microsoft.windows.spartan_{PackageID}\AC\Spartan\User\Default\favorites
+    # InPrivateBrowsing: \users\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxxx\AC\MicrosoftEdge\User\Default\Recovery\Active\{browsing-session-ID}.dat
     
-    Write-Host "[+] Collecting EDGE files (from Windows $OS system)..." -ForegroundColor Green
+    Write-Host "[+] Collecting EDGE files ..." -ForegroundColor Green
     
     if( ($OS -eq "7") -or ($OS -eq "Vista") -or ($OS -eq "8") -or ($OS -eq "10") )
     {
@@ -3346,9 +3357,9 @@ Function Collect-EDGE-Data {
         {
             if( Test-Path -Path "$Global:Source\users\$u\AppData\Local\Packages\")
             {
-                Write-Host "`t[+] User: $u ..." -ForegroundColor Green
+                Write-Host "`t○ user: $u ..." -ForegroundColor Green
 
-                New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\EDGE\$u\ > $null
+                if(-not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\EDGE\$u")) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\EDGE\$u" > $null }
 
                 Get-ChildItem "$Global:Source\users\$u\AppData\Local\Packages\" | ForEach-Object {
                     
@@ -3360,32 +3371,190 @@ Function Collect-EDGE-Data {
                             
                             $dirDB=$_.FullName
 
-                            & $RAW_EXE /FileNamePath:"$dirDB\DBStore\spartan.edb" /OutputPath:"$Global:Destiny\$HOSTNAME\WEB_BROWSERS\EDGE\$u" /OutputName:spartan.edb > $null
+                            & $RAW_EXE /FileNamePath:"$dirDB\DBStore\spartan.edb" /OutputPath:"$Global:Destiny\$HOSTNAME\WebBrowsers\EDGE\$u" /OutputName:spartan.edb > $null
                         }
                     } 
                 }
                 # get cache files
-                & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\WebCache\WebCacheV01.dat" /OutputPath:"$Global:Destiny\$HOSTNAME\WEB_BROWSERS\EDGE\$u" /OutputName:WebCacheV01.dat > $null
+                & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\WebCache\WebCacheV01.dat" /OutputPath:"$Global:Destiny\$HOSTNAME\WebBrowsers\EDGE\$u" /OutputName:WebCacheV01.dat > $null
             }
         }
         
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\EDGE\"))
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\EDGE\"))
         {
-            Write-Host "`t[i] There is no IE Browser in the System ..." -ForegroundColor Yellow
+            Write-Host "`t[i] There is no IE Browser in the System for user $u ..." -ForegroundColor Yellow
         }
     }
 }
 
-<########### S A F A R I #####################################> # SAF <# TODO #>  
+<########### S A F A R I #########################################################> # SAF
 Function Collect-Safari-Data {
-    Write-Host "[+] Collecting SAFARI files (from Windows $OS system)..." -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
+    
+    Write-Host "[+] Collecting SAFARI Artifacts ..." -ForegroundColor Green
+    
+    foreach($u in $USERS){
+
+        Write-Host "`t○ for user $u ..." -ForegroundColor Green
+
+        if($OS -eq "XP")
+        {
+            # CACHE ARTIFACTS
+            if(Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\Application Data\Apple Computer\Safari")
+            {
+                try
+                {
+                    Write-Host "`t`t○ Cache Artifacts ..." -ForegroundColor Green
+                    
+                    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\CahceFiles" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\CahceFiles" > $null }
+
+                    copy "$Global:Source\Documents and Settings\$u\Local Settings\Application Data\Apple Computer\Safari\*" "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\CahceFiles" 2> $null
+                } 
+                catch 
+                {
+                    Report-Error -evidence "Safari Cache artifacts"
+                }
+            }
+
+            # USER DATA ARTIFACTS
+            if(Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Apple Computer\Safari")
+            {
+                try
+                {
+                    Write-Host "`t`t○ User data Artifacts ..." -ForegroundColor Green
+                    
+                    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\UserData" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\UserData" > $null }
+
+                    copy "$Global:Source\Documents and Settings\$u\Application Data\Apple Computer\Safari\*" "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\UserData"  2> $null
+                } 
+                catch 
+                {
+                    Report-Error -evidence "Safari User data artifacts"
+                }
+            }
+        }
+        else # all other windows versions after VISTA
+        {
+            # CACHE ARTIFACTS
+            if(Test-Path "$Global:Source\Users\$u\AppData\Local\Apple Computer\Safari")
+            {
+                try
+                {
+                    Write-Host "`t`t○ Cache Artifacts ..." -ForegroundColor Green
+                    
+                    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\CahceFiles" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\CahceFiles" > $null }
+
+                    copy "$Global:Source\Users\$u\AppData\Local\Apple Computer\Safari\*" "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\CahceFiles"  2> $null
+                } 
+                catch 
+                {
+                    Report-Error -evidence "Safari Cache artifacts"
+                }
+            }
+
+            # USER DATA ARTIFACTS
+            if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Apple Computer\Safari")
+            {
+                try
+                {
+                    Write-Host "`t`t○ User data Artifacts ..." -ForegroundColor Green
+                    
+                    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\UserData" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\UserData" > $null }
+
+                    copy "$Global:Source\Users\$u\AppData\Roaming\Apple Computer\Safari\*" "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\$u\UserData"  2> $null
+                } 
+                catch 
+                {
+                    Report-Error -evidence "Safari User data artifacts"
+                }
+            }
+        }
+
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Safari\")){
+            Write-Host "`t[i] There is no Opera Browser in the System for user $u ..." -ForegroundColor Yellow
+        }
+    }
 }
 
-<########### O P E R A #######################################> # OPE <# TODO #> 
+<########### O P E R A ###########################################################> # OPE
 Function Collect-Opera-Data {
-    Write-Host "[+] Collecting OPERA files (from Windows $OS system)..." -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
+
+    Write-Host "[+] Collecting Opera Artifacts ..." -ForegroundColor Green
+
+    $filesToDownload = "Cookies","Favicons","History","Login Data","Network Action Predictor","QuotaManager","Shortcuts","Top sites","Web Data"
+
+    foreach($u in $USERS){
+    
+        Write-Host "`t○ for user $u ..." -ForegroundColor Green
+
+        if($OS -eq "XP")
+        {
+            # C:\Documents and Settings\%USERNAME%\Application Data\Opera Software\Opera Stable
+            if(Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Opera Software")
+            {
+                try
+                {
+                    # Other Profiles that should have the word profile in it                    
+                    Get-ChildItem "$Global:Source\Documents and Settings\$u\Application Data\Opera Software" -Directory | ForEach-Object {
+                        
+                        if(Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Opera Software\$($_.Name)")
+                        {
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)" > $null }
+
+                            Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
+
+                            foreach($file in $filesToDownload)
+                            {
+                                if (Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Opera Software\$($_.Name)\$file")
+                                {
+                                    copy "$Global:Source\Documents and Settings\$u\Application Data\Opera Software\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)"
+                                }
+                            }
+                        }
+                    }
+                } 
+                catch 
+                {
+                    Report-Error -evidence "Opera files"
+                }
+            }
+        }
+        else # all other windows versions after VISTA
+        {
+            #C:\Users\IMFReversing\AppData\Roaming\Opera Software\Opera Stable
+            if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Opera Software")
+            {
+                try
+                {
+                    # Other Profiles that should have the word profile in it                    
+                    Get-ChildItem "$Global:Source\Users\$u\AppData\Roaming\Opera Software" -Directory | ForEach-Object {
+                        
+                        if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Opera Software\$($_.Name)")
+                        {
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)" > $null }
+
+                            Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
+
+                            foreach($file in $filesToDownload)
+                            {
+                                if (Test-Path "$Global:Source\Users\$u\AppData\Roaming\Opera Software\$($_.Name)\$file")
+                                {
+                                    copy "$Global:Source\Users\$u\AppData\Roaming\Opera Software\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)"
+                                }
+                            }
+                        }
+                    }
+                } 
+                catch 
+                {
+                    Report-Error -evidence "Chrome files"
+                }
+            }
+        }
+
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\")){
+            Write-Host "`t[i] There is no Opera Browser in the System for user $u ..." -ForegroundColor Yellow
+        }
+    }
 }
 
 <########### T O R ###############################################################> # TOR 
@@ -3396,19 +3565,19 @@ Function Collect-Tor-Data {
     Write-Host "[+] Searching for Tor in the System ..." -ForegroundColor Green
 
     # Search for the TOR Browser un the Source unit
-    Get-ChildItem -Directory -Recurse "$Global:Source`\" | ForEach-Object{
+    Get-ChildItem -Directory -Recurse "$Global:Source`\" | foreach{
         if($_.Name -match "Tor Browser") 
         {
             $pathTOR = $_.FullName
 
-            Write-Host "`t[+] Tor Browser found in the System on folder $pathTOR..." -ForegroundColor Green
+            Write-Host "`t○ Tor Browser found in the System on folder $pathTOR..." -ForegroundColor Green
 
             try
             {
-                Write-Host "`t[+] Collecting TOR Artifacts ..." -ForegroundColor Green
+                Write-Host "`t○ Collecting TOR Artifacts ..." -ForegroundColor Green
 
                 # Search for profiles                
-                Get-ChildItem "$pathTOR\Browser\TorBrowser\Data\Browser" -Directory | ForEach-Object {
+                Get-ChildItem "$pathTOR\Browser\TorBrowser\Data\Browser" -Directory 2> $null | ForEach-Object {
                         
                     if($_.Name -match "Profile" -and $_.Name -notmatch "meek-http-helper" -and $_.Name -notmatch "moat-http-helper" )
                     {
@@ -3416,7 +3585,7 @@ Function Collect-Tor-Data {
                         {
                             if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)" > $null }
 
-                            Write-Host "`t`t[+] $($_.Name) found ..." -ForegroundColor Green
+                            Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
                             foreach($file in $filesToDownload)
                             {
@@ -3433,10 +3602,12 @@ Function Collect-Tor-Data {
             {
                 Report-Error -evidence "TOR Artifacts"
             }
-
-            break # After found finish searching
+            
+            #break #continue #return #continue # After found finish searching # TODO: Whether Continue whether Break it breaks the code execution of the script
         }
     }
+
+    Write-Host "`t○ Tor NOT found in the System ..." -ForegroundColor Yellow
 }
 
 
@@ -3566,7 +3737,7 @@ Function Collect-Cloud-Dropbox-Logs {
     }
 
     # GETTING KEYS TO DECRYPT DROPBOX FILES
-    Write-Host "`t[+] Getting Keys to Decrypt Dropbox DBX files ..." -ForegroundColor Green
+    Write-Host "`t○ Getting Keys to Decrypt Dropbox DBX files ..." -ForegroundColor Green
 
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\z_temp" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\z_temp" > $null }
 
@@ -3589,7 +3760,7 @@ Function Collect-Cloud-Dropbox-Logs {
     # DECRYPTING FILES WITH THE KEYS FROM ABOVE
     foreach($u in $USERS)
     {
-        Write-Host "`t[+] Decrypting Dropbox DBX files ..." -ForegroundColor Green
+        Write-Host "`t○ Decrypting Dropbox DBX files ..." -ForegroundColor Green
 
         Write-Host "`t`t○ From user: $u" -ForegroundColor Green
 
@@ -3970,8 +4141,8 @@ Function Show-Simple-Options-Resume {
     if ($Global:MFI ) {Write-Host "            • MFI - Mozilla Firefox Artifacts."}
     if ($Global:IEX ) {Write-Host "            • IEX - Internet Explorer Artifacts."}
     if ($Global:EDG ) {Write-Host "            • EDG - Edge Explorer Artifacts."}
-    if ($Global:SAF ) {Write-Host "            • SAF"}
-    if ($Global:OPE ) {Write-Host "            • OPE"}
+    if ($Global:SAF ) {Write-Host "            • SAF - Safari Browser Artifacts."}
+    if ($Global:OPE ) {Write-Host "            • OPE - Opera Brower Artifacts."}
     if ($Global:TOR ) {Write-Host "            • TOR - TOR Artifacts."}
 
     
@@ -4832,7 +5003,7 @@ Function Old-Code{
 
             
             # RECENT DOCS
-            Write-Host "`t[+] RecentDOCS from $NAME" -ForegroundColor Green
+            Write-Host "`t○ RecentDOCS from $NAME" -ForegroundColor Green
 
             for($n=0; $n -le 149; $n++)
             {
@@ -4877,7 +5048,7 @@ Function Old-Code{
 
 
             # COMDLG32 :: CIDSizeMRU
-            Write-Host "`t[+] CIDSizeMRU from $NAME" -ForegroundColor Green
+            Write-Host "`t○ CIDSizeMRU from $NAME" -ForegroundColor Green
 
             $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU\" -Name MRUListEx
             $i=0
@@ -4927,7 +5098,7 @@ Function Old-Code{
 
 
             # COMDLG32 :: LastVisitedPidlMRU
-            Write-Host "`t[+] LastVisitedPidlMRU from $NAME" -ForegroundColor Green
+            Write-Host "`t○ LastVisitedPidlMRU from $NAME" -ForegroundColor Green
 
             $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU\" -Name MRUListEx
             $i=0
@@ -4978,7 +5149,7 @@ Function Old-Code{
 
 
             # RUN MRU
-            Write-Host "`t[+] RunMRU from $NAME" -ForegroundColor Green
+            Write-Host "`t○ RunMRU from $NAME" -ForegroundColor Green
 
             try 
             {
@@ -5005,7 +5176,7 @@ Function Old-Code{
             # TODO: Translation of the ecnripted code into readable code
             #  [System.Text.Encoding]::Default.GetString((Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU\docx")."9")
             
-            Write-Host "`t[+] OpenSavePidlMRU from $NAME" -ForegroundColor Green
+            Write-Host "`t○ OpenSavePidlMRU from $NAME" -ForegroundColor Green
 
             $cnt = Get-ItemPropertyValue -LiteralPath "REGISTRY::HKEY_USERS\S-1-5-21-1177053623-3576167574-2408905411-1001\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU\*" -Name MRUListEx
             $i=0
