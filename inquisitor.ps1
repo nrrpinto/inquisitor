@@ -3086,7 +3086,7 @@ Function Collect-Chrome-Data {
             {
                 try
                 {
-                    Write-Host "[+] Collecting Chrome files (from Windows $OS system)..." -ForegroundColor Green
+                    Write-Host "[+] Collecting Chrome files ..." -ForegroundColor Green
                     
                     # In case Default profile exists
                     if(Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\Default")
@@ -3138,7 +3138,7 @@ Function Collect-Chrome-Data {
             {
                 try
                 {
-                    Write-Host "[+] Collecting Chrome files (from Windows $OS system)..." -ForegroundColor Green
+                    Write-Host "[+] Collecting Chrome files ..." -ForegroundColor Green
                     
                     # In case Default profile exists
                     if(Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default")
@@ -3191,47 +3191,84 @@ Function Collect-Chrome-Data {
     }
 }
 
-<########### F I R E F O X   W E B   B R O W S E R ###########> # MFI
+<########### F I R E F O X   W E B   B R O W S E R ###############################> # MFI*
 Function Collect-Firefox-Data {
+    
     foreach($u in $USERS){
     
+        $filesToDownload = "content-prefs.sqlite","cookies.sqlite","favicons.sqlite","formhistory.sqlite","permissions.sqlite","places.sqlite","storage.sqlite","storage-sync.sqlite","webappsstore.sqlite"
+
         if($OS -eq "XP")
         {
-            if(Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\")
+            if(Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles")
             {
-                $FF_PROFS = Get-ChildItem "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\" | Select-Object -ExpandProperty Name
-                foreach($PROF in $FF_PROFS){
-                    try{
-                        Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
-                        New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\$u > $null
-                        cmd.exe /c copy "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$PROF\places.sqlite" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\$u\$PROF\."> $null
-                    
-                    } catch {
-                        Report-Error -evidence "Firefox files"
+                try
+                {
+                    Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
+
+                    # Search for profiles                
+                    Get-ChildItem "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles" | ForEach-Object {
+                        
+                        if(Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)")
+                        {
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)" > $null }
+
+                            Write-Host "`t[+] $($_.Name) found ..." -ForegroundColor Green
+
+                            foreach($file in $filesToDownload)
+                            {
+                                if (Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)\$file")
+                                {
+                                    copy "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)"
+                                }
+                            }
+                        }
+                        
                     }
+                } 
+                catch 
+                {
+                    Report-Error -evidence "Firefox files"
                 }
-            }  
+            }
         }
-        else
+        else # all other windows versions after VISTA
         {
-            if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\")
+            if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles")
             {
-                $FF_PROFS = Get-ChildItem "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\" | Select-Object -ExpandProperty Name
-                foreach($PROF in $FF_PROFS){
-                    try{ 
-                        Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
-                        New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\$u\$PROF > $null
-                        cmd.exe /c copy "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$PROF\places.sqlite" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\$u\$PROF\."> $null
-                        # cmd.exe /c copy "C:\Users\$u\AppData\Local\Mozilla\Firefox\Profiles\$PROF\Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\$u\$PROF\."
-                    } catch {
-                        Report-Error -evidence "Firefox files"
+                try
+                {
+                    Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
+
+                    # Search for profiles                
+                    Get-ChildItem "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles" | ForEach-Object {
+                        
+                        if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)")
+                        {
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)" > $null }
+
+                            Write-Host "`t[+] $($_.Name) found ..." -ForegroundColor Green
+
+                            foreach($file in $filesToDownload)
+                            {
+                                if (Test-Path "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)\$file")
+                                {
+                                    copy "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$($_.Name)"
+                                }
+                            }
+                        }
+                        
                     }
+                } 
+                catch 
+                {
+                    Report-Error -evidence "Firefox files"
                 }
             }
         }
 
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\")){
-            Write-Host "`t[i] There is no Firefox Browser installed for user $u ..." -ForegroundColor Yellow
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\")){
+            Write-Host "`t[i] There is no Firefox Browser in the System ..." -ForegroundColor Yellow
         }
     }
 }
@@ -3351,11 +3388,55 @@ Function Collect-Opera-Data {
     Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
 }
 
-<########### T O R ###########################################> # TOR <# TODO #> 
+<########### T O R ###############################################################> # TOR 
 Function Collect-Tor-Data {
-    # I think it is similar to Mozilla
-    Write-Host "[+] Collecting TOR files (from Windows $OS system)..." -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
+    
+    $filesToDownload = "content-prefs.sqlite","cookies.sqlite","favicons.sqlite","formhistory.sqlite","permissions.sqlite","places.sqlite","storage.sqlite","storage-sync.sqlite","webappsstore.sqlite"
+
+    Write-Host "[+] Searching for Tor in the System ..." -ForegroundColor Green
+
+    # Search for the TOR Browser un the Source unit
+    Get-ChildItem -Directory -Recurse "$Global:Source`\" | ForEach-Object{
+        if($_.Name -match "Tor Browser") 
+        {
+            $pathTOR = $_.FullName
+
+            Write-Host "`t[+] Tor Browser found in the System on folder $pathTOR..." -ForegroundColor Green
+
+            try
+            {
+                Write-Host "`t[+] Collecting TOR Artifacts ..." -ForegroundColor Green
+
+                # Search for profiles                
+                Get-ChildItem "$pathTOR\Browser\TorBrowser\Data\Browser" -Directory | ForEach-Object {
+                        
+                    if($_.Name -match "Profile" -and $_.Name -notmatch "meek-http-helper" -and $_.Name -notmatch "moat-http-helper" )
+                    {
+                        if(Test-Path "$pathTOR\Browser\TorBrowser\Data\Browser\$($_.Name)")
+                        {
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)" > $null }
+
+                            Write-Host "`t`t[+] $($_.Name) found ..." -ForegroundColor Green
+
+                            foreach($file in $filesToDownload)
+                            {
+                                if (Test-Path "$pathTOR\Browser\TorBrowser\Data\Browser\$($_.Name)\$file")
+                                {
+                                    copy "$pathTOR\Browser\TorBrowser\Data\Browser\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)"
+                                }
+                            }
+                        }
+                    }
+                }
+            } 
+            catch 
+            {
+                Report-Error -evidence "TOR Artifacts"
+            }
+
+            break # After found finish searching
+        }
+    }
 }
 
 
@@ -3885,13 +3966,13 @@ Function Show-Simple-Options-Resume {
     if ($Global:EMA ) {Write-Host "            • EMA - Email files. (Outlook folders and from everywhere else in the system)."}
 
 
-    if ($Global:CHR ) {Write-Host "            • CHR - Chrome Browser Data."}
-    if ($Global:MFI ) {Write-Host "            • MFI"}
-    if ($Global:IEX ) {Write-Host "            • IEX"}
-    if ($Global:EDG ) {Write-Host "            • EDG"}
+    if ($Global:CHR ) {Write-Host "            • CHR - Chrome Browser Artifacts."}
+    if ($Global:MFI ) {Write-Host "            • MFI - Mozilla Firefox Artifacts."}
+    if ($Global:IEX ) {Write-Host "            • IEX - Internet Explorer Artifacts."}
+    if ($Global:EDG ) {Write-Host "            • EDG - Edge Explorer Artifacts."}
     if ($Global:SAF ) {Write-Host "            • SAF"}
     if ($Global:OPE ) {Write-Host "            • OPE"}
-    if ($Global:TOR ) {Write-Host "            • TOR"}
+    if ($Global:TOR ) {Write-Host "            • TOR - TOR Artifacts."}
 
     
 
