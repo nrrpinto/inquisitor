@@ -37,26 +37,44 @@ Function Report-Error {
     $_.Exception.Message >> $Global:Destiny\$HOSTNAME\errors.log
 }
 
-###################################################################
-
-
-
-
-
-###################################################################
-
 $ScriptTime = [Diagnostics.Stopwatch]::StartNew();  
-Get-ChildItem C:\ -Recurse *.pst 2> $null
+
+###################################################################
+
+
+Get-ChildItem "C:\Users\Nuno Pinto\AppData\Local\Google\Chrome\User Data" | ForEach-Object {
+    if($_.Name -contains "Profile") { Write-Host "THIS IS ONE: $($_.Name)"}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###################################################################
 $ScriptTime.Stop(); 
 Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)"
+###################################################################
 
+<#
 $ScriptTime = [Diagnostics.Stopwatch]::StartNew();  
 Get-ChildItem C:\ -Recurse *.ost 2> $null
 $ScriptTime.Stop(); 
 Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)"
 
-###################################################################
-
+#>
 
 <#
 Function Get-SIDUsername {

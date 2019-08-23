@@ -3072,46 +3072,120 @@ Function Collect-Email-Files {
     }
 }
 
-<########### B R O W S E R S #####################################################>
+############ B R O W S E R S #############################################################################
 
-<########### C H R O M E   W E B   B R O W S E R #############> # CHR
+<########### C H R O M E   W E B   B R O W S E R #################################> # CHR*
 Function Collect-Chrome-Data {
     foreach($u in $USERS){
     
+        $filesToDownload = "Cookies","Favicons","History","Login Data","Network Action Predictor","QuotaManager","Shortcuts","Top sites","Web Data"
+
         if($OS -eq "XP")
         {
-            if(Test-Path "C:\Documents and Settings\$u\Local Settings\Application Data\Google\Chrome\")
+            if(Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data")
             {
-                try{
+                try
+                {
                     Write-Host "[+] Collecting Chrome files (from Windows $OS system)..." -ForegroundColor Green
-                    New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\$u > $null
-                    cmd.exe /c copy "$Global:Source\Documents and Settings\$u\Local Settings\Application Data\Google\Chrome\User Data\Default\Preferences" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Documents and Settings\$u\Local Settings\Application Data\Google\Chrome\User Data\Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\$u\."> $null
-                } catch {
+                    
+                    # In case Default profile exists
+                    if(Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\Default")
+                    {
+                        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default" > $null }
+
+                        Write-Host "`t[+] Default profile found ..." -ForegroundColor Green
+
+                        foreach($file in $filesToDownload)
+                        {
+                            if (Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\Default\$file")
+                            {
+                                copy "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\Default\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default"
+                            }
+                        }
+                    }
+
+                    # Other Profiles that should have the word profile in it                    
+                    Get-ChildItem "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data" | ForEach-Object {
+                        
+                        if($_.Name -match "Profile")
+                        {
+                            if(Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\$($_.Name)")
+                            {
+                                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)" > $null }
+
+                                Write-Host "`t[+] $($_.Name) found ..." -ForegroundColor Green
+
+                                foreach($file in $filesToDownload)
+                                {
+                                    if (Test-Path "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\$($_.Name)\$file")
+                                    {
+                                        copy "$Global:Source\Documents and Settings\$u\Local Settings\ApplicationData\Google\Chrome\User Data\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } 
+                catch 
+                {
                     Report-Error -evidence "Chrome files"
                 }
-            }  
+            }
         }
-
-        if( ($OS -eq "7") -or ($OS -eq "Vista") -or ($OS -eq "8") -or ($OS -eq "10") )
+        else # all other windows versions after VISTA
         {
             if(Test-Path "C:\Users\$u\AppData\Local\Google\Chrome\User data")
             {
-                try{
+                try
+                {
                     Write-Host "[+] Collecting Chrome files (from Windows $OS system)..." -ForegroundColor Green
-                    New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\$u > $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\Preferences" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\Application Cache\Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\Media Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\GPUCache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\$u\."> $null
-                } catch {
+                    
+                    # In case Default profile exists
+                    if(Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default")
+                    {
+                        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default" > $null }
+
+                        Write-Host "`t[+] Default profile found ..." -ForegroundColor Green
+
+                        foreach($file in $filesToDownload)
+                        {
+                            if (Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\$file")
+                            {
+                                copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\Default"
+                            }
+                        }
+                    }
+
+                    # Other Profiles that should have the word profile in it                    
+                    Get-ChildItem "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data" | ForEach-Object {
+                        
+                        if($_.Name -match "Profile")
+                        {
+                            if(Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)")
+                            {
+                                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)" > $null }
+
+                                Write-Host "`t[+] $($_.Name) found ..." -ForegroundColor Green
+
+                                foreach($file in $filesToDownload)
+                                {
+                                    if (Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)\$file")
+                                    {
+                                        copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$($_.Name)"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } 
+                catch 
+                {
                     Report-Error -evidence "Chrome files"
                 }
             }
         }
 
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROME\")){
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\")){
             Write-Host "`t[i] There is no Chrome Browser in the System ..." -ForegroundColor Yellow
         }
     }
@@ -3138,8 +3212,7 @@ Function Collect-Firefox-Data {
                 }
             }  
         }
-
-        if( ($OS -eq "7") -or ($OS -eq "Vista") -or ($OS -eq "8") -or ($OS -eq "10") )
+        else
         {
             if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\")
             {
@@ -3149,7 +3222,7 @@ Function Collect-Firefox-Data {
                         Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
                         New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\$u\$PROF > $null
                         cmd.exe /c copy "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$PROF\places.sqlite" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\$u\$PROF\."> $null
-                        <# cmd.exe /c copy "C:\Users\$u\AppData\Local\Mozilla\Firefox\Profiles\$PROF\Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\$u\$PROF\." #>
+                        # cmd.exe /c copy "C:\Users\$u\AppData\Local\Mozilla\Firefox\Profiles\$PROF\Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\FIREFOX\$u\$PROF\."
                     } catch {
                         Report-Error -evidence "Firefox files"
                     }
@@ -3219,16 +3292,15 @@ Function Collect-IE-Data {
 
 <########### E D G E   W E B   B R O W S E R #################> # EDG
 Function Collect-EDGE-Data {
-    <#
-    https://www.dataforensics.org/microsoft-edge-browser-forensics/
-
-    Cache: \users\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxx\AC\#!001\MicrosoftEdge\Cache
-    Bookmark: %LocalAppData%\packages\microsoft.windows.spartan_{PackageID}\AC\Spartan\User\Default\Favorites
-    Last Browse Session: \User\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxx\AC\MicrosoftEdge\User\Default\Recovery\Active\
-    History: \Users\user_name\AppData\Local\Microsoft\Windows\WebCache\WebCacheV01.dat
-    Web Note: %LocalAppData%\packages\microsoft.windows.spartan_{PackageID}\AC\Spartan\User\Default\favorites
-    InPrivateBrowsing: \users\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxxx\AC\MicrosoftEdge\User\Default\Recovery\Active\{browsing-session-ID}.dat
-    #>
+    
+    #https://www.dataforensics.org/microsoft-edge-browser-forensics/
+    #Cache: \users\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxx\AC\#!001\MicrosoftEdge\Cache
+    #Bookmark: %LocalAppData%\packages\microsoft.windows.spartan_{PackageID}\AC\Spartan\User\Default\Favorites
+    #Last Browse Session: \User\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxx\AC\MicrosoftEdge\User\Default\Recovery\Active\
+    #History: \Users\user_name\AppData\Local\Microsoft\Windows\WebCache\WebCacheV01.dat
+    #Web Note: %LocalAppData%\packages\microsoft.windows.spartan_{PackageID}\AC\Spartan\User\Default\favorites
+    #InPrivateBrowsing: \users\user_name\AppData\Local\Packages\Microsoft.MicrosoftEdge_xxxxx\AC\MicrosoftEdge\User\Default\Recovery\Active\{browsing-session-ID}.dat
+    
     Write-Host "[+] Collecting EDGE files (from Windows $OS system)..." -ForegroundColor Green
     
     if( ($OS -eq "7") -or ($OS -eq "Vista") -or ($OS -eq "8") -or ($OS -eq "10") )
@@ -3280,8 +3352,8 @@ Function Collect-Opera-Data {
 }
 
 <########### T O R ###########################################> # TOR <# TODO #> 
-<#: I think it is similar to Mozilla #> 
 Function Collect-Tor-Data {
+    # I think it is similar to Mozilla
     Write-Host "[+] Collecting TOR files (from Windows $OS system)..." -ForegroundColor Green
     Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
 }
@@ -3810,10 +3882,10 @@ Function Show-Simple-Options-Resume {
     if ($Global:CRE ) {Write-Host "            • CRE - Web and Windows Credentials stored in Credentials Manager."}
     
     if ($Global:SKY ) {Write-Host "            • SKY - Skype conversations."}
-    if ($Global:OUT ) {Write-Host "            • EMA - Email files. (Outlook folders and from everywhere else in the system)."}
+    if ($Global:EMA ) {Write-Host "            • EMA - Email files. (Outlook folders and from everywhere else in the system)."}
 
 
-    if ($Global:CHR ) {Write-Host "            • CHR"}
+    if ($Global:CHR ) {Write-Host "            • CHR - Chrome Browser Data."}
     if ($Global:MFI ) {Write-Host "            • MFI"}
     if ($Global:IEX ) {Write-Host "            • IEX"}
     if ($Global:EDG ) {Write-Host "            • EDG"}
