@@ -2232,6 +2232,26 @@ Function Collect-Files-Lists {
     }
 }
 
+<########### D A N G E R O U S   E X T E N S I O N S #############################> # DEX
+Function Collect-Dangerous-Extensions {
+    
+    # 34 extensions
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\FilesLists ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\FilesLists > $null }
+
+    Write-Host "[+] Collecting List of files with dangerous extensions..." -ForegroundColor Green
+    
+    try
+    {
+        Get-ChildItem "$Global:Source`\" -Include *.VB, *.VBS, *.PIF, *.BAT, *.CMD, *.JS, *.JSE, *.WS, *.WSF, *.WSC, *.WSH, *.PS1, *.PS1XML, *.PS2, *.PS2XML, *.PSC1, *.PSC2, *.MSH, *.MSH1, *.MSH2, *.MSHXML, *.MSH1XML, *.MSH2XML, *.SCF, *.LNK, *.INF, *.APPLICATION, *.GADGET, *.SCR, *.HTA, *.CPL, *.MSI, *.COM, *.EXE  -Recurse 2> $null | ForEach-Object {
+            $_.FullName >> "$Global:Destiny\$HOSTNAME\FilesLists\Possible_Dangerrous_Extension.txt"
+        }
+    } 
+    catch 
+    {
+        Report-Error -evidence "List of Extension $extension"
+    }
+}
+
 <########### P R E F E T C H #####################################################> # PRF*
 Function Collect-Prefetch {
     # TODO: Use Nirsoft tool to parse the information
@@ -3274,10 +3294,9 @@ Function Collect-Firefox-Data {
     }
 }
 
-<########### I E   W E B   B R O W S E R #########################################> # IEX
+<########### I E   W E B   B R O W S E R #########################################> # IEX*
 Function Collect-IE-Data {
     # TODO: see if it adds something new -> Extracts cache inf0rmation from IE - http://www.nirsoft.net/utils/ie_cache_viewer.html
-    # TODO: Computer\HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\TypedURLs
     
     Write-Host "[+] Collecting IE Artifacts ..." -ForegroundColor Green
     
@@ -3338,7 +3357,7 @@ Function Collect-IE-Data {
     }
 }
 
-<########### E D G E   W E B   B R O W S E R #####################################> # EDG
+<########### E D G E   W E B   B R O W S E R #####################################> # EDG*
 Function Collect-EDGE-Data {
     
     # TODO: REVIEW THE BELOW PATHS
@@ -3387,7 +3406,7 @@ Function Collect-EDGE-Data {
     }
 }
 
-<########### S A F A R I #########################################################> # SAF
+<########### S A F A R I #########################################################> # SAF*
 Function Collect-Safari-Data {
     
     Write-Host "[+] Collecting SAFARI Artifacts ..." -ForegroundColor Green
@@ -3475,7 +3494,7 @@ Function Collect-Safari-Data {
     }
 }
 
-<########### O P E R A ###########################################################> # OPE
+<########### O P E R A ###########################################################> # OPE*
 Function Collect-Opera-Data {
 
     Write-Host "[+] Collecting Opera Artifacts ..." -ForegroundColor Green
@@ -3557,7 +3576,7 @@ Function Collect-Opera-Data {
     }
 }
 
-<########### T O R ###############################################################> # TOR 
+<########### T O R ###############################################################> # TOR*
 Function Collect-Tor-Data {
     
     $filesToDownload = "content-prefs.sqlite","cookies.sqlite","favicons.sqlite","formhistory.sqlite","permissions.sqlite","places.sqlite","storage.sqlite","storage-sync.sqlite","webappsstore.sqlite"
@@ -3613,23 +3632,23 @@ Function Collect-Tor-Data {
 
 <########### C L O U D #####################################################>
 
-<########### CLOUD - ONEDRIVE ##############################> # COD
+<########### CLOUD - ONEDRIVE ##############################> # COD*
 Function Collect-Cloud-OneDrive-Logs {
-# It collects the logs, but I don't know how to TREAT the information   
+# It collects the logs, but I don't know how to Parse the information   
     Write-Host "[+] Collecting OneDrive Logs ..." -ForegroundColor Green
 
     foreach($u in $USERS)
     {
         if( Test-Path "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs" )
         {
-            Write-Host "`t○ From user: $u" -ForegroundColor Green
+            Write-Host "`t○ from user: $u" -ForegroundColor Green
 
             # BUSINESS1 logs
             try 
             {
+                Write-Host "`t`t○ Business1 folder" -ForegroundColor Green
                 if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Business1" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Business1" > $null }
-                
-                & cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Business1\*.*" "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Business1" > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Business1\*.*" "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Business1" > $null
             } 
             catch 
             {
@@ -3639,9 +3658,9 @@ Function Collect-Cloud-OneDrive-Logs {
             # COMMON logs
             try 
             {
+                Write-Host "`t`t○ Common folder" -ForegroundColor Green
                 if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Common" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Common" > $null }
-                
-                & cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Common\*.*" "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Common" > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Common\*.*" "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Common" > $null
             } 
             catch 
             {
@@ -3651,9 +3670,9 @@ Function Collect-Cloud-OneDrive-Logs {
             # Personal logs
             try 
             {
+                Write-Host "`t`t○ Personal folder" -ForegroundColor Green
                 if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Personal" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Personal" > $null }
-                
-                & cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Personal\*.*" "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Personal" > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Personal\*.*" "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Personal" > $null
             } 
             catch 
             {
@@ -3663,7 +3682,7 @@ Function Collect-Cloud-OneDrive-Logs {
     }
 }
 
-<########### CLOUD - GOOGLE DRIVE ##########################> # CGD
+<########### CLOUD - GOOGLE DRIVE ##########################> # CGD*
 Function Collect-Cloud-GoogleDrive-Logs {
     
     Write-Host "[+] Collecting GoogleDrive Logs ..." -ForegroundColor Green
@@ -3672,13 +3691,14 @@ Function Collect-Cloud-GoogleDrive-Logs {
     {
         if( Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default" )
         {
-            Write-Host "`t○ From user: $u" -ForegroundColor Green
+            Write-Host "`t○ from user: $u" -ForegroundColor Green
             
             # DB google drive files
             try 
             {
+                Write-Host "`t`t○ DB files" -ForegroundColor Green
                 if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" > $null }
-                cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.db" "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.db" "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" > $null
             } 
             catch 
             {
@@ -3688,8 +3708,9 @@ Function Collect-Cloud-GoogleDrive-Logs {
             # LOG google drive file
             try 
             {
+                Write-Host "`t`t○ LOG files" -ForegroundColor Green
                 if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" > $null }
-                cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.log" "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u\." > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.log" "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u\." > $null
             } 
             catch 
             {
@@ -3699,7 +3720,7 @@ Function Collect-Cloud-GoogleDrive-Logs {
     }
 }
 
-<########### CLOUD - DROPBOX ##############################>  # CDB
+<########### CLOUD - DROPBOX ##############################>  # CDB*
 Function Collect-Cloud-Dropbox-Logs {
     
     Write-Host "[+] Collecting Dropbox Logs ..." -ForegroundColor Green
@@ -3715,7 +3736,7 @@ Function Collect-Cloud-Dropbox-Logs {
             
             try
             {
-                cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Dropbox\instance1\*.dbx" "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1\." > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance1\*.dbx" "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1\." > $null
             } 
             catch 
             {
@@ -3727,7 +3748,7 @@ Function Collect-Cloud-Dropbox-Logs {
 
             try
             {
-                cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Dropbox\instance_db\*.dbx" "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance_db\." > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance_db\*.dbx" "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance_db\." > $null
             } 
             catch 
             {
@@ -3741,7 +3762,7 @@ Function Collect-Cloud-Dropbox-Logs {
 
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\z_temp" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\z_temp" > $null }
 
-    cmd.exe /c powershell.exe $SCRIPTPATH\bin\dbx-key-win-live.ps1 > "$Global:Destiny\$HOSTNAME\z_temp\keys.txt"
+    & $SCRIPTPATH\bin\dbx-key-win-live.ps1 > "$Global:Destiny\$HOSTNAME\z_temp\keys.txt"
 
     Select-String -Path "$Global:Destiny\$HOSTNAME\z_temp\keys.txt" -Pattern DBX | ForEach-Object { 
                 
@@ -3764,7 +3785,6 @@ Function Collect-Cloud-Dropbox-Logs {
 
         Write-Host "`t`t○ From user: $u" -ForegroundColor Green
 
-        # & $SQL_DBX_EXE -key $ks1_key "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1\filecache.dbx" ".backup $Global:Destiny\\$HOSTNAME\\CLOUD\\DROPBOX\\$u\\instance1\\filecache.db" 
         $rootTemp = $Global:Destiny -replace "\\","\\"
 
         Get-ChildItem "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1" -Filter *.dbx | ForEach-Object {
@@ -3802,32 +3822,7 @@ Function Collect-Cloud-Dropbox-Logs {
 <############  LIVE OR OFFLINE SYSTEM  /  NO VOLATILE  /  TIME CONSUMING  ######>
 <###############################################################################>
 
-<########### D A N G E R O U S   E X T E N S I O N S #############################> # DEX
-Function Collect-Dangerous-Extensions {
-    
-    $extensions = "VB","VBS","PIF","BAT","CMD","JS","JSE","WS","WSF","WSC","WSH","PS1","PS1XML","PS2","PS2XML","PSC1","PSC2","MSH","MSH1","MSH2","MSHXML","MSH1XML","MSH2XML","SCF","LNK","INF","APPLICATION","GADGET","SCR","HTA","CPL", "MSI", "COM", "EXE"
 
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\FilesLists ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\FilesLists > $null }
-
-    Write-Host "[+] Collecting List of files with Dangerous extensions..." -ForegroundColor Green
-
-    foreach ($extension in $extensions)
-    {
-        try
-        {
-            Write-Host "`t└>$extension extension" -ForegroundColor Green
-
-            Get-ChildItem "$Global:Source`\" -File -Recurse "*.$extension" 2> $null | ForEach-Object {        # +- 14 mins | c: != c:\ therefore the `\
-                $_.FullName >> "$Global:Destiny\$HOSTNAME\FilesLists\Extension_$extension.txt"
-            }
-        } 
-        catch 
-        {
-            Report-Error -evidence "List of Extension $extension"
-        }
-    }
-
-}
 
 <########### S I G N E D   F I L E S ######################> # SFI <# TIME CONSUMING - Not by Default#>
 Function Collect-Sign-Files {
@@ -3837,9 +3832,8 @@ Function Collect-Sign-Files {
     Write-Host "[+] Collecting Info About Signed Files " -ForegroundColor Green
     try
     {
-        
-        & $SIG_EXE /accepteula -vt -h -c -e -q $Global:Source\Windows\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
-        & $SIG_EXE /accepteula -vt -h -c -e -q $Global:Source\Windows\system32\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\6.SignedFiles.csv" 
+        & $SIG_EXE /accepteula -vt -h -c -e -q $Global:Source\Windows\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\SignedFiles_Windows.csv" 
+        & $SIG_EXE /accepteula -vt -h -c -e -q $Global:Source\Windows\system32\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\SignedFiles_WindowsSystem32.csv" 
     } 
     catch 
     {
@@ -3936,14 +3930,160 @@ Function Control-GUI {
         [string]$testtt="bla"
     )
 
+    ############################################ Import Assemblies ################################################################
     Add-Type -AssemblyName System.Windows.Forms
     Add-Type -AssemblyName System.Drawing
 
+    ############################################ B A N N E R ######################################################################
+
+    $Banner = New-Object System.Windows.Forms.RichTextBox
+    $Banner.location = New-Object System.Drawing.Point(157, 30)
+    $Banner.Size = New-Object System.Drawing.Size(710, 225)
+    $Banner.Name = "Banner"
+    $Banner.Font = New-Object System.Drawing.Font("Lucida Console", "9")
+    $Banner.Multiline = $True
+    $Banner.ReadOnly = $True
+    $Banner.ForeColor = [System.Drawing.Color]::GhostWhite        #AntiqueWhite, FloralWhite
+    $Banner.BackColor = [System.Drawing.Color]::Black
+    $Banner.Text += "`n"
+    $Banner.Text += "  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒`n"
+    $Banner.Text += "  ▓                                                                                              ▒`n"
+    $Banner.Text += "  ▓    ######\                               ##\           ##\   ##\                             ▒`n"
+    $Banner.Text += "  ▓    \_##  _|                              \__|          \__|  ## |                            ▒`n"
+    $Banner.Text += "  ▓      ## |  #######\   ######\  ##\   ##\ ##\  #######\ ##\ ######\    ######\   ######\      ▒`n"
+    $Banner.Text += "  ▓      ## |  ##  __##\ ##  __##\ ## |  ## |## |##  _____|## |\_##  _|  ##  __##\ ##  __##\     ▒`n"
+    $Banner.Text += "  ▓      ## |  ## |  ## |## /  ## |## |  ## |## |\######\  ## |  ## |    ## /  ## |## |  \__|    ▒`n"
+    $Banner.Text += "  ▓      ## |  ## |  ## |## |  ## |## |  ## |## | \____##\ ## |  ## |##\ ## |  ## |## |          ▒`n"
+    $Banner.Text += "  ▓    ######\ ## |  ## |\####### |\######  |## |#######  |## |  \####  |\######  |## |          ▒`n"
+    $Banner.Text += "  ▓    \______|\__|  \__| \____## | \______/ \__|\_______/ \__|   \____/  \______/ \__|          ▒`n"
+    $Banner.Text += "  ▓                            ## |                                                              ▒`n"
+    $Banner.Text += "  ▓                            ## |                                                              ▒`n"
+    $Banner.Text += "  ▓                            \__|                           By:      f4d0                      ▒`n"
+    $Banner.Text += "  ▓                                                           Version: 0.7                       ▒`n"
+    $Banner.Text += "  ▓                                                                                              ▒`n"
+    $Banner.Text += "  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒`n"
+    
+
+    ############################################ General groupBox ################################################################
+    
+    $groupBoxGeneral = New-Object System.Windows.Forms.GroupBox
+    $labelSource = New-Object System.Windows.Forms.Label
+    $comboBoxSource = New-Object System.Windows.Forms.ComboBox
+    $labelDestiny = New-Object System.Windows.Forms.Label
+    $textBoxDestiny = New-Object System.Windows.Forms.TextBox
+    $buttonDestiny = New-Object System.Windows.Forms.Button
+    $checkBoxFormat = New-Object System.Windows.Forms.CheckBox
+
+    # Label Source
+    $labelSource.Location = New-Object System.Drawing.Point(55, 280)
+    $labelSource.Size = New-Object System.Drawing.Size(50, 13)
+    $labelSource.AutoSize = true
+    $labelSource.Name = "labelSource"
+    $labelSource.TabIndex = 0 
+    $labelSource.TabStop = $False
+    $labelSource.Text = "Source: "
+    
+    # Dropbox Source
+    $comboBoxSource.Location = New-Object System.Drawing.Point(105, 277)
+    $comboBoxSource.Size = New-Object System.Drawing.Size(60, 20)
+    $comboBoxSource.FormattingEnabled = true
+    $comboBoxSource.Name = "comboBoxSource"
+    $comboBoxSource.TabIndex = 1
+
+    # Label Destiny
+    $labelDestiny.Location = New-Object System.Drawing.Point(180, 280)
+    $labelDestiny.Size = New-Object System.Drawing.Size(50, 13)
+    $labelDestiny.AutoSize = true
+    $labelDestiny.Name = "labelDestiny"
+    $labelDestiny.TabIndex = 0
+    $labelDestiny.TabStop = $False
+    $labelDestiny.Text = "Destiny: "
+
+    # Textbox Destiny
+    $textBoxDestiny.Location = New-Object System.Drawing.Point(230, 277)
+    $textBoxDestiny.Size = New-Object System.Drawing.Size(262, 20)
+    $textBoxDestiny.Name = "textBox1"
+    $textBoxDestiny.TabIndex = 2
+
+    # Button Destiny
+    $buttonDestiny.Location = New-Object System.Drawing.Point(500, 275)
+    $buttonDestiny.Size = New-Object System.Drawing.Size(75, 23)
+    $buttonDestiny.Name = "buttonDestiny"
+    $buttonDestiny.TabIndex = 3
+    $buttonDestiny.Text = "Select ..."
+    $buttonDestiny.UseVisualStyleBackColor = true
+    $buttonDestiny.Add_Click(
+        {
+        $dialogDestiny = New-Object System.Windows.Forms.FolderBrowserDialog
+        $dialogDestiny.ShowDialog()
+        $textBoxDestiny.Text = $dialogDestiny.SelectedPath
+        $dialogDestiny.Dispose()
+        }
+    )
+
+    # Format Checkbox
+    $checkBoxFormat.Location = New-Object System.Drawing.Point(600, 280)
+    $checkBoxFormat.Size = New-Object System.Drawing.Size(80, 17)
+    $checkBoxFormat.AutoSize = true
+    $checkBoxFormat.Name = "checkBoxFormat"
+    $checkBoxFormat.TabIndex = 4
+    $checkBoxFormat.Text = "Format"
+    $checkBoxFormat.UseVisualStyleBackColor = true
+
+    # groupBox General
+    $groupBoxGeneral.Location = New-Object System.Drawing.Point(50, 260)
+    $groupBoxGeneral.Size = New-Object System.Drawing.Size(924, 75)                   # 924 de X
+    $groupBoxGeneral.Name = "OfflineGroupBox"
+    $groupBoxGeneral.Text = "General"
+    $groupBoxGeneral.BringToFront()
+    
+    ############################################ Online groupBox #################################################################
+
+    # groupBox Online
+    $groupBoxOnline = New-Object System.Windows.Forms.GroupBox
+    $groupBoxOnline.Location = New-Object System.Drawing.Point(50, 350)
+    $groupBoxOnline.Name = "OnlineGroupBox"
+    $groupBoxOnline.Size = New-Object System.Drawing.Size(450, 400)
+    $groupBoxOnline.Text = "Online Options"
+
+    ############################################ Offline groupBox ################################################################
+    
+    # groupBox Offline
+    $groupBoxOffline = New-Object System.Windows.Forms.GroupBox
+    $groupBoxOffline.Location = New-Object System.Drawing.Point(524, 350)
+    $groupBoxOffline.Name = "OfflineGroupBox"
+    $groupBoxOffline.Size = New-Object System.Drawing.Size(450, 400)
+    $groupBoxOffline.Text = "Offline Options"
+    
+    ############################################ FORM Definition #################################################################
+
     $form = New-Object System.Windows.Forms.Form
     $form.Text = "$APPName $APPVersion"
-    $form.Size = New-Object System.Drawing.Size(820,800)
+    $form.Size = New-Object System.Drawing.Size(1024,800)
+    $form.MaximumSize = New-Object System.Drawing.Size(1024,800)
+    $form.MinimumSize = New-Object System.Drawing.Size(1024,800)
     $form.StartPosition = 'CenterScreen'
+    
+    # Add to Form: Banner
+    $form.Controls.Add($Banner)
+    
+    # Add to Form: General Options
+    $form.Controls.Add($labelSource)
+    $form.Controls.Add($comboBoxSource)
+    $form.Controls.Add($labelDestiny)
+    $form.Controls.Add($textBoxDestiny)
+    $form.Controls.Add($buttonDestiny)
+    $form.Controls.Add($checkBoxFormat)
+    $form.Controls.Add($groupBoxGeneral)
+    
+    # Add to Form: Offline Options
+    $form.Controls.Add($groupBoxOffline)
+    
+    # Add to Form: Online Options
+    $form.Controls.Add($groupBoxOnline)
 
+    #######################################################################################################################################
+    
     $OKButton = New-Object System.Windows.Forms.Button
     $OKButton.Location = New-Object System.Drawing.Point(75,120)
     $OKButton.Size = New-Object System.Drawing.Size(75,23)
@@ -3970,32 +4110,7 @@ Function Control-GUI {
     $textBox.Location = New-Object System.Drawing.Point(10,40)
     $textBox.Size = New-Object System.Drawing.Size(260,20)
     #$form.Controls.Add($textBox)
-
-    $Banner = New-Object System.Windows.Forms.RichTextBox
-    $Banner.location = New-Object System.Drawing.Point(50, 50);
-    $Banner.Name = "Banner";
-    $Banner.Size = New-Object System.Drawing.Size(710, 225);
-    $Banner.Font = New-Object System.Drawing.Font("Lucida Console", "9");
-    $Banner.Multiline = $True;
-    $Banner.Text += "`n"
-    $Banner.Text += "  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒`n"
-    $Banner.Text += "  ▓                                                                                              ▒`n"
-    $Banner.Text += "  ▓    ######\                               ##\           ##\   ##\                             ▒`n"
-    $Banner.Text += "  ▓    \_##  _|                              \__|          \__|  ## |                            ▒`n"
-    $Banner.Text += "  ▓      ## |  #######\   ######\  ##\   ##\ ##\  #######\ ##\ ######\    ######\   ######\      ▒`n"
-    $Banner.Text += "  ▓      ## |  ##  __##\ ##  __##\ ## |  ## |## |##  _____|## |\_##  _|  ##  __##\ ##  __##\     ▒`n"
-    $Banner.Text += "  ▓      ## |  ## |  ## |## /  ## |## |  ## |## |\######\  ## |  ## |    ## /  ## |## |  \__|    ▒`n"
-    $Banner.Text += "  ▓      ## |  ## |  ## |## |  ## |## |  ## |## | \____##\ ## |  ## |##\ ## |  ## |## |          ▒`n"
-    $Banner.Text += "  ▓    ######\ ## |  ## |\####### |\######  |## |#######  |## |  \####  |\######  |## |          ▒`n"
-    $Banner.Text += "  ▓    \______|\__|  \__| \____## | \______/ \__|\_______/ \__|   \____/  \______/ \__|          ▒`n"
-    $Banner.Text += "  ▓                            ## |                                                              ▒`n"
-    $Banner.Text += "  ▓                            ## |                                                              ▒`n"
-    $Banner.Text += "  ▓                            \__|                           By:      f4d0                      ▒`n"
-    $Banner.Text += "  ▓                                                           Version: 0.7                       ▒`n"
-    $Banner.Text += "  ▓                                                                                              ▒`n"
-    $Banner.Text += "  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒`n"
     
-    $form.Controls.Add($Banner)
     
     $form.Topmost = $true
 
@@ -4145,11 +4260,9 @@ Function Show-Simple-Options-Resume {
     if ($Global:OPE ) {Write-Host "            • OPE - Opera Brower Artifacts."}
     if ($Global:TOR ) {Write-Host "            • TOR - TOR Artifacts."}
 
-    
-
-    if ($Global:COD ) {Write-Host "            • COD"}
-    if ($Global:CGD ) {Write-Host "            • CGD"}
-    if ($Global:CDB ) {Write-Host "            • CDB"}
+    if ($Global:COD ) {Write-Host "            • COD - Cloud Onedrive Artifacts."}
+    if ($Global:CGD ) {Write-Host "            • CGD - Cloud Googledrive Artifacts."}
+    if ($Global:CDB ) {Write-Host "            • CDB - Cloud Dropbox Artifacts."}
     
     Write-Host "  ═══════════════════════════════════════════"
     Write-Host ""
@@ -4584,779 +4697,5 @@ Function Start-Execution {
 Start-Execution # STARTS THE EXECUTION OF THE PROGRAM
 
 <##################################################################################################################################>
-<#########################  FUTURE DEVELOPMENTS  ###########################################>
+<#########################  SCRIPT EN  ###########################################>
 <##################################################################################################################################>
-
-# http://www.nirsoft.net/utils/web_browser_password.html
-
-# C:\Windows\System32\WDI\LogFiles\StartupInfo
-# It has information about running processes with timestamp, can be an alternative way that anti-forensics don't delete.
-
-<########### S Y S T E M   P O L I C I E S #######################################> # SPO <# TODO #>
-Function Collect-System-Policies {
-
-    Write-Host "[+] Collecting System Policies ..." -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-
-    # https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-gpsb/12867da0-2e4e-4a4f-9dc4-84a7f354c8d9
-    # Computer\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System
-
-
-}
-
-<########### BROWSERS PASSWORD RECOVER ###########################################> # BPR <# TODO #>
-Function Collect-Browsers-Passwords {
-    
-    Write-Host "[+] Collecting IE Passwords ..." -ForegroundColor Green
-
-    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\PASSWORDS\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\PASSWORDS\" > $null }
-
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-
-
-}
-
-<# TODO #> <########### L O C A L   S E S S I O N S #######################> # LSE 
-Function Collect-Local-Sessions {
-    
-    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\System_Info" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\System_Info" > $null }
-
-    Write-Host "[+] Collecting Local Sessions ..." -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-    
-    # query user
-}
-
-<# TODO #> <########### U S E R   A N D   P A S S W O R D   H A S H E S ###> # PWD 
-Function Collect-Passwords {
-    
-    Write-Host "[+] Collecting Passwords" -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-
-}
-
-
-<# TODO: Adjust info collection to the below map
-    Windows Versions MAP:
-    VERSION                        CORE
-    Windows 1.0                    1.04
-    Windows 2.0                    2.11
-    Windows 3.0                    3
-    Windows NT 3.1                 3.10.528
-    Windows for Workgroups 3.11    3.11
-    Windows NT Workstation 3.5     3.5.807
-    Windows NT Workstation 3.51    3.51.1057
-    Windows 95                     4.0.950
-    Windows NT Workstation 4.0     4.0.1381
-    Windows 98                     4.1.1998
-    Windows 98 Second Edition      4.1.2222
-    Windows Me                     4.90.3000
-    Windows 2000 Professional      5.0.2195
-    Windows 2000 Server            5.0
-    Windows XP                     5.1.2600
-    Windows Server 2003            5.2
-    Windows Vista                  6.0.6000
-    Windows Server 2008            6.0
-    Windows 7                      6.1.7600
-    Windows Server 2008 R2         6.1
-    Windows Server 2012            6.2
-    Windows 8.1                    6.3.9600
-    Windows 10                     10.0.10240
-    Windows Server 2016            10.0
-    Windows Server 2019            10.0
-#>
-
-
-<##################################################################################################################################>
-<##################################################################################################################################>
-<############################# G A R B A G E ###############################################>
-<##################################################################################################################################>
-<##################################################################################################################################>
-
-
-
-# Others - SYSTEM INFO
-# Get-ComputerInfo >> "$Global:Destiny\$HOSTNAME\1.ComputerInfo.txt"
-
-
-
-Function Code-Snippets {
-
-
-    <# TEST PATH AND CREATE DIR #>
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\SHELLFOLDERS ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\SHELLFOLDERS > $null }
-
-
-    <# ITERATE USERS #>
-    foreach($u in $USERS){
-        New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\HIVES\$u > $null
-    }
-
-
-    <# ITERATE FOLDER #>
-    Get-ChildItem "C:\Windows\System32\winevt\Logs" -Filter *.evtx | ForEach-Object {
-        if($_.Length -gt 69632) {
-            <# DO SOMETHING #>
-        }
-    }
-
-    <# USER INPUT #>
-    $Answer = Read-Host 'Do you want o use GUI? ("Yes" or "No")'
-
-    <# Copy with RawCopy #>
-    & $RAW_EXE  "$Global:Source\Users\$u\NTUSER.dat" "$Global:Destiny\$HOSTNAME\HIVES\$u\." > $null
-
-    <# Script Path #>
-    Write-Host $PSScriptRoot  <#Powershell 3+#>
-
-    $scriptPath = split-path -parent $MyInvocation.MyCommand.Definition   <# Powershell 2- #>
-    Write-Host $scriptPath
-
-    <# Version de Powershell #>
-    $PSVersionTable
-    $PSVersionTable.PSVersion
-    $PSVersionTable.PSVersion.Major
-    
-    if($PSVersionTable.PSVersion.Major -ge 5)
-    { "do something" }
-    else
-    { "don't do something" }
-
-    <# Get Magic number of file #>
-    '{0:x2}' -f (Get-Content .\inquisitor_v0.5.ps1 -Encoding Byte -ReadCount 4)
-
-
-    <# String Manpulation in Dropox #>
-
-    <# Iterate folder with specific extension file #>
-    Get-ChildItem "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default" -Filter *.db | ForEach-Object {
-    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" > $null }
-        & $RAW_EXE $_.FullName "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u\." > $null
-    }
-
-}
-
-<# Displays an alternive HELP #>
-[switch]$Help=$false        
-
-<# OLD Help. Dificult to mantain.
-Better to use "PS C:\> Get-Help Inquisitor.ps1" #>
-Function Show-Help {
-    
-    Write-Host '▓                                                                                                                                  ▒'
-    Write-Host '▓    INFO: Inquisitor is a tool to collect evidences from a windows system. It works in all types of windows.                      ▒'
-    Write-Host '▓                                                                                                                                  ▒'
-    Write-Host '▓    Syntax:                                                                                                                       ▒'
-    Write-Host '▓       .\inquisitor.ps1 -SOURCE <drive> -DESTINY <drive> <parameters>                                                             ▒' 
-    Write-Host '▓                                                                                                                                  ▒'
-    Write-Host '▓    Examples:                                                                                                                     ▒'
-    Write-Host '▓       1) .\inquisitor.ps1 -SOURCE c: DESTINY d: -ALL -RAM -SF -FORMAT Zeros                                                      ▒'
-    Write-Host '▓       2) .\inquisitor.ps1 -SOURCE c: DESTINY d: -HI -EVT                                                                         ▒'
-    Write-Host '▓       3) .\inquisitor.ps1 -GUI                                                                                                   ▒'
-    Write-Host '▓                                                                                                                                  ▒'
-    Write-Host '▓    Controlling parameters:                                                                                                       ▒'
-    Write-Host '▓                                                                                                                                  ▒'
-    Write-Host '▓    -HELP    -> Show this Menu              -SOURCE  -> Source Drive               -FORMAT -> Format DESTINY drive                ▒'
-    Write-Host '▓    -GUI     -> Use of GUI                  -DESTINY -> Destiny Drive                                                             ▒'
-    Write-Host '▓                                                                                                                                  ▒'
-    Write-Host '▓    Collection parameters:                                                                                                        ▒'
-    Write-Host '▓                                                                                                                                  ▒'
-    Write-Host '▓    -ALL -> Collect Everything (except "Sign Files" and "RAM")                                                                    ▒'
-    Write-Host '▓                                                                                                                                  ▒'
-    Write-Host '▓    -RAM -> Memory Dump                    -NC  -> Network Configuration                                                          ▒'
-    Write-Host '▓                                           -TC  -> TCP Connections                                                                ▒'
-    Write-Host '▓    -SI  -> System Info                    -NEC -> Netbios Connections                                                            ▒'
-    Write-Host '▓    -DT  -> Date and Timezone              -RES -> Remote Established Sessions                                                    ▒'
-    Write-Host '▓    -SRS -> Services Running and Stopped   -CFN -> Copied Files Through Netbios                                                   ▒'
-    Write-Host '▓    -P   -> Processes                      -OP  -> Open Ports                                                                     ▒'
-    Write-Host '▓    -IS  -> Installed Software             -AOP -> Applications with Open Ports                                                   ▒'
-    Write-Host '▓    -SF  -> Sign Files                     -DNS -> DNS Cache                                                                      ▒'
-    Write-Host '▓    -AAF -> All Autorun Files              -ARP -> ARP Cache                                                                      ▒'
-    Write-Host '▓                                           -HI  -> Hives                                                                          ▒'
-    Write-Host '▓    -WCE -> Chrome Web Browser             -REG -> Registry                                                                       ▒'
-    Write-Host '▓    -WCU -> Chromium Web Browser           -RUI -> Registry USB Info                                                              ▒'
-    Write-Host '▓    -WFI -> Firefox Web Browser            -RDI -> Registry Devices Info                                                          ▒'
-    Write-Host '▓    -WIE -> IE Web Browser                 -WI  -> Wireless Info                                                                  ▒'
-    Write-Host '▓    -WED -> EDGE Web Browser               -EVT -> EVTX Files                                                                     ▒'
-    Write-Host '▓    -WSA -> SAFARI                         -SC  -> Security Configuration                                                         ▒'
-    Write-Host '▓    -WOP -> Opera                          -FL  -> Files Lists                                                                    ▒'
-    Write-Host '▓                                           -PRF -> Prefetch                                                                       ▒'
-    Write-Host '▓    -OUT -> Outlook                        -WS  -> Windows Search                                                                 ▒'
-    Write-Host '▓                                           -EE  -> ETW & ETL                                                                      ▒'
-    Write-Host '▓    -COD -> Cloud - OneDrive               -TIC -> Thumbcache                                                                     ▒'
-    Write-Host '▓    -CGD -> Cloud - Google Drive           -ICO -> Iconcache                                                                      ▒'
-    Write-Host '▓    -CDB -> Cloud - Dropbox                -CPH -> CL & PS Command History                                                        ▒'
-    Write-Host '▓                                           -SFO -> Shell Folders                                                                  ▒'
-    Write-Host '▓                                           -PER -> Persistence                                                                    ▒'
-    Write-Host '▓                                           -FEX -> File Extensions                                                                ▒'
-    Write-Host '▓                                                                                                                                  ▒' 
-    Write-Host '▓                                                                                                                                  ▒'
-    Write-Host '▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒'
-}
-
-<#
-do{
-    if($GUI -eq $True)
-    {
-        Create-GUI
-        exit
-    }
-    if($GUI -eq $False)
-    {
-        Control-NOGUI
-        exit
-    }
-
-    
-    $Answer = Read-Host 'Do you want o use GUI? ("Yes" or "No")'
-    if($Answer -eq "Yes") { $GUI=$True  }
-    if($Answer -eq "No" ) { $GUI=$False }
-    
-
-}While(($Graphic -ne $True) -or ($Graphic -ne $False))
-#>
-
-# NetWork Configuration Removed Commands
-# Substitute the below with: Get-CimInstance Win32_NetworkAdapterConfiguration
-# Get-WmiObject Win32_NetworkAdapterConfiguration | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_Adapters_Configuration_Complete.csv"
-# Get-CimInstance Win32_NetworkAdapterConfiguration | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_Adapters_Configuration_Complete.csv"
-
-
-<#
-TEMP LIST OF DONE LIST:
-
-VERSION 0.7
-    - BAM - BACKGROUND ACTIVITY MODERATOR
-
-#>
-
-<# OLD CODE #>
-<########### R E G I S T R Y #####################################################> # REG
-Function Collect-Registry {
-    <# TODO: investigate what is the advantage in having this if we already have the HIVES #>
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\REG_FILES ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\REG_FILES > $null }
-
-    try{
-        Write-Host "[+] Extracting Registry: Key Classes Root ..." -ForegroundColor Green
-        reg export HKEY_CLASSES_ROOT $Global:Destiny\$HOSTNAME\REG_FILES\"HKCR.reg" > $null
-        Write-Host "[+] Extracting Registry: Key Current User ..." -ForegroundColor Green
-        reg export HKEY_CURRENT_USER $Global:Destiny\$HOSTNAME\REG_FILES\"HKCU.reg" > $null
-        Write-Host "[+] Extracting Registry: Key Local Machine ..." -ForegroundColor Green
-        reg export HKEY_LOCAL_MACHINE $Global:Destiny\$HOSTNAME\REG_FILES\"HKLM.reg" > $null
-        Write-Host "[+] Extracting Registry: Key Users ..." -ForegroundColor Green
-        reg export HKEY_USERS $Global:Destiny\$HOSTNAME\REG_FILES\"HKU.reg" > $null
-        Write-Host "[+] Extracting Registry: Key Current Config ..." -ForegroundColor Green
-        reg export HKEY_CURRENT_CONFIG $Global:Destiny\$HOSTNAME\REG_FILES\"HKCC.reg" > $null
-    } catch {
-        Report-Error -evidence "main REG files."
-    }
-}
-
-
-<########### C H R O M I U M   W E B   B R O W S E R #########> # WCU
-Function Collect-Chromium-Data {
-    foreach($u in $USERS){
-    
-        if($OS -eq "XP")
-        {
-            if(Test-Path "C:\Documents and Settings\$u\Local Settings\Application Data\Google\Chrome\")
-            {
-                try{
-                    Write-Host "[+] Collecting Chromium files (from Windows $OS system)..." -ForegroundColor Green
-                    New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\$u > $null
-                    cmd.exe /c copy "$Global:Source\Documents and Settings\$u\Local Settings\Application Data\Chromium\User Data\Default\Preferences" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Documents and Settings\$u\Local Settings\Application Data\Chromium\User Data\Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\$u\."> $null
-                } catch {
-                    Report-Error -evidence "Chromium files"
-                }
-            }  
-        }
-
-        if( ($OS -eq "7") -or ($OS -eq "Vista") -or ($OS -eq "8") -or ($OS -eq "10") )
-        {
-            if(Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User data")
-            {
-                try{
-                    Write-Host "[+] Collecting Chromium files (from Windows $OS system)..." -ForegroundColor Green
-                    New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\$u > $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chromium\Default\Preferences" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chromium\Default\Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chromium\Default\Application Cache\Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chromium\Default\Media Cache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\$u\."> $null
-                    cmd.exe /c copy "$Global:Source\Users\$u\AppData\Local\Google\Chromium\Default\GPUCache\*.*" "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\$u\."> $null
-                } catch {
-                    Report-Error -evidence "Chromium files"
-                }
-            }
-        }
-
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WEB_BROWSERS\CHROMIUM\")){
-            Write-Host "[i] There is no Chromium Browser in the System ..." -ForegroundColor Yellow
-        }
-    }
-}
-
-
-
-<########### A P P L I C A T I O N S   W I T H   O P E N   P O R T S   ###########> # AOP # REMOVED: Because we already have this information in the network connections with the xorresponding executing software and path
-Function Collect-Application-With-Open-Ports {
-
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\NETWORK ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\NETWORK > $null }
-
-    try{
-        Write-Host "[+] Collecting Applications with Open Ports ..." -ForegroundColor Green
-        cmd.exe /c netstat -anob > "$Global:Destiny\$HOSTNAME\NETWORK\ApplicationsWithOpenPorts.txt"
-    }catch{
-        Report-Error -evidence "Applications with Open Ports"
-    }
-}
-
-<########### O P E N   P O R T S  ################################################> # OP #REMOVED: Because this information already exists in Get-NetTCPConnection
-Function Collect-Open-Ports {
-
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\NETWORK ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\NETWORK > $null }
-
-    try{
-        Write-Host "[+] Collecting Open Ports ..." -ForegroundColor Green
-        cmd.exe /c netstat -an |findstr /i "state listening established" > "$Global:Destiny\$HOSTNAME\NETWORK\OpenPorts.txt"
-    }catch{
-        Report-Error -evidence "Open Ports"
-    }
-}
-
-<########### A C T I V E   D I R E C T O R Y   I N F O ###############> <# NEW #> # AD # Removed because the cmdlets for the AD do not come by default, and also, AD info is not so important for local computer forensics.
-Function Collect-AD-Info {
-    try{
-        Write-Host "[+] Collecting Users and Groups from the Active Directory" -ForegroundColor Green
-        Get-ADUser -Filter 'Name -Like "*"' | where Enabled -eq $True > "$Global:Destiny\$HOSTNAME\11.Users_And_Groups_AD.txt"
-        Get-ADGroupMember Administrators | where objectClass -eq 'user' >> "$Global:Destiny\$HOSTNAME\11.Users_And_Groups_AD.txt"
-        Get-ADComputer -Filter "Name -Like '0'" -Properties * | where Enabled -eq $True | Select-Object Name, OperatingSystem, Enabled >> "$Global:Destiny\$HOSTNAME\10.Users_And_Groups_AD.txt"
-    }catch{
-        Report-Error -evidence "Users and Groups from the Active Director"
-    }
-    
-    try{
-        Write-Host "[+] Collecting Active Directory Group Policy" -ForegroundColor Green
-        Get-ADDefaultDomainPasswordPolicy -Current LoggedOnUser > "$Global:Destiny\$HOSTNAME\11.AD_GPO.txt"
-        Get-ADDefaultDomainPasswordPolicy -Current LocalComputer >> "$Global:Destiny\$HOSTNAME\11.AD_GPO.txt"
-        Get-GPO -all >> "$Global:Destiny\$HOSTNAME\11.AD_GPO.txt"        
-        Get-GPOReport -Name "*" - ReportType Html >> "$Global:Destiny\$HOSTNAME\11.AD_GPO.html"
-        <#
-        IF I CAN ITERATE BY USERS AND COMPUTERS OVER THE AD NETWORK, I CAN USE THE FOLLOWING:
-
-        Get-GPResultantSetOfPolicy –user <user> -computer <computer> -ReportType Html -Path ".\user-computer-RSoP.html"
-
-        #>
-    }catch{
-        Report-Error -evidence "Active Directory Group Policy"
-    }
-}
-
-<########### M O U N T E D   P O I N T S #########################################> # MNT <# TODO #> # Removed because there is one command above that gets this information. This might be useful if in the future I want to work only with registry files.
-Function Collect-Mounted-Points {
-
-    Write-Host "[+] Collecting Mounted Points ..." -ForegroundColor Green
-    Write-Host "`t[-] [DEVELOPING] ..." -ForegroundColor Yellow
-
-    # Computer\HKEY_USERS\S-1-5-21-1177053623-3576167574-2408905411-1001\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2
-    # Computer\HKEY_USERS\S-1-5-21-1177053623-3576167574-2408905411-1027\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\{5c00978b-7362-11e7-b923-d0577bd77e67}
-    
-    # Computer\HKEY_LOCAL_MACHINE\SYSTEM\MountedDevices
-}
-
-Function Collect-Wireless-Info {
-
-        # TODO: Review in respective OS       
-        if ($OS -eq "XP") 
-        {
-            #OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WZCSVC\Parameters\Interfaces" "$Global:Destiny\$HOSTNAME\WIFI\WifiNetworkList.reg" > $null
-            Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\WZCSVC\Parameters\Interfaces" "$Global:Destiny\$HOSTNAME\WIFI\WifiNetworkList.txt"
-        } 
-        # TODO: Check the equivalent to the above for windows vista,7,8,10
-        # OLD - cmd.exe /c reg export "HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\TCPIP\Parameters\Interfaces" "$Global:Destiny\$HOSTNAME\WIFI\WifiNetworkCfg.reg" > $null
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\TCPIP\Parameters\Interfaces\*" > "$Global:Destiny\$HOSTNAME\WIFI\WifiNetworkCfg.reg" # TODO: Is this really WIFI
-
-}
-
-<########### Pieces of lost code #########################################>
-Function Old-Code{
-
-
-    $SIDs = Get-ChildItem "REGISTRY::HKEY_USERS" | ForEach-Object { ($_.Name).Split("\")[1] } # list of user SIDs
-
-    foreach($SID in $SIDS){
-
-        if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that users removes the system and network and classes
-        { 
-
-            $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"  # get's the name correspondent to the SID
-            $NAME = $($N.Split("\")[2])
-
-            if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
-
-            # MUI CACHE
-            try{           
-                Get-ItemProperty "REGISTRY::HKEY_USERS\$SID\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache" | Out-File "$Global:Destiny\$HOSTNAME\MRUs\$NAME\MUICache.txt" -Width 200
-            } catch {
-                Report-Error -evidence "Collecting MUI CACHE"
-            }
-
-            
-            # RECENT DOCS
-            Write-Host "`t○ RecentDOCS from $NAME" -ForegroundColor Green
-
-            for($n=0; $n -le 149; $n++)
-            {
-                try 
-                {
-                    $temp = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs" -Name $n
-            
-                    $read=$true
-                    $i = 0
-                            
-                    foreach($b in $temp)
-                    {
-                        if($read)
-                        {
-                            if([int]$b -ne 0)
-                            {
-                                $c = [char][int]$b
-                                $filename = $filename + "$c"
-                            }
-                            if([int]$b -eq 0) 
-                            { 
-                                $i = $i + 1 
-                            }
-                            else 
-                            { 
-                                $i = 0 
-                            }
-                            if($i -gt 1) 
-                            {
-                                $read = $false
-                            }
-                        }
-                    }
-                    echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentDocs.txt"
-                    $filename = ""
-                } 
-                catch 
-                {
-                        Report-Error -evidence "Collecting RecentDOCS"
-                }
-            }
-
-
-            # COMDLG32 :: CIDSizeMRU
-            Write-Host "`t○ CIDSizeMRU from $NAME" -ForegroundColor Green
-
-            $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU\" -Name MRUListEx
-            $i=0
-            foreach($b in $cnt){$i++} # gets the number of entries
-            $max = (($i / 4) - 1)
-
-            for($n=0; $n -lt $max; $n++){
-                        
-                try 
-                {
-                    $temp = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU\" -Name $n
-            
-                    $read=$true
-                    $i = 0
-                            
-                    foreach($b in $temp)
-                    {
-                        if($read)
-                        {
-                            if([int]$b -ne 0)
-                            {
-                                $c = [char][int]$b
-                                $filename = $filename + "$c"
-                            }
-                            if([int]$b -eq 0) 
-                            { 
-                                $i = $i + 1 
-                            }
-                            else 
-                            { 
-                                $i = 0 
-                            }
-                            if($i -gt 1) 
-                            {
-                                $read = $false
-                            }
-                        }
-                    }
-                    echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\CIDSizeMRU.txt"
-                    $filename = ""
-                } 
-                catch 
-                {
-                        Report-Error -evidence "Collecting CIDSizeMRU"
-                }
-            }
-
-
-            # COMDLG32 :: LastVisitedPidlMRU
-            Write-Host "`t○ LastVisitedPidlMRU from $NAME" -ForegroundColor Green
-
-            $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU\" -Name MRUListEx
-            $i=0
-            foreach($b in $cnt){$i++} # gets the number of entries
-            $max = (($i / 4) - 1)
-
-            for($n=0; $n -lt $max; $n++)
-            {
-                        
-                try 
-                {
-                    $temp = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU\" -Name $n
-            
-                    $read=$true
-                    $i = 0
-                            
-                    foreach($b in $temp)
-                    {
-                        if($read)
-                        {
-                            if([int]$b -ne 0)
-                            {
-                                $c = [char][int]$b
-                                $filename = $filename + "$c"
-                            }
-                            if([int]$b -eq 0) 
-                            { 
-                                $i = $i + 1 
-                            }
-                            else 
-                            { 
-                                $i = 0 
-                            }
-                            if($i -gt 1) 
-                            {
-                                $read = $false
-                            }
-                        }
-                    }
-                    echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\LastVisitedPidlMRU.txt"
-                    $filename = ""
-                } 
-                catch 
-                {
-                    Report-Error -evidence "Collecting LastVisitedPidlMRU"
-                }
-            }
-
-
-            # RUN MRU
-            Write-Host "`t○ RunMRU from $NAME" -ForegroundColor Green
-
-            try 
-            {
-                if(Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\" -Name MRUList -ErrorAction Ignore)
-                {
-
-                    $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\" -Name MRUList
-                    $temp = $cnt.ToCharArray()
-                    foreach($n in $temp)
-                    {
-                        $temp = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\" -Name $n
-                            
-                        echo "$temp" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RunMRU.txt"
-                    }
-                }
-            } 
-            catch 
-            {
-                Report-Error -evidence "Collecting RunMRU"
-            }
-
-            
-            # COMDLG32 :: OpenSavePidlMRU # TODO: Substitute the SID static number in the function by variable
-            # TODO: Translation of the ecnripted code into readable code
-            #  [System.Text.Encoding]::Default.GetString((Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU\docx")."9")
-            
-            Write-Host "`t○ OpenSavePidlMRU from $NAME" -ForegroundColor Green
-
-            $cnt = Get-ItemPropertyValue -LiteralPath "REGISTRY::HKEY_USERS\S-1-5-21-1177053623-3576167574-2408905411-1001\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU\*" -Name MRUListEx
-            $i=0
-            foreach($b in $cnt){$i++} # gets the number of entries
-            $max = (($i / 4) - 1)
-
-            for($n=0; $n -lt $max; $n++)
-            {
-                try 
-                {
-                    # Get-ItemPropertyValue -LiteralPath "REGISTRY::HKEY_USERS\S-1-5-21-1177053623-3576167574-2408905411-1001\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU\*" -Name 3 | Format-Hex -Encoding UTF32
-                    $temp = Get-ItemPropertyValue -LiteralPath "REGISTRY::HKEY_USERS\S-1-5-21-1177053623-3576167574-2408905411-1001\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU\*" -Name $n
-            
-                    $read=$true
-                    $i = 0
-                            
-                    foreach($b in $temp)
-                    {
-                        if($read)
-                        {
-                            if([int]$b -ne 0 -and [int]$b -ge 33 -and [int]$b -le 126)
-                            {
-                                $c = [char][int]$b
-                                $filename = $filename + "$c"
-                            }
-                            <#
-                            if([int]$b -eq 0) 
-                            { 
-                                $i = $i + 1 
-                            }
-                            else 
-                            { 
-                                $i = 0 
-                            }
-                            if($i -gt 1) 
-                            {
-                                $read = $false
-                            }
-                            #>
-                        }
-                    }
-                    echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\OpenSavePidlMRU.txt"
-                    $filename = ""
-                } 
-                catch 
-                {
-                    Report-Error -evidence "Collecting LastVisitedPidlMRU"
-                }
-                
-            }
-        }
-    }
-
-
-}
-
-# Queries for TCP connection, puts in a variable, than iterates through all of them and adds information about the the process name and process command line
-<#
-        $TCPConns = Get-NetTCPConnection | Select-Object CreationTime, LocalAddress, LocalPort, RemoteAddress, RemotePort, OwningProcess, State
-
-        for($i=0;$i -le $TCPConns.count;$i++)
-        {
-            $TCPConns[$i]
-
-            Write-Host("Process:")`            (Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $TCPConns[$i].OwningProcess).ProcessName
-            Write-Host("CmdLine:")`            (Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $TCPConns[$i].OwningProcess).CommandLine
-            Write-Host("----------------------------------------")
-        }
-
-
-        $UDPConns = Get-NetUDPEndpoint | Select-Object CreationTime, LocalAddress, LocalPort, RemoteAddress , RemotePort, OwningProcess, State
-
-        for($i=0;$i -le $UDPConns.count;$i++)
-        {
-            $UDPConns[$i]
-
-            Write-Host("Process:")`            (Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $UDPConns[$i].OwningProcess).ProcessName
-            Write-Host("CmdLine:")`            (Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $UDPConns[$i].OwningProcess).CommandLine
-            Write-Host("----------------------------------------")
-        }
-
-#>
-
-<########### S E R V I C E S   P R O C E S S E S ###> # SAP
-
-        
-        # Get-Process has dependency PowerShell 3.1, while Get-CimInstance depends only on version 1.0
-        #
-        # Get-Process | Sort-Object -Property id >> $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
-        # Get-Process | Sort-Object -Property id | Select-Object * >> $Global:Destiny\$HOSTNAME\Services_Processes\"4.Processes.txt"
-        # Get-Process | Sort-Object -Property cpu -Descending > .\004.Processes.txt
-        # Get-Process | Select-Object Name, Path, Company, CPU, Product, TotalProcessorTime, StartTime, PagedSystemMemorySize
-
-
-<########### S C H E D U L E D   T A S K S #########>
-# TODO: Copy the folder with tasks: C:\Windows\System32\Tasks - https://attack.mitre.org/techniques/T1053/
-
-        
-    # Get-ScheduledTask | Select-Object TaskName, TaskPath, Date, Author, Actions, Triggers, Description,State | where Author -NotLike "Microsoft*" | where Author -NotLike "*SystemRoot*" | where Author -ne $null > "$Global:Destiny\$HOSTNAME\Tasks_Jobs\_RESUME_LIST_2.txt"
-
-    # Get-ScheduledTask | where Author -NotLike "Microsoft*" | where Author -NotLike "*SystemRoot*" | where Author -ne $null |  foreach {
-    #        Export-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath |
-    #        Out-File (Join-Path "$Global:Destiny\$HOSTNAME\Tasks_Jobs" "$($_.TaskName).xml") #-WhatIf
-            # cmd /c schtasks /query /tn "\Microsoft\Windows\WCM\WiFiTask" /xml
-
-    # Get-ScheduledJob > $Global:Destiny\$HOSTNAME\Tasks_Jobs\Scheduled_jobs.txt -> is the same as Tasks, powershell makes diference, but it is seen as a task
-
-<########### C O M M A N D   H I S T O R Y #########> # CPH
-
-    # type (Get-PSReadlineOption).HistorySavePath > "$Global:Destiny\$HOSTNAME\CMD_HISTORY\PS_CMD_History.txt" <#TODO: Check if the above code for each user always works, maybe the path may change for different OS and Powershell versions. #>
-
-    # Useless because it is just for each session
-    # cmd.exe /c doskey /history > "$Global:Destiny\$HOSTNAME\CMD_HISTORY\CL_CMD_History.txt"
-        
-<########### I N S T A L L E D   S O F T W A R E ###> # INS
-
-#        Get-ChildItem "$Global:Source\Program Files" | ?{$_.PSIsContainer}                                   >> "$Global:Destiny\$HOSTNAME\Software\InstalledSoftware_ProgramsFolder_x64.txt"
-#        Get-ChildItem "$Global:Source\Program Files (x86)" | ?{$_.PSIsContainer}                             >> "$Global:Destiny\$HOSTNAME\Software\InstalledSoftware_ProgramsFolder_x86.txt"
-
-
-<########### D E V I C E S   I N F O ###############> # DEV
-<#
-Function Collect-Devices-Info {
-
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Devices ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Devices > $null }
-
-    Write-Host "[+] Collecting Devices Info in the Registry ..." -ForegroundColor Green
-    try
-    {
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\DeviceClasses\*\*" > "$Global:Destiny\$HOSTNAME\Devices\DeviceClasses.txt" 2> $null
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\MountedDevices\*\*" > "$Global:Destiny\$HOSTNAME\Devices\MountedDevices.txt" 2> $null
-        # TODO: 
-        #  Get-ItemProperty  "REGISTRY::HKEY_LOCAL_MACHINE\System\MountedDevices"
-        #
-        #  [System.Text.Encoding]::Default.GetString((Get-ItemProperty "HKLM:\System\MountedDevices")."\??\Volume{f688de94-3dd5-11e9-a93b-3c6aa7859fb6}")
-        #  [System.Text.Encoding]::Default.GetString((Get-ItemProperty "HKLM:\System\MountedDevices")."\DosDevices\S:")
-
-        
-        foreach ($id in $(Get-PnpDevice | Select-Object InstanceId)){ 
-            Get-PnpDeviceProperty -InstanceId "$id" | Sort-Object type
-        }
-
-    } 
-    catch 
-    {
-        Report-Error -evidence "Devices Info from the Registry"
-    }
-}
-#>
-
-<########### S E C U R I T Y   C O N F . ###########> # SEC
-<#
-Function Collect-Firewall-Config{
-
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\Security ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\Security > $null }
-
-    try{
-        Write-Host "[+] Collecting Security Configuration Info... " -ForegroundColor Green
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile"     >> "$Global:Destiny\$HOSTNAME\Security\FW_Profiles.txt"
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile"   >> "$Global:Destiny\$HOSTNAME\Security\FW_Profiles.txt"
-        Get-Item "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile"     >> "$Global:Destiny\$HOSTNAME\Security\FW_Profiles.txt"
-
-        Get-ItemProperty "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\"  | Export-Csv "$Global:Destiny\$HOSTNAME\Security\FW_Rules.csv" -NoTypeInformation
-        
-        #$fw_rules = Get-ItemProperty "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\"
-        #foreach($rule in $fw_rules)
-        #{
-        #    echo $rule >> "$Global:Destiny\$HOSTNAME\Security\FW_Rules.txt"
-        #}
-
-        
-        Get-ItemProperty "REGISTRY::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\RestrictedServices\*\*"   >> "$Global:Destiny\$HOSTNAME\Security\FW_RestrictedServices.txt"
-        
-        if($OS -eq "XP") {
-            Get-ItemProperty "REGISTRY::HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Action Center" > "$Global:Destiny\$HOSTNAME\Security\HKLM_ActionCenter.txt"
-        } # TODO: Review in a XP environment 
-        
-       
-    } catch {
-        Report-Error -evidence "Security Information"
-    }
-}
-#>
