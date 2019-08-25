@@ -41,7 +41,7 @@
     Starts Inquisitor in graphical mode.
 
 .EXAMPLE
-    .\inquisitor_v0.4.ps1 -PER -Source c: -Destiny e: -FormatType No
+    .\inquisitor.ps1 -PER -Source c: -Destiny e: -FormatType No
 
     Collects information from drive C: about persistence in the machine, outputing the results to E: and not formating the destiny drive. 
 
@@ -57,9 +57,6 @@
         - autorunsc.exe - Exports a CSV with info about the auto run executables, with hashes and VT info
         - winpmem_1.6.2.exe - Used to dump memory
 
-    Considerations:
-        - PSLOGLIST - it only works with 3 EVTXs Application, Security and System
-
     References:
         - CIR_CODE\obtain_evidences.ps1 de Jaime Ferrer 
         - https://es.wikipedia.org/wiki/Windows_Server
@@ -67,9 +64,6 @@
         - https://docs.microsoft.com/en-us/windows/desktop/SysInfo/about-the-registry
         - https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/wevtutil
         - https://www.sans.org/cyber-security-summit/archives/file/summit-archive-1544032916.pdf
-
-    For better performance and avoid errors, execute in "NT AUTHORITY\SYSTEM"
-        .\bin\PsExec64.exe -i -s powershell.exe
 
     To Activate the execution of Scripts:
         # Set-ExecutionPolicy -ExecutionPolicy Bypass
@@ -373,14 +367,17 @@ $ARCH = $env:PROCESSOR_ARCHITECTURE
 $SCRIPTPATH = split-path -parent $MyInvocation.MyCommand.Definition
 
 <# defines according to architecture which version of Rawcpoy and SigCheck to use #>
-if($ARCH -eq "AMD64") {
+if($ARCH -eq "AMD64") 
+{
     $RAW_EXE = "$SCRIPTPATH\bin\RawCopy64.exe"
     $SIG_EXE = "$SCRIPTPATH\bin\sigcheck64.exe"
     $SQL_DBX_EXE = "$SCRIPTPATH\bin\sqlite-dbx-win64.exe"
     $OPEN_SAVED_FILES_VIEW = "$SCRIPTPATH\bin\opensavefilesview-x64\OpenSaveFilesView.exe" # not used
     $THUMB_CACHE_VIEWER = "$SCRIPTPATH\bin\thumbcache_viewer_64\thumbcache_viewer.exe"
     
-} else {
+} 
+else 
+{
     $RAW_EXE = "$SCRIPTPATH\bin\RawCopy.exe"
     $SIG_EXE = "$SCRIPTPATH\bin\sigcheck.exe"
     $SQL_DBX_EXE = "$SCRIPTPATH\bin\sqlite-dbx-win32.exe"
@@ -423,10 +420,13 @@ Function Collect-Memory-Dump {
 
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\MEMORY_DUMP" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\MEMORY_DUMP" > $null }
     
-    try {
+    try 
+    {
         cmd.exe /c $SCRIPTPATH\bin\winpmem_1.6.2.exe $Global:Destiny\$HOSTNAME\MEMORY_DUMP\"$HOSTNAME".raw > $null
         Write-Host "`t└>Successfully collected" -ForegroundColor DarkGreen
-    } catch {
+    } 
+    catch 
+    {
         Report-Error -evidence "Memory Dump"
     }
 } 
@@ -1456,7 +1456,7 @@ Function Collect-CIDSizeMRU {
 
 }
 
-<########### USER ASSIST ###########################> # N/A - Used with MRUs*
+<########### OpenSavePidlMRU #######################> # N/A - Used with MRUs*
 Function Collect-OpenSavePidlMRU {
     
     Write-Host "`t○ Collecting OpenSavePidlMRU" -ForegroundColor Green
@@ -2689,8 +2689,6 @@ Function Collect-Swapfile {
 
 ##########################################################################################################
 
-
-
 <########### T I M E L I N E   H I S T O R Y #####################################> # TLH*
 Function Collect-Timeline {
 
@@ -2996,7 +2994,7 @@ Function Collect-Skype-History {
     }
 }
 
-<########### O U T L O O K #######################################################> # EMA*
+<########### E M A I L   F I L E S ###############################################> # EMA*
 Function Collect-Email-Files {
 
     Write-Host "[+] Collecting Email files." -ForegroundColor Green
@@ -3818,11 +3816,6 @@ Function Collect-Cloud-Dropbox-Logs {
     Remove-Item -Recurse -Path "$Global:Destiny\$HOSTNAME\z_temp"
 }
 
-<###############################################################################>
-<############  LIVE OR OFFLINE SYSTEM  /  NO VOLATILE  /  TIME CONSUMING  ######>
-<###############################################################################>
-
-
 
 <########### S I G N E D   F I L E S ######################> # SFI <# TIME CONSUMING - Not by Default#>
 Function Collect-Sign-Files {
@@ -3937,12 +3930,13 @@ Function Control-GUI {
     ############################################ B A N N E R ######################################################################
 
     $Banner = New-Object System.Windows.Forms.RichTextBox
-    $Banner.location = New-Object System.Drawing.Point(157, 30)
+    $Banner.location = New-Object System.Drawing.Point(50, 30)
     $Banner.Size = New-Object System.Drawing.Size(710, 225)
     $Banner.Name = "Banner"
     $Banner.Font = New-Object System.Drawing.Font("Lucida Console", "9")
     $Banner.Multiline = $True
     $Banner.ReadOnly = $True
+    $Banner.TabStop = $False
     $Banner.ForeColor = [System.Drawing.Color]::GhostWhite        #AntiqueWhite, FloralWhite
     $Banner.BackColor = [System.Drawing.Color]::Black
     $Banner.Text += "`n"
@@ -3973,6 +3967,14 @@ Function Control-GUI {
     $textBoxDestiny = New-Object System.Windows.Forms.TextBox
     $buttonDestiny = New-Object System.Windows.Forms.Button
     $checkBoxFormat = New-Object System.Windows.Forms.CheckBox
+    $checkBoxFormatQuick = New-Object System.Windows.Forms.CheckBox
+    $checkBoxFormatZero = New-Object System.Windows.Forms.CheckBox
+    $labelColType = New-Object System.Windows.Forms.Label
+    $radioButtonAll = New-Object System.Windows.Forms.RadioButton
+    $radioButtonLive = New-Object System.Windows.Forms.RadioButton
+    $radioButtonLiveOpt = New-Object System.Windows.Forms.RadioButton
+    $radioButtonOffline = New-Object System.Windows.Forms.RadioButton
+    $radioButtonOfflineOpt = New-Object System.Windows.Forms.RadioButton
 
     # Label Source
     $labelSource.Location = New-Object System.Drawing.Point(55, 280)
@@ -4030,38 +4032,581 @@ Function Control-GUI {
     $checkBoxFormat.Text = "Format"
     $checkBoxFormat.UseVisualStyleBackColor = true
 
+    # Format Checkbox
+    $checkBoxFormatQuick.Location = New-Object System.Drawing.Point(610, 300)
+    $checkBoxFormatQuick.Size = New-Object System.Drawing.Size(80, 17)
+    $checkBoxFormatQuick.AutoSize = true
+    $checkBoxFormatQuick.Name = "checkBoxFormatQuick"
+    $checkBoxFormatQuick.TabIndex = 4
+    $checkBoxFormatQuick.Text = "Quick"
+    $checkBoxFormatQuick.UseVisualStyleBackColor = true
+    $checkBoxFormatQuick.Enabled = $False
+
+    # Format Checkbox
+    $checkBoxFormatZero.Location = New-Object System.Drawing.Point(610, 320)
+    $checkBoxFormatZero.Size = New-Object System.Drawing.Size(80, 17)
+    $checkBoxFormatZero.AutoSize = true
+    $checkBoxFormatZero.Name = "checkBoxFormatZero"
+    $checkBoxFormatZero.TabIndex = 4
+    $checkBoxFormatZero.Text = "Zero"
+    $checkBoxFormatZero.UseVisualStyleBackColor = true
+    $checkBoxFormatZero.Enabled = $False
+
+    # Label Collection Type
+    $labelColType.Location = New-Object System.Drawing.Point(55, 310)
+    $labelColType.Size = New-Object System.Drawing.Size(100, 13)
+    $labelColType.AutoSize = true
+    $labelColType.Name = "labelColType"
+    $labelColType.TabIndex = 0
+    $labelColType.TabStop = $False
+    $labelColType.Text = "Collection Type:"
+
+    # Radio Button ALL
+    $radioButtonAll.Location = New-Object System.Drawing.Point(150, 310)
+    $radioButtonAll.Size = New-Object System.Drawing.Size(40, 17)
+    $radioButtonAll.AutoSize = true
+    $radioButtonAll.Name = "radioButtonAll"
+    $radioButtonAll.TabIndex = 4
+    $radioButtonAll.TabStop = true
+    $radioButtonAll.Text = "All"
+    $radioButtonAll.UseVisualStyleBackColor = true
+
+    # Radio Button Live
+    $radioButtonLive.Location = New-Object System.Drawing.Point(200, 300)
+    $radioButtonLive.Size = New-Object System.Drawing.Size(70, 17)
+    $radioButtonLive.AutoSize = true
+    $radioButtonLive.Name = "radioButtonLive"
+    $radioButtonLive.TabIndex = 4
+    $radioButtonLive.TabStop = true
+    $radioButtonLive.Text = "Live"
+    $radioButtonLive.UseVisualStyleBackColor = true
+
+    # Radio Button Live Optimized
+    $radioButtonLiveOpt.Location = New-Object System.Drawing.Point(270, 300)
+    $radioButtonLiveOpt.Size = New-Object System.Drawing.Size(120, 17)
+    $radioButtonLiveOpt.AutoSize = true
+    $radioButtonLiveOpt.Name = "radioButtonLiveOpt"
+    $radioButtonLiveOpt.TabIndex = 4
+    $radioButtonLiveOpt.TabStop = true
+    $radioButtonLiveOpt.Text = "Live Optimized"
+    $radioButtonLiveOpt.UseVisualStyleBackColor = true
+
+    # Radio Button Offline
+    $radioButtonOffline.Location = New-Object System.Drawing.Point(200, 320)
+    $radioButtonOffline.Size = New-Object System.Drawing.Size(70, 17)
+    $radioButtonOffline.AutoSize = true
+    $radioButtonOffline.Name = "radioButtonOffline"
+    $radioButtonOffline.TabIndex = 4
+    $radioButtonOffline.TabStop = true
+    $radioButtonOffline.Text = "Offline"
+    $radioButtonOffline.UseVisualStyleBackColor = true
+
+    # Radio Button Offline Optimized
+    $radioButtonOfflineOpt.Location = New-Object System.Drawing.Point(270, 320)
+    $radioButtonOfflineOpt.Size = New-Object System.Drawing.Size(120, 17)
+    $radioButtonOfflineOpt.AutoSize = true
+    $radioButtonOfflineOpt.Name = "radioButtonOfflineOpt"
+    $radioButtonOfflineOpt.TabIndex = 4
+    $radioButtonOfflineOpt.TabStop = true
+    $radioButtonOfflineOpt.Text = "Offline Optimized"
+    $radioButtonOfflineOpt.UseVisualStyleBackColor = true
+
+
     # groupBox General
     $groupBoxGeneral.Location = New-Object System.Drawing.Point(50, 260)
-    $groupBoxGeneral.Size = New-Object System.Drawing.Size(924, 75)                   # 924 de X
+    $groupBoxGeneral.Size = New-Object System.Drawing.Size(710, 85)                   # 924 de X
     $groupBoxGeneral.Name = "OfflineGroupBox"
     $groupBoxGeneral.Text = "General"
     $groupBoxGeneral.BringToFront()
     
     ############################################ Online groupBox #################################################################
 
-    # groupBox Online
     $groupBoxOnline = New-Object System.Windows.Forms.GroupBox
+    $checkBoxRAM = New-Object System.Windows.Forms.CheckBox
+    $checkBoxNET = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSAP = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSTA = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCPH = New-Object System.Windows.Forms.CheckBox
+    $checkBoxINS = New-Object System.Windows.Forms.CheckBox
+    $checkBoxUGR = New-Object System.Windows.Forms.CheckBox
+    $checkBoxPER = New-Object System.Windows.Forms.CheckBox
+    $checkBoxUSB = New-Object System.Windows.Forms.CheckBox
+    $checkBoxDEV = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSEC = New-Object System.Windows.Forms.CheckBox
+    $checkBoxMRU = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSHI = New-Object System.Windows.Forms.CheckBox
+    $checkBoxRAP = New-Object System.Windows.Forms.CheckBox
+    $checkBoxBAM = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSYS = New-Object System.Windows.Forms.CheckBox
+    $checkBoxLAC = New-Object System.Windows.Forms.CheckBox
+    $checkBoxAFI = New-Object System.Windows.Forms.CheckBox
+
+    # Network Checkbox
+    $checkBoxRAM.Location = New-Object System.Drawing.Point(55, 370)
+    $checkBoxRAM.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxRAM.AutoSize = true
+    $checkBoxRAM.Name = "checkBoxRAM"
+    $checkBoxRAM.TabIndex = 4
+    $checkBoxRAM.Text = "Random Access Memory (RAM)"
+    $checkBoxRAM.UseVisualStyleBackColor = true
+    
+    # Network Checkbox
+    $checkBoxNET.Location = New-Object System.Drawing.Point(55, 390)
+    $checkBoxNET.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxNET.AutoSize = true
+    $checkBoxNET.Name = "checkBoxNET"
+    $checkBoxNET.TabIndex = 4
+    $checkBoxNET.Text = "Network Information"
+    $checkBoxNET.UseVisualStyleBackColor = true
+
+    # Services and Processes Checkbox
+    $checkBoxSAP.Location = New-Object System.Drawing.Point(55, 410)
+    $checkBoxSAP.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxSAP.AutoSize = true
+    $checkBoxSAP.Name = "checkBoxSAP"
+    $checkBoxSAP.TabIndex = 4
+    $checkBoxSAP.Text = "Services and Processes"
+    $checkBoxSAP.UseVisualStyleBackColor = true
+
+    # Scheduled Tasks Checkbox
+    $checkBoxSTA.Location = New-Object System.Drawing.Point(55, 430)
+    $checkBoxSTA.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxSTA.AutoSize = true
+    $checkBoxSTA.Name = "checkBoxSTA"
+    $checkBoxSTA.TabIndex = 4
+    $checkBoxSTA.Text = "Scheduled Tasks"
+    $checkBoxSTA.UseVisualStyleBackColor = true
+
+    # CMD Checkbox
+    $checkBoxCPH.Location = New-Object System.Drawing.Point(55, 450)
+    $checkBoxCPH.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxCPH.AutoSize = true
+    $checkBoxCPH.Name = "checkBoxCPH"
+    $checkBoxCPH.TabIndex = 4
+    $checkBoxCPH.Text = "Command Line History"
+    $checkBoxCPH.UseVisualStyleBackColor = true
+
+    # Installed Software Checkbox
+    $checkBoxINS.Location = New-Object System.Drawing.Point(55, 470)
+    $checkBoxINS.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxINS.AutoSize = true
+    $checkBoxINS.Name = "checkBoxINS"
+    $checkBoxINS.TabIndex = 4
+    $checkBoxINS.Text = "Installed Software"
+    $checkBoxINS.UseVisualStyleBackColor = true
+
+    # Users and Groups Checkbox
+    $checkBoxUGR.Location = New-Object System.Drawing.Point(55, 490)
+    $checkBoxUGR.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxUGR.AutoSize = true
+    $checkBoxUGR.Name = "checkBoxUGR"
+    $checkBoxUGR.TabIndex = 4
+    $checkBoxUGR.Text = "Users and Groups"
+    $checkBoxUGR.UseVisualStyleBackColor = true
+
+    # Persistance Checkbox
+    $checkBoxPER.Location = New-Object System.Drawing.Point(55, 510)
+    $checkBoxPER.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxPER.AutoSize = true
+    $checkBoxPER.Name = "checkBoxPER"
+    $checkBoxPER.TabIndex = 4
+    $checkBoxPER.Text = "Persistance"
+    $checkBoxPER.UseVisualStyleBackColor = true
+
+    # USB Devices Checkbox
+    $checkBoxUSB.Location = New-Object System.Drawing.Point(55, 530)
+    $checkBoxUSB.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxUSB.AutoSize = true
+    $checkBoxUSB.Name = "checkBoxUSB"
+    $checkBoxUSB.TabIndex = 4
+    $checkBoxUSB.Text = "USB Devices Info"
+    $checkBoxUSB.UseVisualStyleBackColor = true
+
+    # Devices Info Checkbox
+    $checkBoxDEV.Location = New-Object System.Drawing.Point(55, 550)
+    $checkBoxDEV.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxDEV.AutoSize = true
+    $checkBoxDEV.Name = "checkBoxDEV"
+    $checkBoxDEV.TabIndex = 4
+    $checkBoxDEV.Text = "Devices Info"
+    $checkBoxDEV.UseVisualStyleBackColor = true
+
+    # Security Configuration Checkbox
+    $checkBoxSEC.Location = New-Object System.Drawing.Point(55, 570)
+    $checkBoxSEC.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxSEC.AutoSize = true
+    $checkBoxSEC.Name = "checkBoxSEC"
+    $checkBoxSEC.TabIndex = 4
+    $checkBoxSEC.Text = "Security Configuration"
+    $checkBoxSEC.UseVisualStyleBackColor = true
+
+    # MRUs Checkbox
+    $checkBoxMRU.Location = New-Object System.Drawing.Point(55, 590)
+    $checkBoxMRU.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxMRU.AutoSize = true
+    $checkBoxMRU.Name = "checkBoxMRU"
+    $checkBoxMRU.TabIndex = 4
+    $checkBoxMRU.Text = "Most Recent Used (MRUs)"
+    $checkBoxMRU.UseVisualStyleBackColor = true
+
+    # Shimcache Checkbox
+    $checkBoxSHI.Location = New-Object System.Drawing.Point(55, 610)
+    $checkBoxSHI.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxSHI.AutoSize = true
+    $checkBoxSHI.Name = "checkBoxSHI"
+    $checkBoxSHI.TabIndex = 4
+    $checkBoxSHI.Text = "Shimcache"
+    $checkBoxSHI.UseVisualStyleBackColor = true
+
+    # RecentAPPs Checkbox
+    $checkBoxRAP.Location = New-Object System.Drawing.Point(55, 630)
+    $checkBoxRAP.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxRAP.AutoSize = true
+    $checkBoxRAP.Name = "checkBoxFormat"
+    $checkBoxRAP.TabIndex = 4
+    $checkBoxRAP.Text = "Recent Applications"
+    $checkBoxRAP.UseVisualStyleBackColor = true
+
+    # BAM Checkbox
+    $checkBoxBAM.Location = New-Object System.Drawing.Point(55, 650)
+    $checkBoxBAM.Size = New-Object System.Drawing.Size(220, 17)
+    $checkBoxBAM.AutoSize = true
+    $checkBoxBAM.Name = "checkBoxBAM"
+    $checkBoxBAM.TabIndex = 4
+    $checkBoxBAM.Text = "Background Activity Moderator (BAM)"
+    $checkBoxBAM.UseVisualStyleBackColor = true
+
+    # System Info Checkbox
+    $checkBoxSYS.Location = New-Object System.Drawing.Point(55, 670)
+    $checkBoxSYS.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxSYS.AutoSize = true
+    $checkBoxSYS.Name = "checkBoxSYS"
+    $checkBoxSYS.TabIndex = 4
+    $checkBoxSYS.Text = "System Info"
+    $checkBoxSYS.UseVisualStyleBackColor = true
+
+    # Last Activity Checkbox
+    $checkBoxLAC.Location = New-Object System.Drawing.Point(55, 690)
+    $checkBoxLAC.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxLAC.AutoSize = true
+    $checkBoxLAC.Name = "checkBoxLAC"
+    $checkBoxLAC.TabIndex = 4
+    $checkBoxLAC.Text = "Last Activity"
+    $checkBoxLAC.UseVisualStyleBackColor = true
+
+    # Autorun Files Checkbox
+    $checkBoxAFI.Location = New-Object System.Drawing.Point(55, 710)
+    $checkBoxAFI.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxAFI.AutoSize = true
+    $checkBoxAFI.Name = "checkBoxAFI"
+    $checkBoxAFI.TabIndex = 4
+    $checkBoxAFI.Text = "Autorun Files"
+    $checkBoxAFI.UseVisualStyleBackColor = true
+
+    # groupBox Online
     $groupBoxOnline.Location = New-Object System.Drawing.Point(50, 350)
+    $groupBoxOnline.Size = New-Object System.Drawing.Size(250, 400)
     $groupBoxOnline.Name = "OnlineGroupBox"
-    $groupBoxOnline.Size = New-Object System.Drawing.Size(450, 400)
-    $groupBoxOnline.Text = "Online Options"
+    $groupBoxOnline.Text = "Live Options"
 
     ############################################ Offline groupBox ################################################################
     
-    # groupBox Offline
     $groupBoxOffline = New-Object System.Windows.Forms.GroupBox
-    $groupBoxOffline.Location = New-Object System.Drawing.Point(524, 350)
+    $checkBoxHIV = New-Object System.Windows.Forms.CheckBox
+    $checkBoxEVT = New-Object System.Windows.Forms.CheckBox
+    $checkBoxFIL = New-Object System.Windows.Forms.CheckBox
+    $checkBoxDEX = New-Object System.Windows.Forms.CheckBox
+    $checkBoxPRF = New-Object System.Windows.Forms.CheckBox
+    $checkBoxWSE = New-Object System.Windows.Forms.CheckBox
+    $checkBoxEET = New-Object System.Windows.Forms.CheckBox
+    $checkBoxJLI = New-Object System.Windows.Forms.CheckBox
+    $checkBoxTHC = New-Object System.Windows.Forms.CheckBox
+    $checkBoxFSF = New-Object System.Windows.Forms.CheckBox
+    $checkBoxMSF = New-Object System.Windows.Forms.CheckBox
+    $checkBoxTLH = New-Object System.Windows.Forms.CheckBox
+    $checkBoxTHA = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSRU = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCRE = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSKY = New-Object System.Windows.Forms.CheckBox
+    $checkBoxEMA = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCHR = New-Object System.Windows.Forms.CheckBox
+    $checkBoxMFI = New-Object System.Windows.Forms.CheckBox
+    $checkBoxIEX = New-Object System.Windows.Forms.CheckBox
+    $checkBoxEDG = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSAF = New-Object System.Windows.Forms.CheckBox
+    $checkBoxOPE = New-Object System.Windows.Forms.CheckBox
+    $checkBoxTOR = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCOD = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCGD = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCDB = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSFI = New-Object System.Windows.Forms.CheckBox
+
+    # Hives Checkbox
+    $checkBoxHIV.Location = New-Object System.Drawing.Point(330, 370)
+    $checkBoxHIV.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxHIV.AutoSize = true
+    $checkBoxHIV.Name = "checkBoxHIV"
+    $checkBoxHIV.TabIndex = 4
+    $checkBoxHIV.Text = "Hives"
+    $checkBoxHIV.UseVisualStyleBackColor = true
+    
+    # Event Log Checkbox
+    $checkBoxEVT.Location = New-Object System.Drawing.Point(330, 390)
+    $checkBoxEVT.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxEVT.AutoSize = true
+    $checkBoxEVT.Name = "checkBoxEVT"
+    $checkBoxEVT.TabIndex = 4
+    $checkBoxEVT.Text = "Event Log Files"
+    $checkBoxEVT.UseVisualStyleBackColor = true
+    
+    # Format Checkbox
+    $checkBoxFIL.Location = New-Object System.Drawing.Point(330, 410)
+    $checkBoxFIL.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxFIL.AutoSize = true
+    $checkBoxFIL.Name = "checkBoxFIL"
+    $checkBoxFIL.TabIndex = 4
+    $checkBoxFIL.Text = "Files Lists"
+    $checkBoxFIL.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxDEX.Location = New-Object System.Drawing.Point(330, 430)
+    $checkBoxDEX.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxDEX.AutoSize = true
+    $checkBoxDEX.Name = "checkBoxDEX"
+    $checkBoxDEX.TabIndex = 4
+    $checkBoxDEX.Text = "Dangerous Extensions"
+    $checkBoxDEX.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxPRF.Location = New-Object System.Drawing.Point(330, 450)
+    $checkBoxPRF.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxPRF.AutoSize = true
+    $checkBoxPRF.Name = "checkBoxPRF"
+    $checkBoxPRF.TabIndex = 4
+    $checkBoxPRF.Text = "Prefetch Files"
+    $checkBoxPRF.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxWSE.Location = New-Object System.Drawing.Point(330, 470)
+    $checkBoxWSE.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxWSE.AutoSize = true
+    $checkBoxWSE.Name = "checkBoxWSE"
+    $checkBoxWSE.TabIndex = 4
+    $checkBoxWSE.Text = "Windows Search"
+    $checkBoxWSE.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxEET.Location = New-Object System.Drawing.Point(330, 490)
+    $checkBoxEET.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxEET.AutoSize = true
+    $checkBoxEET.Name = "checkBoxEET"
+    $checkBoxEET.TabIndex = 4
+    $checkBoxEET.Text = "ETW and ETL Files"
+    $checkBoxEET.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxJLI.Location = New-Object System.Drawing.Point(330, 510)
+    $checkBoxJLI.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxJLI.AutoSize = true
+    $checkBoxJLI.Name = "checkBoxJLI"
+    $checkBoxJLI.TabIndex = 4
+    $checkBoxJLI.Text = "JumpLists"
+    $checkBoxJLI.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxTHC.Location = New-Object System.Drawing.Point(330, 530)
+    $checkBoxTHC.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxTHC.AutoSize = true
+    $checkBoxTHC.Name = "checkBoxTHC"
+    $checkBoxTHC.TabIndex = 4
+    $checkBoxTHC.Text = "ThumbCache `& IconCache"
+    $checkBoxTHC.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxFSF.Location = New-Object System.Drawing.Point(330, 550)
+    $checkBoxFSF.Size = New-Object System.Drawing.Size(240, 17)
+    $checkBoxFSF.AutoSize = true
+    $checkBoxFSF.Name = "checkBoxFSF"
+    $checkBoxFSF.TabIndex = 4
+    $checkBoxFSF.Text = "`$MFT, `$UsnJrnl, `$LogFile"
+    $checkBoxFSF.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxMSF.Location = New-Object System.Drawing.Point(330, 570)
+    $checkBoxMSF.Size = New-Object System.Drawing.Size(240, 17)
+    $checkBoxMSF.AutoSize = true
+    $checkBoxMSF.Name = "checkBoxMSF"
+    $checkBoxMSF.TabIndex = 4
+    $checkBoxMSF.Text = "Hiberfil.sys, Pagefile.sys, Swapfile.sys"
+    $checkBoxMSF.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxTLH.Location = New-Object System.Drawing.Point(330, 590)
+    $checkBoxTLH.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxTLH.AutoSize = true
+    $checkBoxTLH.Name = "checkBoxTLH"
+    $checkBoxTLH.TabIndex = 4
+    $checkBoxTLH.Text = "Timeline"
+    $checkBoxTLH.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxTHA.Location = New-Object System.Drawing.Point(330, 610)
+    $checkBoxTHA.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxTHA.AutoSize = true
+    $checkBoxTHA.Name = "checkBoxTHA"
+    $checkBoxTHA.TabIndex = 4
+    $checkBoxTHA.Text = "Text Harvester"
+    $checkBoxTHA.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxSRU.Location = New-Object System.Drawing.Point(330, 630)
+    $checkBoxSRU.Size = New-Object System.Drawing.Size(240, 17)
+    $checkBoxSRU.AutoSize = true
+    $checkBoxSRU.Name = "checkBoxSRU"
+    $checkBoxSRU.TabIndex = 4
+    $checkBoxSRU.Text = "System Resource Usage Monitor (SRUM)"
+    $checkBoxSRU.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxCRE.Location = New-Object System.Drawing.Point(330, 650)
+    $checkBoxCRE.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxCRE.AutoSize = true
+    $checkBoxCRE.Name = "checkBoxCRE"
+    $checkBoxCRE.TabIndex = 4
+    $checkBoxCRE.Text = "Credentials"
+    $checkBoxCRE.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxSKY.Location = New-Object System.Drawing.Point(570, 370)
+    $checkBoxSKY.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxSKY.AutoSize = true
+    $checkBoxSKY.Name = "checkBoxSKY"
+    $checkBoxSKY.TabIndex = 4
+    $checkBoxSKY.Text = "Skype"
+    $checkBoxSKY.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxEMA.Location = New-Object System.Drawing.Point(570, 390)
+    $checkBoxEMA.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxEMA.AutoSize = true
+    $checkBoxEMA.Name = "checkBoxEMA"
+    $checkBoxEMA.TabIndex = 4
+    $checkBoxEMA.Text = "Email files"
+    $checkBoxEMA.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxCHR.Location = New-Object System.Drawing.Point(570, 430)
+    $checkBoxCHR.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxCHR.AutoSize = true
+    $checkBoxCHR.Name = "checkBoxCHR"
+    $checkBoxCHR.TabIndex = 4
+    $checkBoxCHR.Text = "Chrome"
+    $checkBoxCHR.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxMFI.Location = New-Object System.Drawing.Point(570, 450)
+    $checkBoxMFI.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxMFI.AutoSize = true
+    $checkBoxMFI.Name = "checkBoxMFI"
+    $checkBoxMFI.TabIndex = 4
+    $checkBoxMFI.Text = "Firefox"
+    $checkBoxMFI.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxIEX.Location = New-Object System.Drawing.Point(570, 470)
+    $checkBoxIEX.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxIEX.AutoSize = true
+    $checkBoxIEX.Name = "checkBoxIEX"
+    $checkBoxIEX.TabIndex = 4
+    $checkBoxIEX.Text = "Internet Explorer"
+    $checkBoxIEX.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxEDG.Location = New-Object System.Drawing.Point(570, 490)
+    $checkBoxEDG.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxEDG.AutoSize = true
+    $checkBoxEDG.Name = "checkBoxEDG"
+    $checkBoxEDG.TabIndex = 4
+    $checkBoxEDG.Text = "EDGE"
+    $checkBoxEDG.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxSAF.Location = New-Object System.Drawing.Point(570, 510)
+    $checkBoxSAF.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxSAF.AutoSize = true
+    $checkBoxSAF.Name = "checkBoxSAF"
+    $checkBoxSAF.TabIndex = 4
+    $checkBoxSAF.Text = "Safari"
+    $checkBoxSAF.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxOPE.Location = New-Object System.Drawing.Point(570, 530)
+    $checkBoxOPE.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxOPE.AutoSize = true
+    $checkBoxOPE.Name = "checkBoxOPE"
+    $checkBoxOPE.TabIndex = 4
+    $checkBoxOPE.Text = "Opera"
+    $checkBoxOPE.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxTOR.Location = New-Object System.Drawing.Point(570, 550)
+    $checkBoxTOR.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxTOR.AutoSize = true
+    $checkBoxTOR.Name = "checkBoxTOR"
+    $checkBoxTOR.TabIndex = 4
+    $checkBoxTOR.Text = "TOR"
+    $checkBoxTOR.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxCOD.Location = New-Object System.Drawing.Point(570, 590)
+    $checkBoxCOD.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxCOD.AutoSize = true
+    $checkBoxCOD.Name = "checkBoxAFI"
+    $checkBoxCOD.TabIndex = 4
+    $checkBoxCOD.Text = "OneDrive"
+    $checkBoxCOD.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxCGD.Location = New-Object System.Drawing.Point(570, 610)
+    $checkBoxCGD.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxCGD.AutoSize = true
+    $checkBoxCGD.Name = "checkBoxCGD"
+    $checkBoxCGD.TabIndex = 4
+    $checkBoxCGD.Text = "GoogleDrive"
+    $checkBoxCGD.UseVisualStyleBackColor = true
+
+    # DropBox Checkbox
+    $checkBoxCDB.Location = New-Object System.Drawing.Point(570, 630)
+    $checkBoxCDB.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxCDB.AutoSize = true
+    $checkBoxCDB.Name = "checkBoxCDB"
+    $checkBoxCDB.TabIndex = 4
+    $checkBoxCDB.Text = "DropBox"
+    $checkBoxCDB.UseVisualStyleBackColor = true
+
+    # Format Checkbox
+    $checkBoxSFI.Location = New-Object System.Drawing.Point(570, 670)
+    $checkBoxSFI.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxSFI.AutoSize = true
+    $checkBoxSFI.Name = "checkBoxSFI"
+    $checkBoxSFI.TabIndex = 4
+    $checkBoxSFI.Text = "Signed Files"
+    $checkBoxSFI.UseVisualStyleBackColor = true
+
+
+    # groupBox Offline
+    $groupBoxOffline.Location = New-Object System.Drawing.Point(324, 350)
+    $groupBoxOffline.Size = New-Object System.Drawing.Size(436, 400)
     $groupBoxOffline.Name = "OfflineGroupBox"
-    $groupBoxOffline.Size = New-Object System.Drawing.Size(450, 400)
     $groupBoxOffline.Text = "Offline Options"
     
     ############################################ FORM Definition #################################################################
 
     $form = New-Object System.Windows.Forms.Form
     $form.Text = "$APPName $APPVersion"
-    $form.Size = New-Object System.Drawing.Size(1024,800)
-    $form.MaximumSize = New-Object System.Drawing.Size(1024,800)
-    $form.MinimumSize = New-Object System.Drawing.Size(1024,800)
+    $form.Size = New-Object System.Drawing.Size(820,800)
+    $form.MaximumSize = New-Object System.Drawing.Size(820,800)
+    $form.MinimumSize = New-Object System.Drawing.Size(820,800)
     $form.StartPosition = 'CenterScreen'
     
     # Add to Form: Banner
@@ -4073,14 +4618,48 @@ Function Control-GUI {
     $form.Controls.Add($labelDestiny)
     $form.Controls.Add($textBoxDestiny)
     $form.Controls.Add($buttonDestiny)
-    $form.Controls.Add($checkBoxFormat)
+    $form.Controls.AddRange(@($checkBoxFormat,$checkBoxFormatQuick,$checkBoxFormatZero))
+    $form.Controls.AddRange(@($radioButtonAll,$radioButtonLive,$radioButtonLiveOpt,$radioButtonOffline,$radioButtonOfflineOpt))
+    $form.Controls.Add($labelColType)
     $form.Controls.Add($groupBoxGeneral)
-    
+
+    # Add to Form: Live Options
+    $form.Controls.AddRange(@($checkBoxRAM,$checkBoxNET,$checkBoxSAP,$checkBoxSTA,$checkBoxCPH,$checkBoxINS,$checkBoxUGR,$checkBoxPER,$checkBoxUSB))
+    $form.Controls.AddRange(@($checkBoxDEV,$checkBoxSEC,$checkBoxMRU,$checkBoxSHI,$checkBoxRAP,$checkBoxBAM,$checkBoxSYS,$checkBoxLAC,$checkBoxAFI ))
+    $form.Controls.Add($groupBoxOnline)
+
     # Add to Form: Offline Options
+    $form.Controls.Add($checkBoxHIV)
+    $form.Controls.Add($checkBoxEVT)
+    $form.Controls.Add($checkBoxFIL)
+    $form.Controls.Add($checkBoxDEX)
+    $form.Controls.Add($checkBoxPRF)
+    $form.Controls.Add($checkBoxWSE)
+    $form.Controls.Add($checkBoxEET)
+    $form.Controls.Add($checkBoxJLI)
+    $form.Controls.Add($checkBoxTHC)
+    $form.Controls.Add($checkBoxFSF)
+    $form.Controls.Add($checkBoxMSF)
+    $form.Controls.Add($checkBoxTLH)
+    $form.Controls.Add($checkBoxTHA)
+    $form.Controls.Add($checkBoxSRU)
+    $form.Controls.Add($checkBoxCRE)
+    $form.Controls.Add($checkBoxSKY)
+    $form.Controls.Add($checkBoxEMA)
+    $form.Controls.Add($checkBoxCHR)
+    $form.Controls.Add($checkBoxMFI)
+    $form.Controls.Add($checkBoxIEX)
+    $form.Controls.Add($checkBoxEDG)
+    $form.Controls.Add($checkBoxSAF)
+    $form.Controls.Add($checkBoxOPE)
+    $form.Controls.Add($checkBoxTOR)
+    $form.Controls.Add($checkBoxCOD)
+    $form.Controls.Add($checkBoxCGD)
+    $form.Controls.Add($checkBoxCDB)
+    $form.Controls.Add($checkBoxSFI)
     $form.Controls.Add($groupBoxOffline)
     
-    # Add to Form: Online Options
-    $form.Controls.Add($groupBoxOnline)
+    
 
     #######################################################################################################################################
     
