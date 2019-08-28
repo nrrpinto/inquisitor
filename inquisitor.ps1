@@ -198,6 +198,9 @@ TIME CONSUMING: Depending on the computer and disk can go easly over 20 minutes.
     <# Collects EVTX Files #>
     [switch]$EVT=$false,         
     
+    <# Collects ETW and ETL Files #>
+    [switch]$EET=$false, 
+    
     <# Collects Information about all the files in the system orderer by different dates. #>
     [switch]$FIL=$false,         
     
@@ -207,10 +210,7 @@ TIME CONSUMING: Depending on the computer and disk can go easly over 20 minutes.
     <# Collects Windows Search database file. #>
     [switch]$WSE=$false,          
     
-    <# Collects ETW and ETL Files #>
-    [switch]$EET=$false,         
-    
-    <# Collects Thumcache files from the system. #>
+    <# Collects Thumcache and Thumbicons files from the system. #>
     [switch]$TIC=$false,          
     
     <# Collects File System files: $MFT, $UsnJrnl and $LogFile #>
@@ -319,10 +319,10 @@ $Global:AFI=$AFI
 
 $Global:HIV=$HIV          
 $Global:EVT=$EVT         
+$Global:EET=$EET
 $Global:FIL=$FIL         
 $Global:PRF=$PRF         
 $Global:WSE=$WSE          
-$Global:EET=$EET         
 $Global:TIC=$TIC          
 
 $Global:FSF=$FSF         
@@ -374,6 +374,7 @@ if($ARCH -eq "AMD64")
     $SQL_DBX_EXE = "$SCRIPTPATH\bin\sqlite-dbx-win64.exe"
     $OPEN_SAVED_FILES_VIEW = "$SCRIPTPATH\bin\opensavefilesview-x64\OpenSaveFilesView.exe" # not used
     $THUMB_CACHE_VIEWER = "$SCRIPTPATH\bin\thumbcache_viewer_64\thumbcache_viewer.exe"
+    $AUTORUNS = "$SCRIPTPATH\bin\autorunsc64.exe"
     
 } 
 else 
@@ -383,6 +384,7 @@ else
     $SQL_DBX_EXE = "$SCRIPTPATH\bin\sqlite-dbx-win32.exe"
     $OPEN_SAVED_FILES_VIEW = "$SCRIPTPATH\bin\opensavefilesview\OpenSaveFilesView.exe"
     $THUMB_CACHE_VIEWER = "$SCRIPTPATH\bin\thumbcache_viewer_32\thumbcache_viewer.exe"
+    $AUTORUNS = "$SCRIPTPATH\bin\autorunsc.exe"
 }
 
 $UsedParameters = $PSBoundParameters.Keys <# TODO: Will use this variable to check which parameters were inserted in the command line and therefore don't need confirmation #>
@@ -399,13 +401,17 @@ $UsedParameters = $PSBoundParameters.Keys <# TODO: Will use this variable to che
 <########### S Y S T E M   T I M E #################> # TIM*
 Function Collect-Time {
     
+    param(
+        [ValidateSet("Start","Finish")][string]$Status=""
+    )
+
     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\System_Info\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\System_Info\ > $null }
 
-    Write-Host "[+] Collecting Date and Timezone ..." -ForegroundColor Green
+    Write-Host "[+] Collecting $Status Date and Timezone ..." -ForegroundColor Green
     try
     {
-        Get-Date > "$Global:Destiny\$HOSTNAME\System_Info\Date_Time_TimeZone.txt"  # Other options: cmd.exe /c Write-Host %DATE% %TIME% OR  cmd.exe /c "date /t & time /t"
-        Get-TimeZone >> "$Global:Destiny\$HOSTNAME\System_Info\Date_Time_TimeZone.txt"
+        Get-Date > "$Global:Destiny\$HOSTNAME\System_Info\Date_Time_TimeZone_$Status.txt"  # Other options: cmd.exe /c Write-Host %DATE% %TIME% OR  cmd.exe /c "date /t & time /t"
+        Get-TimeZone >> "$Global:Destiny\$HOSTNAME\System_Info\Date_Time_TimeZone_$Status.txt"
     }
     catch
     {
@@ -440,11 +446,6 @@ Function Collect-Network-Information {
     Write-Host "[+] Collecting TCP Connections ..." -ForegroundColor Green
     try
     {
-        Get-NetTCPConnection | ? {($_.State -eq "Established")} | Sort-Object -Property RemoteAddress | Select-Object CreationTime, LocalAddress, LocalPort, RemoteAddress, RemotePort, State, AppliedSetting, OwningProcess, @{Name="Process";Expression={(Get-Process -Id $_.OwningProcess).ProcessName }}, @{Name="Proc. Path:";Expression={(Get-Process -Id $_.OwningProcess).Path }}, @{Name="CMD Line:";Expression={(Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $_.OwningProcess).CommandLine }} | Export-Csv "$Global:Destiny\$HOSTNAME\Network\TCP_Connections_Established.csv"
-        Get-NetTCPConnection | ? {($_.State -eq "Bound")} | Sort-Object -Property RemoteAddress | Select-Object CreationTime, LocalAddress, LocalPort, RemoteAddress, RemotePort, State, AppliedSetting, OwningProcess, @{Name="Process";Expression={(Get-Process -Id $_.OwningProcess).ProcessName }},@{Name="Proc. Path:";Expression={(Get-Process -Id $_.OwningProcess).Path }}, @{Name="CMD Line:";Expression={(Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $_.OwningProcess).CommandLine }} | Export-Csv "$Global:Destiny\$HOSTNAME\Network\TCP_Connections_Bound.csv"
-        Get-NetTCPConnection | ? {($_.State -eq "Listen")} | Sort-Object -Property RemoteAddress | Select-Object CreationTime, LocalAddress, LocalPort, RemoteAddress, RemotePort, State, AppliedSetting, OwningProcess, @{Name="Process";Expression={(Get-Process -Id $_.OwningProcess).ProcessName }},@{Name="Proc. Path:";Expression={(Get-Process -Id $_.OwningProcess).Path }}, @{Name="CMD Line:";Expression={(Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $_.OwningProcess).CommandLine }} | Export-Csv "$Global:Destiny\$HOSTNAME\Network\TCP_Connections_Listen.csv"
-        Get-NetTCPConnection | ? {($_.State -eq "TimeWait")} | Sort-Object -Property RemoteAddress | Select-Object CreationTime, LocalAddress, LocalPort, RemoteAddress, RemotePort, State, AppliedSetting, OwningProcess, @{Name="Process";Expression={(Get-Process -Id $_.OwningProcess).ProcessName }},@{Name="Proc. Path:";Expression={(Get-Process -Id $_.OwningProcess).Path }}, @{Name="CMD Line:";Expression={(Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $_.OwningProcess).CommandLine }} | Export-Csv "$Global:Destiny\$HOSTNAME\Network\TCP_Connections_TimeWait.csv"
-        Get-NetTCPConnection | ? {($_.State -eq "SynSent")} | Sort-Object -Property RemoteAddress | Select-Object CreationTime, LocalAddress, LocalPort, RemoteAddress, RemotePort, State, AppliedSetting, OwningProcess, @{Name="Process";Expression={(Get-Process -Id $_.OwningProcess).ProcessName }},@{Name="Proc. Path:";Expression={(Get-Process -Id $_.OwningProcess).Path }}, @{Name="CMD Line:";Expression={(Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $_.OwningProcess).CommandLine }} | Export-Csv "$Global:Destiny\$HOSTNAME\Network\TCP_Connections_SynSent.csv"
         Get-NetTCPConnection | Select-Object *, @{Name="Process";Expression={(Get-Process -Id $_.OwningProcess).ProcessName }},@{Name="Proc. Path:";Expression={(Get-Process -Id $_.OwningProcess).Path }}, @{Name="CMD Line:";Expression={(Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $_.OwningProcess).CommandLine }} | Export-Csv "$Global:Destiny\$HOSTNAME\Network\TCP_Connections_All.csv"
     }
     catch
@@ -574,7 +575,7 @@ Function Collect-Services-and-Processes {
     try # Dependency of PowerShell 3.1 because or the Export-Csv
     {
         Get-CimInstance -ClassName Win32_Service | Select-Object Name, DisplayName, StartMode, State, PathName, StartName, ServiceType | Export-Csv "$Global:Destiny\$HOSTNAME\Services_Processes\Services_simplified.csv"
-        Get-CimInstance -ClassName Win32_Service | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Services_Processes\Services_all.csv"
+        Get-CimInstance -ClassName Win32_Service | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Services_Processes\Services_detailed.csv"
         # Get-CimInstance -Query "SELECT * from Win32_Service"
         # Get-Service  (Powershell 3.1)
     }
@@ -586,7 +587,7 @@ Function Collect-Services-and-Processes {
     try
     {
         Get-CimInstance -ClassName Win32_Service | Select-Object Name, DisplayName, StartMode, State, PathName, StartName, ServiceType > "$Global:Destiny\$HOSTNAME\Services_Processes\Services_simplified.txt" # Duplicated but with 
-        Get-CimInstance -ClassName Win32_Service | Select-Object * > "$Global:Destiny\$HOSTNAME\Services_Processes\Services_all.txt"
+        Get-CimInstance -ClassName Win32_Service | Select-Object * > "$Global:Destiny\$HOSTNAME\Services_Processes\Services_detailed.txt"
     }
     catch
     {
@@ -674,13 +675,13 @@ Function Collect-Scheduled-Tasks {
 <########### PS C O M M A N D   H I S T O R Y ######> # CPH*
 Function Collect-PSCommand-History {
     
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\PSCMD_HISTORY ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\PSCMD_HISTORY > $null }
-    
     Write-Host "[+] Collecting PowerShell CMD history for each user ... " -ForegroundColor Green
     # For each user reads the Console History from Powershell
     foreach($u in $USERS)
     {
         Write-Host "`t`tUser: $u " -ForegroundColor Green
+        if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\PSCMD_HISTORY\$u ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\PSCMD_HISTORY\$u > $null }
+    
         if(Test-Path -Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt")
         {
             try
@@ -704,8 +705,8 @@ Function Collect-Installed-Software {
     Write-Host "[+] Collecting List of Installed Software ..." -ForegroundColor Green
     try
     {
-        cmd.exe /c dir /ad "$Global:Source\Program Files"                                   >> "$Global:Destiny\$HOSTNAME\Software\InstalledSoftware_ProgramsFolder_x64.txt"
-        cmd.exe /c dir /ad "$Global:Source\Program Files (x86)"                             >> "$Global:Destiny\$HOSTNAME\Software\InstalledSoftware_ProgramsFolder_x86.txt"
+        Get-ChildItem -Force -Directory "$Global:Source\Program Files"                                   >> "$Global:Destiny\$HOSTNAME\Software\InstalledSoftware_ProgramsFolder_x64.txt"
+        Get-ChildItem -Force -Directory "$Global:Source\Program Files (x86)"                             >> "$Global:Destiny\$HOSTNAME\Software\InstalledSoftware_ProgramsFolder_x86.txt"
         
 
         Get-ItemProperty "HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"           >> "$Global:Destiny\$HOSTNAME\Software\InstalledSoftware_RegUninstall_x64.txt"
@@ -729,7 +730,7 @@ Function Collect-Users-Groups {
     {
         Get-LocalUser | Select-Object *                            > "$Global:Destiny\$HOSTNAME\Users_Groups\Users_Local.txt"
         Get-LocalGroup | Select-Object *                           > "$Global:Destiny\$HOSTNAME\Users_Groups\Groups_Local.txt"
-        Get-LocalGroupMember Administrators | Select-Object *      > "$Global:Destiny\$HOSTNAME\Users_Groups\Administrator_LocalMembers.txt"
+        Get-LocalGroupMember Administrators | Select-Object *      > "$Global:Destiny\$HOSTNAME\Users_Groups\Administrator_LocalMembers.txt"  #TODO: There might be a problem with the word Administrators in systems that use other languages.
     }
     catch
     {
@@ -1383,6 +1384,48 @@ Function Collect-RecentDocs2 {
     }
 }
 
+<########### OpenSavePidlMRU #######################> # N/A - Used with MRUs*
+Function Collect-OpenSavePidlMRU {
+    
+    Write-Host "`t○ Collecting OpenSavePidlMRU" -ForegroundColor Green
+    try
+    {
+        & $OPEN_SAVED_FILES_VIEW /shtml "$Global:Destiny\$HOSTNAME\MRUs\OpenSavePidlMRU.html"
+    }
+    catch
+    {
+        Report-Error -evidence "COMDLG32 :: OpenSavePidlMRU"
+    }
+}
+
+<########### USER ASSIST ###########################> # N/A - Used with MRUs*
+Function Collect-UserAssist {
+    
+    Write-Host "`t○ Collecting User Assist ..." -ForegroundColor Green
+    try
+    {
+        & "$SCRIPTPATH\bin\userassistview\UserAssistView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\User_Assist.html"
+    }
+    catch
+    {
+        Report-Error -evidence "User Assist"
+    }
+}
+
+<########### SHELLBAGS #############################> # N/A - Used with MRUs*
+Function Collect-ShellBags {
+    
+    Write-Host "`t○ Collecting ShellBags ..." -ForegroundColor Green
+    try
+    {
+        & "$SCRIPTPATH\bin\shellbagsview\ShellBagsView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\ShellBags.html"
+    }
+    catch
+    {
+        Report-Error -evidence "ShellBags"
+    }
+}
+
 <########### CID Size MRU ##########################> # N/A - Used with MRUs*
 Function Collect-CIDSizeMRU {
  
@@ -1454,48 +1497,6 @@ Function Collect-CIDSizeMRU {
         }
     }
 
-}
-
-<########### OpenSavePidlMRU #######################> # N/A - Used with MRUs*
-Function Collect-OpenSavePidlMRU {
-    
-    Write-Host "`t○ Collecting OpenSavePidlMRU" -ForegroundColor Green
-    try
-    {
-        & $OPEN_SAVED_FILES_VIEW /shtml "$Global:Destiny\$HOSTNAME\MRUs\OpenSavePidlMRU.html"
-    }
-    catch
-    {
-        Report-Error -evidence "COMDLG32 :: OpenSavePidlMRU"
-    }
-}
-
-<########### USER ASSIST ###########################> # N/A - Used with MRUs*
-Function Collect-UserAssist {
-    
-    Write-Host "`t○ Collecting User Assist ..." -ForegroundColor Green
-    try
-    {
-        & "$SCRIPTPATH\bin\userassistview\UserAssistView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\User_Assist.html"
-    }
-    catch
-    {
-        Report-Error -evidence "User Assist"
-    }
-}
-
-<########### SHELLBAGS #############################> # N/A - Used with MRUs*
-Function Collect-ShellBags {
-    
-    Write-Host "`t○ Collecting ShellBags ..." -ForegroundColor Green
-    try
-    {
-        & "$SCRIPTPATH\bin\shellbagsview\ShellBagsView.exe" /sort "~Modified Time" /shtml "$Global:Destiny\$HOSTNAME\MRUs\ShellBags.html"
-    }
-    catch
-    {
-        Report-Error -evidence "ShellBags"
-    }
 }
 
 <########### Last Visited Pidl MRU #################> # N/A - Used with MRUs*
@@ -1985,6 +1986,7 @@ Function Collect-BAM {
 
     if( Test-Path -Path "REGISTRY::HKLM\SYSTEM\CurrentControlSet\services\bam\") 
     {
+        Write-Host "[+] Collecting BAM (Background Activiy Moderator) ..." -ForegroundColor Green
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\BAM") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\BAM" > $null }    
         echo "UserSID,Username,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
@@ -1996,6 +1998,8 @@ Function Collect-BAM {
         foreach($SID in $SIDs)
         {
             $USERNAME = Get-SIDUsername -sid $SID
+
+            Write-Host "`t○ for user $USERNAME ..." -ForegroundColor Green
             
             $APPs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\$SID\" | foreach{ 
                 $_.Property 
@@ -2085,7 +2089,7 @@ Function Collect-Autorun-Files {
     Write-Host "[+] Collecting Autorun Files ..." -ForegroundColor Green
     try
     {
-        cmd.exe /c  $SCRIPTPATH\bin\autorunsc.exe -accepteula -a * -c -h -o "$Global:Destiny\$HOSTNAME\Autorun_Files\7.AutorunFiles.csv" -s -t -u -v -vt -nobanner
+        & cmd.exe /c $AUTORUNS -accepteula -a * -c -h -o "$Global:Destiny\$HOSTNAME\Autorun_Files\AutorunFiles.csv" -s -t -u -v -vt -nobanner
     }
     catch
     {
@@ -2213,7 +2217,49 @@ Function Collect-EVTX-Files {
     }
 }
 
-<########### F I L E S   L I S T S ###############################################> # FIL*
+<########### E T W   &   E T L ###################################################> # EET*
+Function Collect-ETW-ETL {
+    <# TODO: maybe consider the following: C:\Windows\System32\WDI #>
+    try
+    {
+        Write-Host "[+] Collecting ETL files ..." -ForegroundColor Green
+
+        if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\ETL\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\ETL\ > $null }
+        
+        & $RAW_EXE /FileNamePath:"$Global:Source\Windows\System32\WDI\LogFiles\BootCKCL.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:BootCKCL.etl > $null
+        
+        & copy "$Global:Source\Windows\System32\WDI\LogFiles\WdiContextLog.*" "$Global:Destiny\$HOSTNAME\ETL"
+
+        & $RAW_EXE /FileNamePath:"$Global:Source\Windows\System32\WDI\LogFiles\ShutdownCKCL.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:ShutdownCKCL.etl > $null
+        
+        & copy "$Global:Source\Windows\System32\LogFiles\WMI\LwtNetLog.etl" "$Global:Destiny\$HOSTNAME\ETL"
+
+        & copy "$Global:Source\Windows\System32\LogFiles\WMI\Wifi.etl" "$Global:Destiny\$HOSTNAME\ETL"
+        
+        & $RAW_EXE /FileNamePath:"$Global:Source\Windows\Panther\setup.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:setup.etl > $null
+        
+        foreach($u in $USERS)
+        {
+            if(Test-Path "$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\ExplorerStartupLog.etl")
+            {
+                if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\ETL\$u\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\ETL\$u\ > $null }
+                & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\ExplorerStartupLog.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL\$u" /OutputName:ExplorerStartupLog.etl > $null
+            }
+            
+            if(Test-Path "$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\ExplorerStartupLog_RunOnce.etl")
+            {
+                if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\ETL\$u\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\ETL\$u\ > $null }
+                & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\ExplorerStartupLog_RunOnce.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL\$u" /OutputName:ExplorerStartupLog_RunOnce.etl > $null
+            }
+        }
+    } 
+    catch 
+    {
+        Report-Error -evidence "ETL files"
+    }
+}
+
+<########### F I L E S   L I S T S ###############################################> # FIL*   04:23
 Function Collect-Files-Lists {
 
     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\FilesLists ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\FilesLists > $null }
@@ -2232,7 +2278,7 @@ Function Collect-Files-Lists {
     }
 }
 
-<########### D A N G E R O U S   E X T E N S I O N S #############################> # DEX
+<########### D A N G E R O U S   E X T E N S I O N S #############################> # DEX*   04:16
 Function Collect-Dangerous-Extensions {
     
     # 34 extensions
@@ -2300,48 +2346,6 @@ Function Collect-Windows-Search {
     else
     {
         Write-Host "[-] Windows Search File windows.edb does not exist ... " -ForegroundColor Yellow
-    }
-}
-
-<########### E T W   &   E T L ###################################################> # EET*
-Function Collect-ETW-ETL {
-    <# TODO: maybe consider the following: C:\Windows\System32\WDI #>
-    try
-    {
-        Write-Host "[+] Collecting ETL files ..." -ForegroundColor Green
-
-        if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\ETL\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\ETL\ > $null }
-        
-        & $RAW_EXE /FileNamePath:"$Global:Source\Windows\System32\WDI\LogFiles\BootCKCL.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:BootCKCL.etl > $null
-        
-        & copy "$Global:Source\Windows\System32\WDI\LogFiles\WdiContextLog.*" "$Global:Destiny\$HOSTNAME\ETL"
-
-        & $RAW_EXE /FileNamePath:"$Global:Source\Windows\System32\WDI\LogFiles\ShutdownCKCL.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:ShutdownCKCL.etl > $null
-        
-        & copy "$Global:Source\Windows\System32\LogFiles\WMI\LwtNetLog.etl" "$Global:Destiny\$HOSTNAME\ETL"
-
-        & copy "$Global:Source\Windows\System32\LogFiles\WMI\Wifi.etl" "$Global:Destiny\$HOSTNAME\ETL"
-        
-        & $RAW_EXE /FileNamePath:"$Global:Source\Windows\Panther\setup.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL" /OutputName:setup.etl > $null
-        
-        foreach($u in $USERS)
-        {
-            if(Test-Path "$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\ExplorerStartupLog.etl")
-            {
-                if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\ETL\$u\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\ETL\$u\ > $null }
-                & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\ExplorerStartupLog.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL\$u" /OutputName:ExplorerStartupLog.etl > $null
-            }
-            
-            if(Test-Path "$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\ExplorerStartupLog_RunOnce.etl")
-            {
-                if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\ETL\$u\ ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\ETL\$u\ > $null }
-                & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\AppData\Local\Microsoft\Windows\Explorer\ExplorerStartupLog_RunOnce.etl" /OutputPath:"$Global:Destiny\$HOSTNAME\ETL\$u" /OutputName:ExplorerStartupLog_RunOnce.etl > $null
-            }
-        }
-    } 
-    catch 
-    {
-        Report-Error -evidence "ETL files"
     }
 }
 
@@ -2768,7 +2772,7 @@ Function Collect-TextHarvester { <# TODO: Have to activate this option in a OS a
 
                     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u\ParsedData" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\TextHarvester\$u\ParsedData" > $null }
 
-                    & cmd.exe /c "$SCRIPTPATH\bin\wlripEXE-master\wlrip.exe" -c -x -f "$Global:Destiny\$HOSTNAME\TextHarvester\$u\WaitList.dat" -o "$Global:Destiny\$HOSTNAME\TextHarvester\$u\ParsedData" > $null
+                    & cmd.exe /c "$SCRIPTPATH\bin\wlripEXE-master\wlrip.exe" -c -x -f "$Global:Destiny\$HOSTNAME\TextHarvester\$u\WaitList.dat" -o "$Global:Destiny\$HOSTNAME\TextHarvester\$u\ParsedData.csv" > $null
                 }
                 catch
                 {
@@ -2810,7 +2814,7 @@ Function Collect-SRUM {
         {
             if( -Not (Test-Path -Path "$Global:Destiny\$HOSTNAME\HIVES\SOFTWARE") ) # Collect HIVE SOFTWARE in case it was not collected yet
             {
-                Write-Host "`t[*] Collecting HIVE SOFTWARE ..." -ForegroundColor Yellow
+                Write-Host "`t[*] Collecting HIVE SOFTWARE file ..." -ForegroundColor Yellow
                 
                 if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\HIVES ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\HIVES > $null }
 
@@ -3215,11 +3219,11 @@ Function Collect-Firefox-Data {
     
     Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
 
+    $filesToDownload = "content-prefs.sqlite","cookies.sqlite","favicons.sqlite","formhistory.sqlite","permissions.sqlite","places.sqlite","storage.sqlite","storage-sync.sqlite","webappsstore.sqlite"
+
     foreach($u in $USERS){
 
         Write-Host "`t○ for user $u ..." -ForegroundColor Green
-    
-        $filesToDownload = "content-prefs.sqlite","cookies.sqlite","favicons.sqlite","formhistory.sqlite","permissions.sqlite","places.sqlite","storage.sqlite","storage-sync.sqlite","webappsstore.sqlite"
 
         if($OS -eq "XP")
         {
@@ -3582,7 +3586,7 @@ Function Collect-Tor-Data {
     Write-Host "[+] Searching for Tor in the System ..." -ForegroundColor Green
 
     # Search for the TOR Browser un the Source unit
-    Get-ChildItem -Directory -Recurse "$Global:Source`\" | foreach{
+    Get-ChildItem -Directory -Recurse "$Global:Source`\" 2> $null | foreach{
         if($_.Name -match "Tor Browser") 
         {
             $pathTOR = $_.FullName
@@ -3624,7 +3628,8 @@ Function Collect-Tor-Data {
         }
     }
 
-    Write-Host "`t○ Tor NOT found in the System ..." -ForegroundColor Yellow
+    # The Below only if Break, continue or return work in finishing this foreach
+    # Write-Host "`t○ Tor NOT found in the System ..." -ForegroundColor Yellow 
 }
 
 
@@ -3842,42 +3847,40 @@ Function Collect-Sign-Files {
 <# MANAGE NO GUI EXECUTION #>
 Function Control-NOGUI{
 
-    # LIVE                                                                                                                                                                                                                        # mm:ss
-
-    if ($true         ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Time ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                                    # 00:00
+    Collect-Time -Status Start
     
-    if (         $Global:RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-    if ($All -or $Global:NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:20
-    if ($All -or $Global:SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 00:??
-    if ($All -or $Global:STA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
-    if ($All -or $Global:CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PSCommand-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                # ??:??
-    if ($All -or $Global:INS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Installed-Software ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
-    if ($All -or $Global:UGR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Users-Groups ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
-    if ($All -or $Global:PER ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Persistence ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-    if ($All -or $Global:USB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-USB-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
-    if ($All -or $Global:DEV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Devices-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
-    if ($All -or $Global:SEC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firewall-Config ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # ??:??
-
-    if ($All -or $Global:MRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MRUs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # ??:??
-    if ($All -or $Global:SHI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shimcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
+    # LIVE
     
+    if (         $Global:RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:22 4GB
+
+    if ($All -or $Global:NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:23
+    if ($All -or $Global:SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 01:03
+    if ($All -or $Global:STA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # 00:02
+    if ($All -or $Global:CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PSCommand-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                # 00:00
+    if ($All -or $Global:INS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Installed-Software ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # 00:11
+    if ($All -or $Global:UGR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Users-Groups ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # 00:00
+    if ($All -or $Global:PER ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Persistence ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:03
+    if ($All -or $Global:USB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-USB-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # 00:00
+    if ($All -or $Global:DEV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Devices-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # 00:40
+    if ($All -or $Global:SEC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firewall-Config ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # 00:03
+
+    if ($All -or $Global:MRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MRUs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # 00:25
+    if (         $Global:SHI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shimcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
+    if (         $Global:RAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-RecentApps ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
+
     if ($All -or $Global:BAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-BAM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                              # ??:??
-    
-    
-    if ($All -or $Global:RAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-RecentApps ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
     if ($All -or $Global:SYS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-System-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
-
-    
     if ($All -or $Global:LAC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Last-Activity ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
     if (         $Global:AFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Autorun-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 05:40
 
     # OFFLINE
     if ($All -or $Global:HIV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Hives ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                            # ??:??
     if ($All -or $Global:EVT ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-EVTX-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
+    if ($All -or $Global:EET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-ETW-ETL ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # ??:??
     if ($All -or $Global:FIL ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Files-Lists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
+    if (         $Global:DEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
     if ($All -or $Global:PRF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Prefetch ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
     if ($All -or $Global:WSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Windows-Search ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # ??:??
-    if ($All -or $Global:EET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-ETW-ETL ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # ??:??
     if ($All -or $Global:JLI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-JumpLists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
     if ($All -or $Global:TIC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Thumcache-Iconcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
     
@@ -3893,7 +3896,6 @@ Function Control-NOGUI{
     if ($All -or $Global:SKY ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Skype-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # ??:??
     if ($All -or $Global:EMA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Email-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 04:00
 
-
     if ($All -or $Global:CHR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Chrome-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # ??:??
     if ($All -or $Global:MFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firefox-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # ??:??
     if ($All -or $Global:IEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-IE-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # ??:??
@@ -3902,16 +3904,13 @@ Function Control-NOGUI{
     if ($All -or $Global:OPE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Opera-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
     if ($All -or $Global:TOR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Tor-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # ??:??
 
-    
-
     if ($All -or $Global:COD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-OneDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # ??:??
     if ($All -or $Global:CGD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-GoogleDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # ??:??
     if ($All -or $Global:CDB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-Dropbox-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # ??:??
     
-    # Offline - Time Consuming 
-
     if (         $Global:SFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Sign-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
-    if (         $Global:DEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05
+
+    Collect-Time -Status Finish
 }
 
 <# MANAGE GUI EXECTION #> 
