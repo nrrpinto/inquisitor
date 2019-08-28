@@ -12,7 +12,7 @@
     ▓    ######\ ## |  ## |\####### |\######  |## |#######  |## |  \####  |\######  |## |          ▒
     ▓    \______|\__|  \__| \____## | \______/ \__|\_______/ \__|   \____/  \______/ \__|          ▒
     ▓                            ## |                                                              ▒
-    ▓                            ## |                                                              ▒
+    ▓                            ## |                           Forensic artifacts collector       ▒
     ▓                            \__|                           By:      f4d0                      ▒
     ▓                                                           Version: 0.7                       ▒ 
     ▓                                                                                              ▒
@@ -21,7 +21,7 @@
 
 
 .DESCRIPTION
-    Script in powershell to collect evidence from windows machines.
+    Script in powershell to collect forensic artifacts from windows machines.
 
 .EXAMPLE
     .\inquisitor.ps1 -SOURCE c: DESTINY d: -ALL -RAM -SFI -FormatType Zeros
@@ -3950,9 +3950,9 @@ Function Control-GUI {
     $Banner.Text += "  ▓    ######\ ## |  ## |\####### |\######  |## |#######  |## |  \####  |\######  |## |          ▒`n"
     $Banner.Text += "  ▓    \______|\__|  \__| \____## | \______/ \__|\_______/ \__|   \____/  \______/ \__|          ▒`n"
     $Banner.Text += "  ▓                            ## |                                                              ▒`n"
-    $Banner.Text += "  ▓                            ## |                                                              ▒`n"
-    $Banner.Text += "  ▓                            \__|                           By:      f4d0                      ▒`n"
-    $Banner.Text += "  ▓                                                           Version: 0.7                       ▒`n"
+    $Banner.Text += "  ▓                            ## |                              Forensic artifacts collector    ▒`n"
+    $Banner.Text += "  ▓                            \__|                              By:      f4d0                   ▒`n"
+    $Banner.Text += "  ▓                                                              Version: 0.7                    ▒`n"
     $Banner.Text += "  ▓                                                                                              ▒`n"
     $Banner.Text += "  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒`n"
     
@@ -4756,7 +4756,7 @@ Function Show-Banner {
     Write-Host '  ▓    ######\ ## |  ## |\####### |\######  |## |#######  |## |  \####  |\######  |## |          ▒'
     Write-Host '  ▓    \______|\__|  \__| \____## | \______/ \__|\_______/ \__|   \____/  \______/ \__|          ▒'
     Write-Host '  ▓                            ## |                                                              ▒'
-    Write-Host '  ▓                            ## |                                                              ▒'
+    Write-Host '  ▓                            ## |                           Forensic artifacts collector       ▒'
     Write-Host '  ▓                            \__|                           By:      f4d0                      ▒'
     Write-Host '  ▓                                                           Version: 0.7                       ▒'
     Write-Host '  ▓                                                                                              ▒'
