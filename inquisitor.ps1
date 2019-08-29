@@ -365,6 +365,7 @@ $USERS = Get-LocalUser | ? { $_.Enabled } | Select-Object -ExpandProperty Name #
 $SIDS = Get-ChildItem "REGISTRY::HKEY_USERS" | ForEach-Object { ($_.Name).Split("\")[1] } # list of user SIDs
 $ARCH = $env:PROCESSOR_ARCHITECTURE
 $SCRIPTPATH = split-path -parent $MyInvocation.MyCommand.Definition
+$DRIVES = $(Get-PSDrive -PSProvider FileSystem).Root
 
 <# defines according to architecture which version of Rawcpoy and SigCheck to use #>
 if($ARCH -eq "AMD64") 
@@ -3830,8 +3831,8 @@ Function Collect-Sign-Files {
     Write-Host "[+] Collecting Info About Signed Files " -ForegroundColor Green
     try
     {
-        & $SIG_EXE /accepteula -vt -h -c -e -q $Global:Source\Windows\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\SignedFiles_Windows.csv" 
-        & $SIG_EXE /accepteula -vt -h -c -e -q $Global:Source\Windows\system32\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\SignedFiles_WindowsSystem32.csv" 
+        & $SIG_EXE /accepteula -vt -h -c -e -q -v $Global:Source\Windows\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\SignedFiles_Windows.csv" 
+        & $SIG_EXE /accepteula -vt -h -c -e -q -v $Global:Source\Windows\system32\ >> "$Global:Destiny\$HOSTNAME\Signed_Files\SignedFiles_WindowsSystem32.csv" 
     } 
     catch 
     {
@@ -3851,7 +3852,7 @@ Function Control-NOGUI{
     
     # LIVE
     
-    if (         $Global:RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:22 4GB
+    if ($All -or $Global:RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:22 4GB
 
     if ($All -or $Global:NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:23
     if ($All -or $Global:SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 01:03
@@ -3956,9 +3957,9 @@ Function Control-GUI {
     $Banner.Text += "  ▓                                                                                              ▒`n"
     $Banner.Text += "  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒`n"
     
+    ############################################ Controls Creation ################################################################
 
-    ############################################ General groupBox ################################################################
-    
+    # GENERAL PANEL
     $groupBoxGeneral = New-Object System.Windows.Forms.GroupBox
     $labelSource = New-Object System.Windows.Forms.Label
     $comboBoxSource = New-Object System.Windows.Forms.ComboBox
@@ -3968,6 +3969,10 @@ Function Control-GUI {
     $checkBoxFormat = New-Object System.Windows.Forms.CheckBox
     $checkBoxFormatQuick = New-Object System.Windows.Forms.CheckBox
     $checkBoxFormatZero = New-Object System.Windows.Forms.CheckBox
+    $checkBoxHash = New-Object System.Windows.Forms.CheckBox
+    $checkBoxHashMD5 = New-Object System.Windows.Forms.CheckBox
+    $checkBoxHashSHA256 = New-Object System.Windows.Forms.CheckBox
+    $buttonExecute = New-Object System.Windows.Forms.Button
     $labelColType = New-Object System.Windows.Forms.Label
     $radioButtonAll = New-Object System.Windows.Forms.RadioButton
     $radioButtonLive = New-Object System.Windows.Forms.RadioButton
@@ -3975,6 +3980,61 @@ Function Control-GUI {
     $radioButtonOffline = New-Object System.Windows.Forms.RadioButton
     $radioButtonOfflineOpt = New-Object System.Windows.Forms.RadioButton
 
+    # LIVE PANEL
+    $groupBoxOnline = New-Object System.Windows.Forms.GroupBox
+    $checkBoxRAM = New-Object System.Windows.Forms.CheckBox
+    $checkBoxNET = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSAP = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSTA = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCPH = New-Object System.Windows.Forms.CheckBox
+    $checkBoxINS = New-Object System.Windows.Forms.CheckBox
+    $checkBoxUGR = New-Object System.Windows.Forms.CheckBox
+    $checkBoxPER = New-Object System.Windows.Forms.CheckBox
+    $checkBoxUSB = New-Object System.Windows.Forms.CheckBox
+    $checkBoxDEV = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSEC = New-Object System.Windows.Forms.CheckBox
+    $checkBoxMRU = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSHI = New-Object System.Windows.Forms.CheckBox
+    $checkBoxRAP = New-Object System.Windows.Forms.CheckBox
+    $checkBoxBAM = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSYS = New-Object System.Windows.Forms.CheckBox
+    $checkBoxLAC = New-Object System.Windows.Forms.CheckBox
+    $checkBoxAFI = New-Object System.Windows.Forms.CheckBox    
+    
+    # OFFLINE PANEL
+    $groupBoxOffline = New-Object System.Windows.Forms.GroupBox
+    $checkBoxHIV = New-Object System.Windows.Forms.CheckBox
+    $checkBoxEVT = New-Object System.Windows.Forms.CheckBox
+    $checkBoxFIL = New-Object System.Windows.Forms.CheckBox
+    $checkBoxDEX = New-Object System.Windows.Forms.CheckBox
+    $checkBoxPRF = New-Object System.Windows.Forms.CheckBox
+    $checkBoxWSE = New-Object System.Windows.Forms.CheckBox
+    $checkBoxEET = New-Object System.Windows.Forms.CheckBox
+    $checkBoxJLI = New-Object System.Windows.Forms.CheckBox
+    $checkBoxTHC = New-Object System.Windows.Forms.CheckBox
+    $checkBoxFSF = New-Object System.Windows.Forms.CheckBox
+    $checkBoxMSF = New-Object System.Windows.Forms.CheckBox
+    $checkBoxTLH = New-Object System.Windows.Forms.CheckBox
+    $checkBoxTHA = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSRU = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCRE = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSFI = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSKY = New-Object System.Windows.Forms.CheckBox
+    $checkBoxEMA = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCHR = New-Object System.Windows.Forms.CheckBox
+    $checkBoxMFI = New-Object System.Windows.Forms.CheckBox
+    $checkBoxIEX = New-Object System.Windows.Forms.CheckBox
+    $checkBoxEDG = New-Object System.Windows.Forms.CheckBox
+    $checkBoxSAF = New-Object System.Windows.Forms.CheckBox
+    $checkBoxOPE = New-Object System.Windows.Forms.CheckBox
+    $checkBoxTOR = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCOD = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCGD = New-Object System.Windows.Forms.CheckBox
+    $checkBoxCDB = New-Object System.Windows.Forms.CheckBox
+
+    ############################################ General groupBox ################################################################
+
+    
     # Label Source
     $labelSource.Location = New-Object System.Drawing.Point(55, 280)
     $labelSource.Size = New-Object System.Drawing.Size(50, 13)
@@ -3984,12 +4044,13 @@ Function Control-GUI {
     $labelSource.TabStop = $False
     $labelSource.Text = "Source: "
     
-    # Dropbox Source
+    # Combobox Source
     $comboBoxSource.Location = New-Object System.Drawing.Point(105, 277)
     $comboBoxSource.Size = New-Object System.Drawing.Size(60, 20)
     $comboBoxSource.FormattingEnabled = true
     $comboBoxSource.Name = "comboBoxSource"
     $comboBoxSource.TabIndex = 1
+    $comboBoxSource.Items.AddRange($DRIVES)
 
     # Label Destiny
     $labelDestiny.Location = New-Object System.Drawing.Point(180, 280)
@@ -4006,7 +4067,7 @@ Function Control-GUI {
     $textBoxDestiny.Name = "textBox1"
     $textBoxDestiny.TabIndex = 2
 
-    # Button Destiny
+    # Button Select Destiny
     $buttonDestiny.Location = New-Object System.Drawing.Point(500, 275)
     $buttonDestiny.Size = New-Object System.Drawing.Size(75, 23)
     $buttonDestiny.Name = "buttonDestiny"
@@ -4024,32 +4085,220 @@ Function Control-GUI {
 
     # Format Checkbox
     $checkBoxFormat.Location = New-Object System.Drawing.Point(600, 280)
-    $checkBoxFormat.Size = New-Object System.Drawing.Size(80, 17)
+    $checkBoxFormat.Size = New-Object System.Drawing.Size(60, 17)
     $checkBoxFormat.AutoSize = true
     $checkBoxFormat.Name = "checkBoxFormat"
     $checkBoxFormat.TabIndex = 4
     $checkBoxFormat.Text = "Format"
     $checkBoxFormat.UseVisualStyleBackColor = true
+    $checkBoxFormat.Add_Click(
+        {
+            if($checkBoxFormat.Checked -eq $True)
+            {
+                $checkBoxFormatQuick.Enabled = $True
+                $checkBoxFormatZero.Enabled = $True
+            }
+            else
+            {
+                $checkBoxFormatQuick.Enabled = $False
+                $checkBoxFormatZero.Enabled = $False
+                $checkBoxFormatQuick.Checked = $False
+                $checkBoxFormatZero.Checked = $False
+            }
+        }
+    )
 
     # Format Checkbox
     $checkBoxFormatQuick.Location = New-Object System.Drawing.Point(610, 300)
-    $checkBoxFormatQuick.Size = New-Object System.Drawing.Size(80, 17)
+    $checkBoxFormatQuick.Size = New-Object System.Drawing.Size(60, 17)
     $checkBoxFormatQuick.AutoSize = true
     $checkBoxFormatQuick.Name = "checkBoxFormatQuick"
     $checkBoxFormatQuick.TabIndex = 4
     $checkBoxFormatQuick.Text = "Quick"
     $checkBoxFormatQuick.UseVisualStyleBackColor = true
     $checkBoxFormatQuick.Enabled = $False
+    $checkBoxFormatQuick.Add_Click(
+        {
+            if($checkBoxFormatQuick.Checked -eq $True)
+            {
+                $checkBoxFormatZero.Checked = $False
+            }
+            else
+            {
+                $checkBoxFormatZero.Checked = $True
+            }
+        }
+    )
 
     # Format Checkbox
     $checkBoxFormatZero.Location = New-Object System.Drawing.Point(610, 320)
-    $checkBoxFormatZero.Size = New-Object System.Drawing.Size(80, 17)
+    $checkBoxFormatZero.Size = New-Object System.Drawing.Size(50, 17)
     $checkBoxFormatZero.AutoSize = true
     $checkBoxFormatZero.Name = "checkBoxFormatZero"
     $checkBoxFormatZero.TabIndex = 4
     $checkBoxFormatZero.Text = "Zero"
     $checkBoxFormatZero.UseVisualStyleBackColor = true
     $checkBoxFormatZero.Enabled = $False
+    $checkBoxFormatZero.Add_Click(
+        {
+            if($checkBoxFormatZero.Checked -eq $True)
+            {
+                $checkBoxFormatQuick.Checked = $False
+            }
+            else
+            {
+                $checkBoxFormatQuick.Checked = $True
+            }            
+        }
+    )
+
+    # Hash Checkbox
+    $checkBoxHash.Location = New-Object System.Drawing.Point(670, 280)
+    $checkBoxHash.Size = New-Object System.Drawing.Size(60, 17)
+    $checkBoxHash.AutoSize = true
+    $checkBoxHash.Name = "checkBoxHash"
+    $checkBoxHash.TabIndex = 4
+    $checkBoxHash.Text = "Hash"
+    $checkBoxHash.UseVisualStyleBackColor = true
+    $checkBoxHash.Add_Click(
+        {
+            if($checkBoxHash.Checked -eq $True)
+            {
+                $checkBoxHashMD5.Enabled = $True
+                $checkBoxHashSHA256.Enabled = $True
+            }
+            else
+            {
+                $checkBoxHashMD5.Enabled = $False
+                $checkBoxHashSHA256.Enabled = $False
+                $checkBoxHashMD5.Checked = $False
+                $checkBoxHashSHA256.Checked = $False
+            }
+        }
+    )
+
+    # Hash MD5 Checkbox
+    $checkBoxHashMD5.Location = New-Object System.Drawing.Point(680, 300)
+    $checkBoxHashMD5.Size = New-Object System.Drawing.Size(60, 17)
+    $checkBoxHashMD5.AutoSize = true
+    $checkBoxHashMD5.Name = "checkBoxFormatQuick"
+    $checkBoxHashMD5.TabIndex = 4
+    $checkBoxHashMD5.Text = "MD5"
+    $checkBoxHashMD5.UseVisualStyleBackColor = true
+    $checkBoxHashMD5.Enabled = $False
+    $checkBoxHashMD5.Add_Click(
+        {
+            if($checkBoxHashMD5.Checked -eq $True)
+            {
+                $checkBoxHashSHA256.Checked = $False
+            }
+            else
+            {
+                $checkBoxHashSHA256.Checked = $True
+            }
+        }
+    )
+
+    # Hash SHA256 Checkbox
+    $checkBoxHashSHA256.Location = New-Object System.Drawing.Point(680, 320)
+    $checkBoxHashSHA256.Size = New-Object System.Drawing.Size(70, 17)
+    $checkBoxHashSHA256.AutoSize = true
+    $checkBoxHashSHA256.Name = "checkBoxHashSHA256"
+    $checkBoxHashSHA256.TabIndex = 4
+    $checkBoxHashSHA256.Text = "SHA256"
+    $checkBoxHashSHA256.UseVisualStyleBackColor = true
+    $checkBoxHashSHA256.Enabled = $False
+    $checkBoxHashSHA256.Add_Click(
+        {
+            if($checkBoxHashSHA256.Checked -eq $True)
+            {
+                $checkBoxHashMD5.Checked = $False
+            }
+            else
+            {
+                $checkBoxHashMD5.Checked = $True
+            }            
+        }
+    )
+
+    # Button Execute/ Collect
+    $buttonExecute.Location = New-Object System.Drawing.Point(425, 300)
+    $buttonExecute.Size = New-Object System.Drawing.Size(150, 40)
+    $buttonExecute.Font =  [System.Drawing.Font]::new("Microsoft Sans Serif", 10, [System.Drawing.FontStyle]::Bold)
+    $buttonExecute.Name = "buttonExecute"
+    $buttonExecute.TabIndex = 3
+    $buttonExecute.Text = "EXECUTE!"
+    $buttonExecute.UseVisualStyleBackColor = true
+    $buttonExecute.Add_Click(
+        {
+            if($comboBoxSource.Text -ne "" -and $textBoxDestiny.Text -ne "" -and ($radioButtonAll.Checked -or $radioButtonLive.Checked -or $radioButtonLiveOpt.Checked -or $radioButtonOffline.Checked -or $radioButtonOfflineOpt.Checked))
+            {
+                Write-Host "Source is: $($comboBoxSource.Text)" -ForegroundColor Yellow
+                $Global:Source = $($comboBoxSource.Text)
+                Write-Host "Destiny is: $($textBoxDestiny.Text)" -BackgroundColor Green
+                $Global:Destiny = $($textBoxDestiny.Text)
+                Write-Host "Destiny is: $($radioButtonAll.Checked)"
+                Write-Host "Destiny is: $($radioButtonLive.Checked)"
+                Write-Host "Destiny is: $($radioButtonLiveOpt.Checked)"
+                Write-Host "Destiny is: $($radioButtonOffline.Checked)"
+                Write-Host "Destiny is: $($radioButtonOfflineOpt.Checked)"
+                
+                if($checkBoxRAM.Checked -eq $True) { $Global:RAM = $True }
+                if($checkBoxNET.Checked -eq $True) { $Global:NET = $True }
+                if($checkBoxSAP.Checked -eq $True) { $Global:SAP = $True }
+                if($checkBoxSTA.Checked -eq $True) { $Global:STA = $True }
+                if($checkBoxCPH.Checked -eq $True) { $Global:CPH = $True }
+                if($checkBoxINS.Checked -eq $True) { $Global:INS = $True }
+                if($checkBoxUGR.Checked -eq $True) { $Global:UGR = $True }
+                if($checkBoxPER.Checked -eq $True) { $Global:PER = $True }
+                if($checkBoxUSB.Checked -eq $True) { $Global:USB = $True }
+                if($checkBoxDEV.Checked -eq $True) { $Global:DEV = $True }
+                if($checkBoxSEC.Checked -eq $True) { $Global:SEC = $True }
+                if($checkBoxMRU.Checked -eq $True) { $Global:MRU = $True }
+                if($checkBoxSHI.Checked -eq $True) { $Global:SHI = $True }
+                if($checkBoxRAP.Checked -eq $True) { $Global:RAP = $True }
+                if($checkBoxBAM.Checked -eq $True) { $Global:BAM = $True }
+                if($checkBoxSYS.Checked -eq $True) { $Global:SYS = $True }
+                if($checkBoxLAC.Checked -eq $True) { $Global:LAC = $True }
+                if($checkBoxAFI.Checked -eq $True) { $Global:AFI = $True }
+                if($checkBoxHIV.Checked -eq $True) { $Global:HIV = $True }
+                if($checkBoxEVT.Checked -eq $True) { $Global:EVT = $True }
+                if($checkBoxFIL.Checked -eq $True) { $Global:FIL = $True }
+                if($checkBoxDEX.Checked -eq $True) { $Global:DEX = $True }
+                if($checkBoxPRF.Checked -eq $True) { $Global:PRF = $True }
+                if($checkBoxWSE.Checked -eq $True) { $Global:WSE = $True }
+                if($checkBoxEET.Checked -eq $True) { $Global:EET = $True }
+                if($checkBoxJLI.Checked -eq $True) { $Global:JLI = $True }
+                if($checkBoxTHC.Checked -eq $True) { $Global:THC = $True }
+                if($checkBoxFSF.Checked -eq $True) { $Global:FSF = $True }
+                if($checkBoxMSF.Checked -eq $True) { $Global:MSF = $True }
+                if($checkBoxTLH.Checked -eq $True) { $Global:TLH = $True }
+                if($checkBoxTHA.Checked -eq $True) { $Global:THA = $True }
+                if($checkBoxSRU.Checked -eq $True) { $Global:SRU = $True }
+                if($checkBoxCRE.Checked -eq $True) { $Global:CRE = $True }
+                if($checkBoxSFI.Checked -eq $True) { $Global:SFI = $True }
+                if($checkBoxSKY.Checked -eq $True) { $Global:SKY = $True }
+                if($checkBoxEMA.Checked -eq $True) { $Global:EMA = $True }
+                if($checkBoxCHR.Checked -eq $True) { $Global:CHR = $True }
+                if($checkBoxMFI.Checked -eq $True) { $Global:MFI = $True }
+                if($checkBoxIEX.Checked -eq $True) { $Global:IEX = $True }
+                if($checkBoxEDG.Checked -eq $True) { $Global:EDG = $True }
+                if($checkBoxSAF.Checked -eq $True) { $Global:SAF = $True }
+                if($checkBoxOPE.Checked -eq $True) { $Global:OPE = $True }
+                if($checkBoxTOR.Checked -eq $True) { $Global:TOR = $True }
+                if($checkBoxCOD.Checked -eq $True) { $Global:COD = $True }
+                if($checkBoxCGD.Checked -eq $True) { $Global:CGD = $True }
+                if($checkBoxCDB.Checked -eq $True) { $Global:CDB = $True }
+                $buttonExecute.Text = "EXECUTING..."
+                $buttonExecute.Enabled = $False
+                Control-NOGUI
+                $buttonExecute.Text = "EXECUTE!"
+                $buttonExecute.Enabled = $True
+
+            }
+        }
+    )
+
 
     # Label Collection Type
     $labelColType.Location = New-Object System.Drawing.Point(55, 310)
@@ -4060,6 +4309,8 @@ Function Control-GUI {
     $labelColType.TabStop = $False
     $labelColType.Text = "Collection Type:"
 
+    
+
     # Radio Button ALL
     $radioButtonAll.Location = New-Object System.Drawing.Point(150, 310)
     $radioButtonAll.Size = New-Object System.Drawing.Size(40, 17)
@@ -4069,6 +4320,56 @@ Function Control-GUI {
     $radioButtonAll.TabStop = true
     $radioButtonAll.Text = "All"
     $radioButtonAll.UseVisualStyleBackColor = true
+    $radioButtonAll.Add_Click(
+        {
+        $checkBoxRAM.Checked = $True
+        $checkBoxNET.Checked = $True
+        $checkBoxSAP.Checked = $True
+        $checkBoxSTA.Checked = $True
+        $checkBoxCPH.Checked = $True
+        $checkBoxINS.Checked = $True
+        $checkBoxUGR.Checked = $True
+        $checkBoxPER.Checked = $True
+        $checkBoxUSB.Checked = $True
+        $checkBoxDEV.Checked = $True
+        $checkBoxSEC.Checked = $True
+        $checkBoxMRU.Checked = $True
+        $checkBoxSHI.Checked = $True
+        $checkBoxRAP.Checked = $True
+        $checkBoxBAM.Checked = $True
+        $checkBoxSYS.Checked = $True
+        $checkBoxLAC.Checked = $True
+        $checkBoxAFI.Checked = $True
+        $checkBoxHIV.Checked = $True
+        $checkBoxEVT.Checked = $True
+        $checkBoxFIL.Checked = $True
+        $checkBoxDEX.Checked = $True
+        $checkBoxPRF.Checked = $True
+        $checkBoxWSE.Checked = $True
+        $checkBoxEET.Checked = $True
+        $checkBoxJLI.Checked = $True
+        $checkBoxTHC.Checked = $True
+        $checkBoxFSF.Checked = $True
+        $checkBoxMSF.Checked = $True
+        $checkBoxTLH.Checked = $True
+        $checkBoxTHA.Checked = $True
+        $checkBoxSRU.Checked = $True
+        $checkBoxCRE.Checked = $True
+        $checkBoxSFI.Checked = $True
+        $checkBoxSKY.Checked = $True
+        $checkBoxEMA.Checked = $True
+        $checkBoxCHR.Checked = $True
+        $checkBoxMFI.Checked = $True
+        $checkBoxIEX.Checked = $True
+        $checkBoxEDG.Checked = $True
+        $checkBoxSAF.Checked = $True
+        $checkBoxOPE.Checked = $True
+        $checkBoxTOR.Checked = $True
+        $checkBoxCOD.Checked = $True
+        $checkBoxCGD.Checked = $True
+        $checkBoxCDB.Checked = $True
+        }
+    )
 
     # Radio Button Live
     $radioButtonLive.Location = New-Object System.Drawing.Point(200, 300)
@@ -4079,6 +4380,56 @@ Function Control-GUI {
     $radioButtonLive.TabStop = true
     $radioButtonLive.Text = "Live"
     $radioButtonLive.UseVisualStyleBackColor = true
+    $radioButtonLive.Add_Click(
+        {
+        $checkBoxRAM.Checked = $True
+        $checkBoxNET.Checked = $True
+        $checkBoxSAP.Checked = $True
+        $checkBoxSTA.Checked = $True
+        $checkBoxCPH.Checked = $True
+        $checkBoxINS.Checked = $True
+        $checkBoxUGR.Checked = $True
+        $checkBoxPER.Checked = $True
+        $checkBoxUSB.Checked = $True
+        $checkBoxDEV.Checked = $True
+        $checkBoxSEC.Checked = $True
+        $checkBoxMRU.Checked = $True
+        $checkBoxSHI.Checked = $True
+        $checkBoxRAP.Checked = $True
+        $checkBoxBAM.Checked = $True
+        $checkBoxSYS.Checked = $True
+        $checkBoxLAC.Checked = $True
+        $checkBoxAFI.Checked = $True
+        $checkBoxHIV.Checked = $False
+        $checkBoxEVT.Checked = $False
+        $checkBoxFIL.Checked = $False
+        $checkBoxDEX.Checked = $False
+        $checkBoxPRF.Checked = $False
+        $checkBoxWSE.Checked = $False
+        $checkBoxEET.Checked = $False
+        $checkBoxJLI.Checked = $False
+        $checkBoxTHC.Checked = $False
+        $checkBoxFSF.Checked = $False
+        $checkBoxMSF.Checked = $False
+        $checkBoxTLH.Checked = $False
+        $checkBoxTHA.Checked = $False
+        $checkBoxSRU.Checked = $False
+        $checkBoxCRE.Checked = $False
+        $checkBoxSFI.Checked = $False
+        $checkBoxSKY.Checked = $False
+        $checkBoxEMA.Checked = $False
+        $checkBoxCHR.Checked = $False
+        $checkBoxMFI.Checked = $False
+        $checkBoxIEX.Checked = $False
+        $checkBoxEDG.Checked = $False
+        $checkBoxSAF.Checked = $False
+        $checkBoxOPE.Checked = $False
+        $checkBoxTOR.Checked = $False
+        $checkBoxCOD.Checked = $False
+        $checkBoxCGD.Checked = $False
+        $checkBoxCDB.Checked = $False
+        }
+    )
 
     # Radio Button Live Optimized
     $radioButtonLiveOpt.Location = New-Object System.Drawing.Point(270, 300)
@@ -4099,6 +4450,57 @@ Function Control-GUI {
     $radioButtonOffline.TabStop = true
     $radioButtonOffline.Text = "Offline"
     $radioButtonOffline.UseVisualStyleBackColor = true
+    $radioButtonOffline.Add_Click(
+        {
+        $checkBoxRAM.Checked = $False
+        $checkBoxNET.Checked = $False
+        $checkBoxSAP.Checked = $False
+        $checkBoxSTA.Checked = $False
+        $checkBoxCPH.Checked = $False
+        $checkBoxINS.Checked = $False
+        $checkBoxUGR.Checked = $False
+        $checkBoxPER.Checked = $False
+        $checkBoxUSB.Checked = $False
+        $checkBoxDEV.Checked = $False
+        $checkBoxSEC.Checked = $False
+        $checkBoxMRU.Checked = $False
+        $checkBoxSHI.Checked = $False
+        $checkBoxRAP.Checked = $False
+        $checkBoxBAM.Checked = $False
+        $checkBoxSYS.Checked = $False
+        $checkBoxLAC.Checked = $False
+        $checkBoxAFI.Checked = $False
+        $checkBoxHIV.Checked = $True
+        $checkBoxEVT.Checked = $True
+        $checkBoxFIL.Checked = $True
+        $checkBoxDEX.Checked = $True
+        $checkBoxPRF.Checked = $True
+        $checkBoxWSE.Checked = $True
+        $checkBoxEET.Checked = $True
+        $checkBoxJLI.Checked = $True
+        $checkBoxTHC.Checked = $True
+        $checkBoxFSF.Checked = $True
+        $checkBoxMSF.Checked = $True
+        $checkBoxTLH.Checked = $True
+        $checkBoxTHA.Checked = $True
+        $checkBoxSRU.Checked = $True
+        $checkBoxCRE.Checked = $True
+        $checkBoxSFI.Checked = $True
+        $checkBoxSKY.Checked = $True
+        $checkBoxEMA.Checked = $True
+        $checkBoxCHR.Checked = $True
+        $checkBoxMFI.Checked = $True
+        $checkBoxIEX.Checked = $True
+        $checkBoxEDG.Checked = $True
+        $checkBoxSAF.Checked = $True
+        $checkBoxOPE.Checked = $True
+        $checkBoxTOR.Checked = $True
+        $checkBoxCOD.Checked = $True
+        $checkBoxCGD.Checked = $True
+        $checkBoxCDB.Checked = $True
+
+        }
+    )
 
     # Radio Button Offline Optimized
     $radioButtonOfflineOpt.Location = New-Object System.Drawing.Point(270, 320)
@@ -4120,25 +4522,9 @@ Function Control-GUI {
     
     ############################################ Online groupBox #################################################################
 
-    $groupBoxOnline = New-Object System.Windows.Forms.GroupBox
-    $checkBoxRAM = New-Object System.Windows.Forms.CheckBox
-    $checkBoxNET = New-Object System.Windows.Forms.CheckBox
-    $checkBoxSAP = New-Object System.Windows.Forms.CheckBox
-    $checkBoxSTA = New-Object System.Windows.Forms.CheckBox
-    $checkBoxCPH = New-Object System.Windows.Forms.CheckBox
-    $checkBoxINS = New-Object System.Windows.Forms.CheckBox
-    $checkBoxUGR = New-Object System.Windows.Forms.CheckBox
-    $checkBoxPER = New-Object System.Windows.Forms.CheckBox
-    $checkBoxUSB = New-Object System.Windows.Forms.CheckBox
-    $checkBoxDEV = New-Object System.Windows.Forms.CheckBox
-    $checkBoxSEC = New-Object System.Windows.Forms.CheckBox
-    $checkBoxMRU = New-Object System.Windows.Forms.CheckBox
-    $checkBoxSHI = New-Object System.Windows.Forms.CheckBox
-    $checkBoxRAP = New-Object System.Windows.Forms.CheckBox
-    $checkBoxBAM = New-Object System.Windows.Forms.CheckBox
-    $checkBoxSYS = New-Object System.Windows.Forms.CheckBox
-    $checkBoxLAC = New-Object System.Windows.Forms.CheckBox
-    $checkBoxAFI = New-Object System.Windows.Forms.CheckBox
+
+    
+
 
     # Network Checkbox
     $checkBoxRAM.Location = New-Object System.Drawing.Point(55, 370)
@@ -4148,7 +4534,19 @@ Function Control-GUI {
     $checkBoxRAM.TabIndex = 4
     $checkBoxRAM.Text = "Random Access Memory (RAM)"
     $checkBoxRAM.UseVisualStyleBackColor = true
-    
+    $checkBoxRAM.Add_CheckStateChanged(
+        {
+            if($checkBoxRAM -eq $True)
+            {
+                $Global:RAM = $True
+            }
+            else
+            {
+                $Global:RAM = $False
+            }
+        }
+    )
+
     # Network Checkbox
     $checkBoxNET.Location = New-Object System.Drawing.Point(55, 390)
     $checkBoxNET.Size = New-Object System.Drawing.Size(200, 17)
@@ -4309,36 +4707,6 @@ Function Control-GUI {
     $groupBoxOnline.Text = "Live Options"
 
     ############################################ Offline groupBox ################################################################
-    
-    $groupBoxOffline = New-Object System.Windows.Forms.GroupBox
-    $checkBoxHIV = New-Object System.Windows.Forms.CheckBox
-    $checkBoxEVT = New-Object System.Windows.Forms.CheckBox
-    $checkBoxFIL = New-Object System.Windows.Forms.CheckBox
-    $checkBoxDEX = New-Object System.Windows.Forms.CheckBox
-    $checkBoxPRF = New-Object System.Windows.Forms.CheckBox
-    $checkBoxWSE = New-Object System.Windows.Forms.CheckBox
-    $checkBoxEET = New-Object System.Windows.Forms.CheckBox
-    $checkBoxJLI = New-Object System.Windows.Forms.CheckBox
-    $checkBoxTHC = New-Object System.Windows.Forms.CheckBox
-    $checkBoxFSF = New-Object System.Windows.Forms.CheckBox
-    $checkBoxMSF = New-Object System.Windows.Forms.CheckBox
-    $checkBoxTLH = New-Object System.Windows.Forms.CheckBox
-    $checkBoxTHA = New-Object System.Windows.Forms.CheckBox
-    $checkBoxSRU = New-Object System.Windows.Forms.CheckBox
-    $checkBoxCRE = New-Object System.Windows.Forms.CheckBox
-    $checkBoxSKY = New-Object System.Windows.Forms.CheckBox
-    $checkBoxEMA = New-Object System.Windows.Forms.CheckBox
-    $checkBoxCHR = New-Object System.Windows.Forms.CheckBox
-    $checkBoxMFI = New-Object System.Windows.Forms.CheckBox
-    $checkBoxIEX = New-Object System.Windows.Forms.CheckBox
-    $checkBoxEDG = New-Object System.Windows.Forms.CheckBox
-    $checkBoxSAF = New-Object System.Windows.Forms.CheckBox
-    $checkBoxOPE = New-Object System.Windows.Forms.CheckBox
-    $checkBoxTOR = New-Object System.Windows.Forms.CheckBox
-    $checkBoxCOD = New-Object System.Windows.Forms.CheckBox
-    $checkBoxCGD = New-Object System.Windows.Forms.CheckBox
-    $checkBoxCDB = New-Object System.Windows.Forms.CheckBox
-    $checkBoxSFI = New-Object System.Windows.Forms.CheckBox
 
     # Hives Checkbox
     $checkBoxHIV.Location = New-Object System.Drawing.Point(330, 370)
@@ -4474,7 +4842,16 @@ Function Control-GUI {
     $checkBoxCRE.TabIndex = 4
     $checkBoxCRE.Text = "Credentials"
     $checkBoxCRE.UseVisualStyleBackColor = true
-
+    
+    # Format Checkbox
+    $checkBoxSFI.Location = New-Object System.Drawing.Point(330, 670)
+    $checkBoxSFI.Size = New-Object System.Drawing.Size(150, 17)
+    $checkBoxSFI.AutoSize = true
+    $checkBoxSFI.Name = "checkBoxSFI"
+    $checkBoxSFI.TabIndex = 4
+    $checkBoxSFI.Text = "Signed Files"
+    $checkBoxSFI.UseVisualStyleBackColor = true
+    
     # Format Checkbox
     $checkBoxSKY.Location = New-Object System.Drawing.Point(570, 370)
     $checkBoxSKY.Size = New-Object System.Drawing.Size(150, 17)
@@ -4583,21 +4960,14 @@ Function Control-GUI {
     $checkBoxCDB.Text = "DropBox"
     $checkBoxCDB.UseVisualStyleBackColor = true
 
-    # Format Checkbox
-    $checkBoxSFI.Location = New-Object System.Drawing.Point(570, 670)
-    $checkBoxSFI.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxSFI.AutoSize = true
-    $checkBoxSFI.Name = "checkBoxSFI"
-    $checkBoxSFI.TabIndex = 4
-    $checkBoxSFI.Text = "Signed Files"
-    $checkBoxSFI.UseVisualStyleBackColor = true
+
 
 
     # groupBox Offline
     $groupBoxOffline.Location = New-Object System.Drawing.Point(324, 350)
     $groupBoxOffline.Size = New-Object System.Drawing.Size(436, 400)
     $groupBoxOffline.Name = "OfflineGroupBox"
-    $groupBoxOffline.Text = "Offline Options"
+    $groupBoxOffline.Text = "Live/Offline Options"
     
     ############################################ FORM Definition #################################################################
 
@@ -4617,7 +4987,8 @@ Function Control-GUI {
     $form.Controls.Add($labelDestiny)
     $form.Controls.Add($textBoxDestiny)
     $form.Controls.Add($buttonDestiny)
-    $form.Controls.AddRange(@($checkBoxFormat,$checkBoxFormatQuick,$checkBoxFormatZero))
+    $form.Controls.AddRange(@($checkBoxFormat,$checkBoxFormatQuick,$checkBoxFormatZero,$buttonExecute))
+    $form.Controls.AddRange(@($checkBoxHash,$checkBoxHashMD5,$checkBoxHashSHA256))
     $form.Controls.AddRange(@($radioButtonAll,$radioButtonLive,$radioButtonLiveOpt,$radioButtonOffline,$radioButtonOfflineOpt))
     $form.Controls.Add($labelColType)
     $form.Controls.Add($groupBoxGeneral)
