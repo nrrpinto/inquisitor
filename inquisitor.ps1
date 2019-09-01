@@ -1,4 +1,5 @@
-﻿<#
+﻿#Requires -RunAsAdministrator
+<#
 
 .SYNOPSIS
     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒
@@ -141,8 +142,8 @@ Exceptions are: "Signed Files" and "RAM"
     <# Collects Information about USB devices. #>
     [switch]$USB=$false, 
     
-    <# Collects Information about Devices from the OS. #>
-    [switch]$DEV=$false, 
+    <# Collects Information about PnP Devices from the OS. #>
+    [switch]$PNP=$false, 
     
     <# Collects Information about Security configuration of the system. #>
     [switch]$SEC=$false, 
@@ -295,7 +296,7 @@ $Global:INS=$INS
 $Global:UGR=$UGR 
 $global:PER=$PER 
 $Global:USB=$USB 
-$Global:DEV=$DEV 
+$Global:PNP=$PNP 
 $Global:SEC=$SEC 
  
 $Global:MRU=$MRU 
@@ -1144,57 +1145,57 @@ Function Collect-USB-Info {
     # TODO: https://blogs.sans.org/computer-forensics/files/2009/09/USBKEY-Guide.pdf (page 3 win7) 
     # TODO: Cross with this: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Portable Devices\Devices
 
-    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\USB_`&_Devices ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\USB_`&_Devices > $null }
+    if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\USB_PnPDevices ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\USB_PnPDevices > $null }
  
     try{
         Write-Host "[+] Collecting USB Info ..." -ForegroundColor Green
         
         if( Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB")
         {
-            echo "RESUME: "                                                                                                       > "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USB.txt"
-            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB\*\*" | Select-Object FriendlyName, DeviceDesc, Mfg    >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USB.txt" 2> $null
+            echo "RESUME: "                                                                                                       > "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USB.txt"
+            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB\*\*" | Select-Object FriendlyName, DeviceDesc, Mfg    >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USB.txt" 2> $null
 
-            echo "DETAILED: "                                                                                                     >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USB.txt"
-            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB\*\*"                                                  >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USB.txt" 2> $null
+            echo "DETAILED: "                                                                                                     >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USB.txt"
+            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USB\*\*"                                                  >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USB.txt" 2> $null
         }
 
 
         if( Test-Path -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR")
         {
-            echo "RESUME: "                                                                                                            > "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBSTOR.txt"
-            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR\*\*" | Select-Object FriendlyName, DeviceDesc, Mfg     >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBSTOR.txt" 2> $null
+            echo "RESUME: "                                                                                                            > "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USBSTOR.txt"
+            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR\*\*" | Select-Object FriendlyName, DeviceDesc, Mfg     >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USBSTOR.txt" 2> $null
 
-            echo "DETAILED: "                                                                                                          >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBSTOR.txt"
-            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR\*\*"                                                   >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBSTOR.txt" 2> $null
+            echo "DETAILED: "                                                                                                          >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USBSTOR.txt"
+            Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Enum\USBSTOR\*\*"                                                   >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USBSTOR.txt" 2> $null
         }
 
-        echo "RESUME: "                                                                                                                      > "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBControllerDevice.txt"
-        Get-WmiObject Win32_USBControllerDevice | Foreach-Object { [Wmi]$_.Dependent } | Select-Object Caption, PNPClass, Present, Status    >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBControllerDevice.txt" 2> $null
+        echo "RESUME: "                                                                                                                      > "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USBControllerDevice.txt"
+        Get-WmiObject Win32_USBControllerDevice | Foreach-Object { [Wmi]$_.Dependent } | Select-Object Caption, PNPClass, Present, Status    >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USBControllerDevice.txt" 2> $null
             
-        echo "DETAILED: "                                                                                                                    >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBControllerDevice.txt"
-        Get-WmiObject Win32_USBControllerDevice | Foreach-Object { [Wmi]$_.Dependent }                                                       >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\USBControllerDevice.txt" 2> $null
+        echo "DETAILED: "                                                                                                                    >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USBControllerDevice.txt"
+        Get-WmiObject Win32_USBControllerDevice | Foreach-Object { [Wmi]$_.Dependent }                                                       >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\USBControllerDevice.txt" 2> $null
 
     } catch {
         Report-Error -evidence "USB info"
     }
 }
 
-<########### D E V I C E S   I N F O ###############> # DEV*
-Function Collect-Devices-Info {
+<########### D E V I C E S   I N F O ###############> # PNP*
+Function Collect-PnPDevices-Info {
 
-    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\USB_`&_Devices" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\USB_`&_Devices" > $null }
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\USB_PnPDevices" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\USB_PnPDevices" > $null }
 
     Write-Host "[+] Collecting Devices Info ..." -ForegroundColor Green
     try
     {
-        echo "Devices Resume: "                                                                     > "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
-        Get-PnpDevice | Select-Object Class, FriendlyName, InstanceID | Sort-Object Class          >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
-        echo "Devices Details: "                                                                   >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
-        Get-PnpDevice | Select-Object * | Sort-Object Class                                        >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
-        echo "Devices Deep Details: "                                                              >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt" 
+        echo "Devices Resume: "                                                                     > "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
+        Get-PnpDevice | Select-Object Class, FriendlyName, InstanceID | Sort-Object Class          >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
+        echo "Devices Details: "                                                                   >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
+        Get-PnpDevice | Select-Object * | Sort-Object Class                                        >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
+        echo "Devices Deep Details: "                                                              >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt" 
         Get-PnpDevice | Select-Object InstanceId | ForEach-Object {
-            echo $_.Name                                                                           >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
-            Get-PnpDeviceProperty -InstanceId $_.instanceID | Sort-Object type                     >> "$Global:Destiny\$HOSTNAME\USB_`&_Devices\Devices.txt"
+            echo $_.Name                                                                           >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
+            Get-PnpDeviceProperty -InstanceId $_.instanceID | Sort-Object type                     >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
         }
     } 
     catch 
@@ -2566,6 +2567,8 @@ Function Collect-Thumcache-Iconcache {
 <########### F I L E   S Y S T E M   F I L E S ###################################> # FSF*
 Function Collect-FileSystemFiles {
     
+    # TODO: Use tools like MFT2csv, Usn2csv and LogParser to automate the extraction of this content. Very easy to do, the problem is the time. Must create variable for the investigator choose if want just collect or collect and parsing.
+
     Write-Host "[+] Collecting File System Files..." -ForegroundColor Green
     
     Collect-MFT
@@ -2629,6 +2632,8 @@ Function Collect-LogFile {
 
 <########### M E M O R Y   S U P P O R T   F I L E S ###############################> # MSF*
 Function Collect-MemorySupportFiles {
+    
+    # TODO: Use Yara rules ober this files.
     
     Write-Host "[+] Collecting Memory Support Files." -ForegroundColor Green
 
@@ -3100,6 +3105,8 @@ Function Collect-Email-Files {
 <########### C H R O M E   W E B   B R O W S E R #################################> # CHR*
 Function Collect-Chrome-Data {
     
+    # TODO: parse SQLite tables to CSV files
+
     Write-Host "[+] Collecting Chrome files ..." -ForegroundColor Green
 
     $filesToDownload = "Cookies","Favicons","History","Login Data","Network Action Predictor","QuotaManager","Shortcuts","Top sites","Web Data"
@@ -3218,6 +3225,8 @@ Function Collect-Chrome-Data {
 <########### F I R E F O X   W E B   B R O W S E R ###############################> # MFI*
 Function Collect-Firefox-Data {
     
+    # TODO: parse SQLite tables to CSV files
+
     Write-Host "[+] Collecting Firefox files ..." -ForegroundColor Green
 
     $filesToDownload = "content-prefs.sqlite","cookies.sqlite","favicons.sqlite","formhistory.sqlite","permissions.sqlite","places.sqlite","storage.sqlite","storage-sync.sqlite","webappsstore.sqlite"
@@ -3862,7 +3871,7 @@ Function Control-NOGUI{
     if ($All -or $Global:UGR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Users-Groups ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # 00:00
     if ($All -or $Global:PER ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Persistence ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:03
     if ($All -or $Global:USB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-USB-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # 00:00
-    if ($All -or $Global:DEV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Devices-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # 00:40
+    if ($All -or $Global:PNP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PnPDevices-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # 00:40
     if ($All -or $Global:SEC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firewall-Config ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # 00:03
 
     if ($All -or $Global:MRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MRUs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # 00:25
@@ -3957,6 +3966,88 @@ Function Control-GUI {
     $Banner.Text += "  ▓                                                                                              ▒`n"
     $Banner.Text += "  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒`n"
     
+    ############################################ Pop Up Help Definition ################################################################
+
+    #define a tooltip object
+    $tooltipOptions = New-Object System.Windows.Forms.ToolTip
+ 
+    <#
+    define a scriptblock to display the tooltip
+    add a _MouseHover event to display the corresponding tool tip
+     e.g. $txtPath.add_MouseHover($ShowHelp)
+     #>
+    $ShowHelp={
+     #display popup help
+        #each value is the name of a control on the form.
+        echo $this.name
+        Switch ($this.name) {
+            
+            "labelSource" {$tip = "Please select the source to collect artifacts from"}
+            "labelDestiny" {$tip = "Please select the destiny to collect artifacts to"}
+            "buttonDestiny" {$tip = "Click to select the destiny."}
+            "checkBoxFormat" {$tip = "To format the destiny unit."}
+            "checkBoxFormatQuick" {$tip = "Quick format the destiny unit."}
+            "checkBoxFormatZero" {$tip = "Format the destiny unit setting all the bits to Zero."}
+            "checkBoxHash" {$tip = "Hash all the collected files."}
+            "checkBoxHashMD5" {$tip = "Use MD5 hashing algorithm."}
+            "checkBoxHashSHA256" {$tip = "Use SHA256 hashing algorithm."}
+            "buttonExecute" {$tip = "Execute the collection and parsing of the selected options."}
+            "labelColType" {$tip = "Please select a collection type to quick select the desirable options."}
+            "radioButtonAll" {$tip = "Select all the options."}
+            "radioButtonLive" {$tip = "Only live acquisition options."}
+            "radioButtonLiveOpt" {$tip = "Live acquisition options optimized to take the less time."}
+            "radioButtonOffline" {$tip = "Only offline acquisition options."}
+            "radioButtonOfflineOpt" {$tip = "Offline acquisition options optimized to take the less time."}
+            "checkBoxRAM" {$tip = "Collection of: `n- Random Access Memory (RAM)"}
+            "checkBoxNET" {$tip = "Collection of: `n- TCP and UDP connections `n- Netbios sessions `n- Net session and Net file `n- Network configuration `n- DNS and ARP cache `n- WiFi network"}
+            "checkBoxSAP" {$tip = "Collection of: `n- Running services `n- Running processes `n- Processes and their process parents"}
+            "checkBoxSTA" {$tip = "Collection of: `n- Scheduled tasks"}
+            "checkBoxCPH" {$tip = "Collection of: `n- Powershell command line history"}
+            "checkBoxINS" {$tip = "Collection of: `n- List of Installed software"}
+            "checkBoxUGR" {$tip = "Collection of: `n- Users `n- Groups `n- Administrator users"}
+            "checkBoxPER" {$tip = "Collection of: `n- Persistence : Registry run keys `n- Persistence : Shell Folders `n- Persistence : Winlogon helper dll `n- Persistence : Time providers `n- Persistence : SIP and trust provider hijacking `n- Persistence : Security Support Provider `n- Persistence : Port monitors `n- Persistence : Office application startup `n- Persistence : Change default file association `n- Persistence : AppInit DLLs `n- Persistence : AppCert DLLs"}
+            "checkBoxUSB" {$tip = "Collection of: `n- USB devices information"}
+            "checkBoxDEV" {$tip = "Collection of: `n- Plug and Play (PnP) devices information"}
+            "checkBoxSEC" {$tip = "Collection of: `n- Firewall configuration and rules"}
+            "checkBoxMRU" {$tip = "Collection and Parsing of: `n- MRUs : MUICache `n- MRUs : Recent docs `n- MRUs : Open/Saved files MRU `n- MRUs : User Assist `n- MRUs : ShellBags `n- MRUs : CIDSizeMRU `n- MRUs : Last Visited MRU `n- MRUs : RUN DialogBox MRU `n- MRUs : AppCompatCache (Shimcache) `n- MRUs : Recent Applications"}
+            "checkBoxSHI" {$tip = "Collection and Parsing of: `n- AppCompatCache (Shimcache)"}
+            "checkBoxRAP" {$tip = "Collection and Parsing of: `n- Recent applications"}
+            "checkBoxBAM" {$tip = "Collection and Parsing of: `n- Background Activity Moderator (BAM)"}
+            "checkBoxSYS" {$tip = "Collection of: `n- System Information `n- Hotfixes `n- Environment variables"}
+            "checkBoxLAC" {$tip = "Collection of: `n- Running executables `n- Opening open/save dialog-box `n- Opening file/folder from Explorer or other software `n- software installation `n- system shutdown/start `n- application or system crash `n- network connection/disconnection `n- more..."}
+            "checkBoxAFI" {$tip = "Collection of: `n- Running programs configured to run during the bootup or login"}
+            "checkBoxHIV" {$tip = "Collection of: `n- HIVE : NTUDER.dat `n- DEFAULT `n- SAM `n- SECURITY `n- SOFTWARE `n- SYSTEM `n- COMPONENTS `n- UsrClass.dat `n- BCD-Template `n- BBI `n- DRIVERS `n- ELAM `n- Amcache.hve"}
+            "checkBoxEVT" {$tip = "Collection of: `n- All EVTX files that are not empty"}
+            "checkBoxEET" {$tip = "Collection of: `n- BootCKCL.etl `n- ShutdownCKCL.etl `n- WdiContextLog.etl.### `n- LwtNetLog.etl `n- Wifi.etl `n- setup.etl `n- ExplorerStartupLog.etl `n- ExplorerStartupLog_RunOnce.etl"}
+            "checkBoxFIL" {$tip = "Collection of: `n- File system directory tree"}
+            "checkBoxDEX" {$tip = "Collection of: `n- List of all the files in the system with the following extensions: `n- *.VB, `n- *.VBS, `n- *.PIF, `n- *.BAT, `n- *.CMD, `n- *.JS, `n- *.JSE, `n- *.WS, `n- *.WSF, `n- *.WSC, `n- *.WSH, `n- *.PS1, `n- *.PS1XML, `n- *.PS2, `n- *.PS2XML, `n- *.PSC1, `n- *.PSC2, `n- *.MSH, `n- *.MSH1, `n- *.MSH2, `n- *.MSHXML, `n- *.MSH1XML, `n- *.MSH2XML, `n- *.SCF, `n- *.LNK, `n- *.INF, `n- *.APPLICATION, `n- *.GADGET, `n- *.SCR, `n-*.HTA, `n- *.CPL, `n- *.MSI, `n- *.COM, `n- *.EXE"}
+            "checkBoxPRF" {$tip = "Collection of: `n- All files with extension *.pf and *.db from prefetch directory"}
+            "checkBoxWSE" {$tip = "Collection and Parsing of: `n- Windows Search Database (windows.edb)"}
+            "checkBoxJLI" {$tip = "Collection and Parsing of: `n- AutomaticDestinations `n- CustomDestinations”}
+            "checkBoxTIC" {$tip = "Collection and Parsing of: `n- ThumbCache files `n- IconCache files"}
+            "checkBoxFSF" {$tip = "Collection of: `n- `$MFT `n- `$UsnJrnl `n- `$Logfile "}
+            "checkBoxMSF" {$tip = "Collection of: `n- hiberfil.sys `n- pagefile.sys `n- swapfile.sys"}
+            "checkBoxTLH" {$tip = "Collection and Parsing of: `n- Timeline History (ActivitiesCache.db)"}
+            "checkBoxTHA" {$tip = "Collection and Parsing of: `n- Text Harverter (WaitList.dat)"}
+            "checkBoxSRU" {$tip = "Collection and Parsing of: `n- System Resource Usage Monitor (SRUM) (SRUDB.dat)"}
+            "checkBoxCRE" {$tip = "Collection and Parsing of: `n- Credentials Manager"}
+            "checkBoxSKY" {$tip = "Collection and Parsing of: `n- Skype logs and conversations"}
+            "checkBoxEMA" {$tip = "Collection of: `n- All OST files in the system `n- All PST files in the system"}
+            "checkBoxCHR" {$tip = "Collection of: `n- Cookies `n- Favicons `n- History `n- Login Data `n- Network Action Predictor `n- QuotaManager `n- Shortcuts `n- Top sites `n- Web Data"}
+            "checkBoxMFI" {$tip = "Collection of: `n- content-prefs.sqlite `n- cookies.sqlite `n- favicons.sqlite `n- formhistory.sqlite `n- permissions.sqlite `n- places.sqlite `n- storage.sqlite `n- storage-sync.sqlite `n- webappsstore.sqlite"}
+            "checkBoxIEX" {$tip = "Collection of: `n- Registry Typed URLs `n- History (WebCacheV01.dat)"}
+            "checkBoxEDG" {$tip = "Collection of: `n- Registry Typed URLs `n- History (WebCacheV01.dat)"}
+            "checkBoxSAF" {$tip = "Collection of: `n- User Data logs `n- Cache logs"}
+            "checkBoxOPE" {$tip = "Collection of: `n- Cookies `n- Favicons `n- History `n- Login Data `n- Network Action Predictor `n- QuotaManager `n- Shortcuts `n- Top sites `n- Web Data"}
+            "checkBoxTOR" {$tip = "Collection of: `n- content-prefs.sqlite `n- cookies.sqlite `n- favicons.sqlite `n- formhistory.sqlite `n- permissions.sqlite `n- places.sqlite `n- storage.sqlite `n- storage-sync.sqlite `n- webappsstore.sqlite"}
+            "checkBoxCOD" {$tip = "Collection of: `n- Business1 folder content `n- Common folder content `n- Personal folder content"}
+            "checkBoxCGD" {$tip = "Collection of: `n- All *.log files from profile folder `n- All *.db files from profile folder"}
+            "checkBoxCDB" {$tip = "Collection and Parsing of: `n- *.dbx files from the profile folder"}
+            "checkBoxSFI" {$tip = "Collection of: `n- File signature from all files in %SystemDrive%\Windows\ `n- %SystemDrive%\Windows\System32"}
+        }
+    $tooltipOptions.SetToolTip($this,$tip)
+    } #end ShowHelp
+
     ############################################ Controls Creation ################################################################
 
     # GENERAL PANEL
@@ -4011,7 +4102,7 @@ Function Control-GUI {
     $checkBoxWSE = New-Object System.Windows.Forms.CheckBox
     $checkBoxEET = New-Object System.Windows.Forms.CheckBox
     $checkBoxJLI = New-Object System.Windows.Forms.CheckBox
-    $checkBoxTHC = New-Object System.Windows.Forms.CheckBox
+    $checkBoxTIC = New-Object System.Windows.Forms.CheckBox
     $checkBoxFSF = New-Object System.Windows.Forms.CheckBox
     $checkBoxMSF = New-Object System.Windows.Forms.CheckBox
     $checkBoxTLH = New-Object System.Windows.Forms.CheckBox
@@ -4043,6 +4134,7 @@ Function Control-GUI {
     $labelSource.TabIndex = 0 
     $labelSource.TabStop = $False
     $labelSource.Text = "Source: "
+    $labelSource.add_MouseHover($ShowHelp)
     
     # Combobox Source
     $comboBoxSource.Location = New-Object System.Drawing.Point(105, 277)
@@ -4060,6 +4152,7 @@ Function Control-GUI {
     $labelDestiny.TabIndex = 0
     $labelDestiny.TabStop = $False
     $labelDestiny.Text = "Destiny: "
+    $labelDestiny.add_MouseHover($ShowHelp)
 
     # Textbox Destiny
     $textBoxDestiny.Location = New-Object System.Drawing.Point(230, 277)
@@ -4074,6 +4167,7 @@ Function Control-GUI {
     $buttonDestiny.TabIndex = 3
     $buttonDestiny.Text = "Select ..."
     $buttonDestiny.UseVisualStyleBackColor = true
+    $buttonDestiny.add_MouseHover($ShowHelp)
     $buttonDestiny.Add_Click(
         {
         $dialogDestiny = New-Object System.Windows.Forms.FolderBrowserDialog
@@ -4082,6 +4176,7 @@ Function Control-GUI {
         $dialogDestiny.Dispose()
         }
     )
+    
 
     # Format Checkbox
     $checkBoxFormat.Location = New-Object System.Drawing.Point(600, 280)
@@ -4091,6 +4186,7 @@ Function Control-GUI {
     $checkBoxFormat.TabIndex = 4
     $checkBoxFormat.Text = "Format"
     $checkBoxFormat.UseVisualStyleBackColor = true
+    $checkBoxFormat.add_MouseHover($ShowHelp)
     $checkBoxFormat.Add_Click(
         {
             if($checkBoxFormat.Checked -eq $True)
@@ -4107,8 +4203,9 @@ Function Control-GUI {
             }
         }
     )
+    
 
-    # Format Checkbox
+    # Quick Format Checkbox
     $checkBoxFormatQuick.Location = New-Object System.Drawing.Point(610, 300)
     $checkBoxFormatQuick.Size = New-Object System.Drawing.Size(60, 17)
     $checkBoxFormatQuick.AutoSize = true
@@ -4117,6 +4214,7 @@ Function Control-GUI {
     $checkBoxFormatQuick.Text = "Quick"
     $checkBoxFormatQuick.UseVisualStyleBackColor = true
     $checkBoxFormatQuick.Enabled = $False
+    $checkBoxFormatQuick.add_MouseHover($ShowHelp)
     $checkBoxFormatQuick.Add_Click(
         {
             if($checkBoxFormatQuick.Checked -eq $True)
@@ -4129,8 +4227,9 @@ Function Control-GUI {
             }
         }
     )
+    
 
-    # Format Checkbox
+    # Zeros Format Checkbox
     $checkBoxFormatZero.Location = New-Object System.Drawing.Point(610, 320)
     $checkBoxFormatZero.Size = New-Object System.Drawing.Size(50, 17)
     $checkBoxFormatZero.AutoSize = true
@@ -4139,6 +4238,7 @@ Function Control-GUI {
     $checkBoxFormatZero.Text = "Zero"
     $checkBoxFormatZero.UseVisualStyleBackColor = true
     $checkBoxFormatZero.Enabled = $False
+    $checkBoxFormatZero.add_MouseHover($ShowHelp)
     $checkBoxFormatZero.Add_Click(
         {
             if($checkBoxFormatZero.Checked -eq $True)
@@ -4151,6 +4251,7 @@ Function Control-GUI {
             }            
         }
     )
+    
 
     # Hash Checkbox
     $checkBoxHash.Location = New-Object System.Drawing.Point(670, 280)
@@ -4160,6 +4261,7 @@ Function Control-GUI {
     $checkBoxHash.TabIndex = 4
     $checkBoxHash.Text = "Hash"
     $checkBoxHash.UseVisualStyleBackColor = true
+    $checkBoxHash.add_MouseHover($ShowHelp)
     $checkBoxHash.Add_Click(
         {
             if($checkBoxHash.Checked -eq $True)
@@ -4176,16 +4278,18 @@ Function Control-GUI {
             }
         }
     )
+    
 
     # Hash MD5 Checkbox
     $checkBoxHashMD5.Location = New-Object System.Drawing.Point(680, 300)
     $checkBoxHashMD5.Size = New-Object System.Drawing.Size(60, 17)
     $checkBoxHashMD5.AutoSize = true
-    $checkBoxHashMD5.Name = "checkBoxFormatQuick"
+    $checkBoxHashMD5.Name = "checkBoxHashMD5"
     $checkBoxHashMD5.TabIndex = 4
     $checkBoxHashMD5.Text = "MD5"
     $checkBoxHashMD5.UseVisualStyleBackColor = true
     $checkBoxHashMD5.Enabled = $False
+    $checkBoxHashMD5.add_MouseHover($ShowHelp)
     $checkBoxHashMD5.Add_Click(
         {
             if($checkBoxHashMD5.Checked -eq $True)
@@ -4198,6 +4302,7 @@ Function Control-GUI {
             }
         }
     )
+    
 
     # Hash SHA256 Checkbox
     $checkBoxHashSHA256.Location = New-Object System.Drawing.Point(680, 320)
@@ -4208,6 +4313,7 @@ Function Control-GUI {
     $checkBoxHashSHA256.Text = "SHA256"
     $checkBoxHashSHA256.UseVisualStyleBackColor = true
     $checkBoxHashSHA256.Enabled = $False
+    $checkBoxHashSHA256.add_MouseHover($ShowHelp)
     $checkBoxHashSHA256.Add_Click(
         {
             if($checkBoxHashSHA256.Checked -eq $True)
@@ -4220,6 +4326,7 @@ Function Control-GUI {
             }            
         }
     )
+    
 
     # Button Execute/ Collect
     $buttonExecute.Location = New-Object System.Drawing.Point(425, 300)
@@ -4229,6 +4336,7 @@ Function Control-GUI {
     $buttonExecute.TabIndex = 3
     $buttonExecute.Text = "EXECUTE!"
     $buttonExecute.UseVisualStyleBackColor = true
+    $buttonExecute.add_MouseHover($ShowHelp)
     $buttonExecute.Add_Click(
         {
             if($comboBoxSource.Text -ne "" -and $textBoxDestiny.Text -ne "" -and ($radioButtonAll.Checked -or $radioButtonLive.Checked -or $radioButtonLiveOpt.Checked -or $radioButtonOffline.Checked -or $radioButtonOfflineOpt.Checked))
@@ -4252,7 +4360,7 @@ Function Control-GUI {
                 if($checkBoxUGR.Checked -eq $True) { $Global:UGR = $True }
                 if($checkBoxPER.Checked -eq $True) { $Global:PER = $True }
                 if($checkBoxUSB.Checked -eq $True) { $Global:USB = $True }
-                if($checkBoxDEV.Checked -eq $True) { $Global:DEV = $True }
+                if($checkBoxDEV.Checked -eq $True) { $Global:PNP = $True }
                 if($checkBoxSEC.Checked -eq $True) { $Global:SEC = $True }
                 if($checkBoxMRU.Checked -eq $True) { $Global:MRU = $True }
                 if($checkBoxSHI.Checked -eq $True) { $Global:SHI = $True }
@@ -4269,7 +4377,7 @@ Function Control-GUI {
                 if($checkBoxWSE.Checked -eq $True) { $Global:WSE = $True }
                 if($checkBoxEET.Checked -eq $True) { $Global:EET = $True }
                 if($checkBoxJLI.Checked -eq $True) { $Global:JLI = $True }
-                if($checkBoxTHC.Checked -eq $True) { $Global:THC = $True }
+                if($checkBoxTIC.Checked -eq $True) { $Global:TIC = $True }
                 if($checkBoxFSF.Checked -eq $True) { $Global:FSF = $True }
                 if($checkBoxMSF.Checked -eq $True) { $Global:MSF = $True }
                 if($checkBoxTLH.Checked -eq $True) { $Global:TLH = $True }
@@ -4308,6 +4416,7 @@ Function Control-GUI {
     $labelColType.TabIndex = 0
     $labelColType.TabStop = $False
     $labelColType.Text = "Collection Type:"
+    $labelColType.add_MouseHover($ShowHelp)
 
     
 
@@ -4320,6 +4429,7 @@ Function Control-GUI {
     $radioButtonAll.TabStop = true
     $radioButtonAll.Text = "All"
     $radioButtonAll.UseVisualStyleBackColor = true
+    $radioButtonAll.add_MouseHover($ShowHelp)
     $radioButtonAll.Add_Click(
         {
         $checkBoxRAM.Checked = $True
@@ -4348,7 +4458,7 @@ Function Control-GUI {
         $checkBoxWSE.Checked = $True
         $checkBoxEET.Checked = $True
         $checkBoxJLI.Checked = $True
-        $checkBoxTHC.Checked = $True
+        $checkBoxTIC.Checked = $True
         $checkBoxFSF.Checked = $True
         $checkBoxMSF.Checked = $True
         $checkBoxTLH.Checked = $True
@@ -4380,6 +4490,7 @@ Function Control-GUI {
     $radioButtonLive.TabStop = true
     $radioButtonLive.Text = "Live"
     $radioButtonLive.UseVisualStyleBackColor = true
+    $radioButtonLive.add_MouseHover($ShowHelp)
     $radioButtonLive.Add_Click(
         {
         $checkBoxRAM.Checked = $True
@@ -4394,8 +4505,6 @@ Function Control-GUI {
         $checkBoxDEV.Checked = $True
         $checkBoxSEC.Checked = $True
         $checkBoxMRU.Checked = $True
-        $checkBoxSHI.Checked = $True
-        $checkBoxRAP.Checked = $True
         $checkBoxBAM.Checked = $True
         $checkBoxSYS.Checked = $True
         $checkBoxLAC.Checked = $True
@@ -4408,7 +4517,7 @@ Function Control-GUI {
         $checkBoxWSE.Checked = $False
         $checkBoxEET.Checked = $False
         $checkBoxJLI.Checked = $False
-        $checkBoxTHC.Checked = $False
+        $checkBoxTIC.Checked = $False
         $checkBoxFSF.Checked = $False
         $checkBoxMSF.Checked = $False
         $checkBoxTLH.Checked = $False
@@ -4440,6 +4549,7 @@ Function Control-GUI {
     $radioButtonLiveOpt.TabStop = true
     $radioButtonLiveOpt.Text = "Live Optimized"
     $radioButtonLiveOpt.UseVisualStyleBackColor = true
+    $radioButtonLiveOpt.add_MouseHover($ShowHelp)
 
     # Radio Button Offline
     $radioButtonOffline.Location = New-Object System.Drawing.Point(200, 320)
@@ -4450,6 +4560,7 @@ Function Control-GUI {
     $radioButtonOffline.TabStop = true
     $radioButtonOffline.Text = "Offline"
     $radioButtonOffline.UseVisualStyleBackColor = true
+    $radioButtonOffline.add_MouseHover($ShowHelp)
     $radioButtonOffline.Add_Click(
         {
         $checkBoxRAM.Checked = $False
@@ -4478,7 +4589,7 @@ Function Control-GUI {
         $checkBoxWSE.Checked = $True
         $checkBoxEET.Checked = $True
         $checkBoxJLI.Checked = $True
-        $checkBoxTHC.Checked = $True
+        $checkBoxTIC.Checked = $True
         $checkBoxFSF.Checked = $True
         $checkBoxMSF.Checked = $True
         $checkBoxTLH.Checked = $True
@@ -4511,6 +4622,7 @@ Function Control-GUI {
     $radioButtonOfflineOpt.TabStop = true
     $radioButtonOfflineOpt.Text = "Offline Optimized"
     $radioButtonOfflineOpt.UseVisualStyleBackColor = true
+    $radioButtonOfflineOpt.add_MouseHover($ShowHelp)
 
 
     # groupBox General
@@ -4526,7 +4638,7 @@ Function Control-GUI {
     
 
 
-    # Network Checkbox
+    # RAM Checkbox
     $checkBoxRAM.Location = New-Object System.Drawing.Point(55, 370)
     $checkBoxRAM.Size = New-Object System.Drawing.Size(200, 17)
     $checkBoxRAM.AutoSize = true
@@ -4534,6 +4646,7 @@ Function Control-GUI {
     $checkBoxRAM.TabIndex = 4
     $checkBoxRAM.Text = "Random Access Memory (RAM)"
     $checkBoxRAM.UseVisualStyleBackColor = true
+    $checkBoxRAM.add_MouseHover($ShowHelp)
     $checkBoxRAM.Add_CheckStateChanged(
         {
             if($checkBoxRAM -eq $True)
@@ -4555,6 +4668,7 @@ Function Control-GUI {
     $checkBoxNET.TabIndex = 4
     $checkBoxNET.Text = "Network Information"
     $checkBoxNET.UseVisualStyleBackColor = true
+    $checkBoxNET.add_MouseHover($ShowHelp)
 
     # Services and Processes Checkbox
     $checkBoxSAP.Location = New-Object System.Drawing.Point(55, 410)
@@ -4564,6 +4678,7 @@ Function Control-GUI {
     $checkBoxSAP.TabIndex = 4
     $checkBoxSAP.Text = "Services and Processes"
     $checkBoxSAP.UseVisualStyleBackColor = true
+    $checkBoxSAP.add_MouseHover($ShowHelp)
 
     # Scheduled Tasks Checkbox
     $checkBoxSTA.Location = New-Object System.Drawing.Point(55, 430)
@@ -4573,6 +4688,7 @@ Function Control-GUI {
     $checkBoxSTA.TabIndex = 4
     $checkBoxSTA.Text = "Scheduled Tasks"
     $checkBoxSTA.UseVisualStyleBackColor = true
+    $checkBoxSTA.add_MouseHover($ShowHelp)
 
     # CMD Checkbox
     $checkBoxCPH.Location = New-Object System.Drawing.Point(55, 450)
@@ -4582,6 +4698,7 @@ Function Control-GUI {
     $checkBoxCPH.TabIndex = 4
     $checkBoxCPH.Text = "Command Line History"
     $checkBoxCPH.UseVisualStyleBackColor = true
+    $checkBoxCPH.add_MouseHover($ShowHelp)
 
     # Installed Software Checkbox
     $checkBoxINS.Location = New-Object System.Drawing.Point(55, 470)
@@ -4591,6 +4708,7 @@ Function Control-GUI {
     $checkBoxINS.TabIndex = 4
     $checkBoxINS.Text = "Installed Software"
     $checkBoxINS.UseVisualStyleBackColor = true
+    $checkBoxINS.add_MouseHover($ShowHelp)
 
     # Users and Groups Checkbox
     $checkBoxUGR.Location = New-Object System.Drawing.Point(55, 490)
@@ -4600,6 +4718,7 @@ Function Control-GUI {
     $checkBoxUGR.TabIndex = 4
     $checkBoxUGR.Text = "Users and Groups"
     $checkBoxUGR.UseVisualStyleBackColor = true
+    $checkBoxUGR.add_MouseHover($ShowHelp)
 
     # Persistance Checkbox
     $checkBoxPER.Location = New-Object System.Drawing.Point(55, 510)
@@ -4609,6 +4728,7 @@ Function Control-GUI {
     $checkBoxPER.TabIndex = 4
     $checkBoxPER.Text = "Persistance"
     $checkBoxPER.UseVisualStyleBackColor = true
+    $checkBoxPER.add_MouseHover($ShowHelp)
 
     # USB Devices Checkbox
     $checkBoxUSB.Location = New-Object System.Drawing.Point(55, 530)
@@ -4618,6 +4738,7 @@ Function Control-GUI {
     $checkBoxUSB.TabIndex = 4
     $checkBoxUSB.Text = "USB Devices Info"
     $checkBoxUSB.UseVisualStyleBackColor = true
+    $checkBoxUSB.add_MouseHover($ShowHelp)
 
     # Devices Info Checkbox
     $checkBoxDEV.Location = New-Object System.Drawing.Point(55, 550)
@@ -4627,6 +4748,7 @@ Function Control-GUI {
     $checkBoxDEV.TabIndex = 4
     $checkBoxDEV.Text = "Devices Info"
     $checkBoxDEV.UseVisualStyleBackColor = true
+    $checkBoxDEV.add_MouseHover($ShowHelp)
 
     # Security Configuration Checkbox
     $checkBoxSEC.Location = New-Object System.Drawing.Point(55, 570)
@@ -4636,6 +4758,7 @@ Function Control-GUI {
     $checkBoxSEC.TabIndex = 4
     $checkBoxSEC.Text = "Security Configuration"
     $checkBoxSEC.UseVisualStyleBackColor = true
+    $checkBoxSEC.add_MouseHover($ShowHelp)
 
     # MRUs Checkbox
     $checkBoxMRU.Location = New-Object System.Drawing.Point(55, 590)
@@ -4645,6 +4768,23 @@ Function Control-GUI {
     $checkBoxMRU.TabIndex = 4
     $checkBoxMRU.Text = "Most Recent Used (MRUs)"
     $checkBoxMRU.UseVisualStyleBackColor = true
+    $checkBoxMRU.add_MouseHover($ShowHelp)
+    $checkBoxMRU.Add_CheckStateChanged(
+        {
+            if($checkBoxMRU.Checked -eq $True)
+            {
+                $checkBoxSHI.Enabled = $False
+                $checkBoxRAP.Enabled = $False
+                $checkBoxSHI.Checked = $False
+                $checkBoxRAP.Checked = $False
+            }
+            else
+            {
+                $checkBoxSHI.Enabled = $True
+                $checkBoxRAP.Enabled = $True
+            }
+        }
+    )
 
     # Shimcache Checkbox
     $checkBoxSHI.Location = New-Object System.Drawing.Point(55, 610)
@@ -4654,15 +4794,17 @@ Function Control-GUI {
     $checkBoxSHI.TabIndex = 4
     $checkBoxSHI.Text = "Shimcache"
     $checkBoxSHI.UseVisualStyleBackColor = true
+    $checkBoxSHI.add_MouseHover($ShowHelp)
 
     # RecentAPPs Checkbox
     $checkBoxRAP.Location = New-Object System.Drawing.Point(55, 630)
     $checkBoxRAP.Size = New-Object System.Drawing.Size(200, 17)
     $checkBoxRAP.AutoSize = true
-    $checkBoxRAP.Name = "checkBoxFormat"
+    $checkBoxRAP.Name = "checkBoxRAP"
     $checkBoxRAP.TabIndex = 4
     $checkBoxRAP.Text = "Recent Applications"
     $checkBoxRAP.UseVisualStyleBackColor = true
+    $checkBoxRAP.add_MouseHover($ShowHelp)
 
     # BAM Checkbox
     $checkBoxBAM.Location = New-Object System.Drawing.Point(55, 650)
@@ -4672,6 +4814,7 @@ Function Control-GUI {
     $checkBoxBAM.TabIndex = 4
     $checkBoxBAM.Text = "Background Activity Moderator (BAM)"
     $checkBoxBAM.UseVisualStyleBackColor = true
+    $checkBoxBAM.add_MouseHover($ShowHelp)
 
     # System Info Checkbox
     $checkBoxSYS.Location = New-Object System.Drawing.Point(55, 670)
@@ -4681,6 +4824,7 @@ Function Control-GUI {
     $checkBoxSYS.TabIndex = 4
     $checkBoxSYS.Text = "System Info"
     $checkBoxSYS.UseVisualStyleBackColor = true
+    $checkBoxSYS.add_MouseHover($ShowHelp)
 
     # Last Activity Checkbox
     $checkBoxLAC.Location = New-Object System.Drawing.Point(55, 690)
@@ -4690,6 +4834,7 @@ Function Control-GUI {
     $checkBoxLAC.TabIndex = 4
     $checkBoxLAC.Text = "Last Activity"
     $checkBoxLAC.UseVisualStyleBackColor = true
+    $checkBoxLAC.add_MouseHover($ShowHelp)
 
     # Autorun Files Checkbox
     $checkBoxAFI.Location = New-Object System.Drawing.Point(55, 710)
@@ -4699,6 +4844,7 @@ Function Control-GUI {
     $checkBoxAFI.TabIndex = 4
     $checkBoxAFI.Text = "Autorun Files"
     $checkBoxAFI.UseVisualStyleBackColor = true
+    $checkBoxAFI.add_MouseHover($ShowHelp)
 
     # groupBox Online
     $groupBoxOnline.Location = New-Object System.Drawing.Point(50, 350)
@@ -4716,6 +4862,7 @@ Function Control-GUI {
     $checkBoxHIV.TabIndex = 4
     $checkBoxHIV.Text = "Hives"
     $checkBoxHIV.UseVisualStyleBackColor = true
+    $checkBoxHIV.add_MouseHover($ShowHelp)
     
     # Event Log Checkbox
     $checkBoxEVT.Location = New-Object System.Drawing.Point(330, 390)
@@ -4725,6 +4872,7 @@ Function Control-GUI {
     $checkBoxEVT.TabIndex = 4
     $checkBoxEVT.Text = "Event Log Files"
     $checkBoxEVT.UseVisualStyleBackColor = true
+    $checkBoxEVT.add_MouseHover($ShowHelp)
     
     # Format Checkbox
     $checkBoxFIL.Location = New-Object System.Drawing.Point(330, 410)
@@ -4734,6 +4882,7 @@ Function Control-GUI {
     $checkBoxFIL.TabIndex = 4
     $checkBoxFIL.Text = "Files Lists"
     $checkBoxFIL.UseVisualStyleBackColor = true
+    $checkBoxFIL.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxDEX.Location = New-Object System.Drawing.Point(330, 430)
@@ -4743,6 +4892,7 @@ Function Control-GUI {
     $checkBoxDEX.TabIndex = 4
     $checkBoxDEX.Text = "Dangerous Extensions"
     $checkBoxDEX.UseVisualStyleBackColor = true
+    $checkBoxDEX.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxPRF.Location = New-Object System.Drawing.Point(330, 450)
@@ -4752,6 +4902,7 @@ Function Control-GUI {
     $checkBoxPRF.TabIndex = 4
     $checkBoxPRF.Text = "Prefetch Files"
     $checkBoxPRF.UseVisualStyleBackColor = true
+    $checkBoxPRF.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxWSE.Location = New-Object System.Drawing.Point(330, 470)
@@ -4761,6 +4912,7 @@ Function Control-GUI {
     $checkBoxWSE.TabIndex = 4
     $checkBoxWSE.Text = "Windows Search"
     $checkBoxWSE.UseVisualStyleBackColor = true
+    $checkBoxWSE.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxEET.Location = New-Object System.Drawing.Point(330, 490)
@@ -4770,6 +4922,7 @@ Function Control-GUI {
     $checkBoxEET.TabIndex = 4
     $checkBoxEET.Text = "ETW and ETL Files"
     $checkBoxEET.UseVisualStyleBackColor = true
+    $checkBoxEET.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxJLI.Location = New-Object System.Drawing.Point(330, 510)
@@ -4779,15 +4932,17 @@ Function Control-GUI {
     $checkBoxJLI.TabIndex = 4
     $checkBoxJLI.Text = "JumpLists"
     $checkBoxJLI.UseVisualStyleBackColor = true
+    $checkBoxJLI.add_MouseHover($ShowHelp)
 
     # Format Checkbox
-    $checkBoxTHC.Location = New-Object System.Drawing.Point(330, 530)
-    $checkBoxTHC.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxTHC.AutoSize = true
-    $checkBoxTHC.Name = "checkBoxTHC"
-    $checkBoxTHC.TabIndex = 4
-    $checkBoxTHC.Text = "ThumbCache `& IconCache"
-    $checkBoxTHC.UseVisualStyleBackColor = true
+    $checkBoxTIC.Location = New-Object System.Drawing.Point(330, 530)
+    $checkBoxTIC.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxTIC.AutoSize = true
+    $checkBoxTIC.Name = "checkBoxTIC"
+    $checkBoxTIC.TabIndex = 4
+    $checkBoxTIC.Text = "ThumbCache `& IconCache"
+    $checkBoxTIC.UseVisualStyleBackColor = true
+    $checkBoxTIC.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxFSF.Location = New-Object System.Drawing.Point(330, 550)
@@ -4797,6 +4952,7 @@ Function Control-GUI {
     $checkBoxFSF.TabIndex = 4
     $checkBoxFSF.Text = "`$MFT, `$UsnJrnl, `$LogFile"
     $checkBoxFSF.UseVisualStyleBackColor = true
+    $checkBoxFSF.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxMSF.Location = New-Object System.Drawing.Point(330, 570)
@@ -4806,6 +4962,7 @@ Function Control-GUI {
     $checkBoxMSF.TabIndex = 4
     $checkBoxMSF.Text = "Hiberfil.sys, Pagefile.sys, Swapfile.sys"
     $checkBoxMSF.UseVisualStyleBackColor = true
+    $checkBoxMSF.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxTLH.Location = New-Object System.Drawing.Point(330, 590)
@@ -4815,6 +4972,7 @@ Function Control-GUI {
     $checkBoxTLH.TabIndex = 4
     $checkBoxTLH.Text = "Timeline"
     $checkBoxTLH.UseVisualStyleBackColor = true
+    $checkBoxTLH.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxTHA.Location = New-Object System.Drawing.Point(330, 610)
@@ -4824,6 +4982,7 @@ Function Control-GUI {
     $checkBoxTHA.TabIndex = 4
     $checkBoxTHA.Text = "Text Harvester"
     $checkBoxTHA.UseVisualStyleBackColor = true
+    $checkBoxTHA.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxSRU.Location = New-Object System.Drawing.Point(330, 630)
@@ -4833,6 +4992,7 @@ Function Control-GUI {
     $checkBoxSRU.TabIndex = 4
     $checkBoxSRU.Text = "System Resource Usage Monitor (SRUM)"
     $checkBoxSRU.UseVisualStyleBackColor = true
+    $checkBoxSRU.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxCRE.Location = New-Object System.Drawing.Point(330, 650)
@@ -4842,6 +5002,7 @@ Function Control-GUI {
     $checkBoxCRE.TabIndex = 4
     $checkBoxCRE.Text = "Credentials"
     $checkBoxCRE.UseVisualStyleBackColor = true
+    $checkBoxCRE.add_MouseHover($ShowHelp)
     
     # Format Checkbox
     $checkBoxSFI.Location = New-Object System.Drawing.Point(330, 670)
@@ -4851,6 +5012,7 @@ Function Control-GUI {
     $checkBoxSFI.TabIndex = 4
     $checkBoxSFI.Text = "Signed Files"
     $checkBoxSFI.UseVisualStyleBackColor = true
+    $checkBoxSFI.add_MouseHover($ShowHelp)
     
     # Format Checkbox
     $checkBoxSKY.Location = New-Object System.Drawing.Point(570, 370)
@@ -4860,6 +5022,7 @@ Function Control-GUI {
     $checkBoxSKY.TabIndex = 4
     $checkBoxSKY.Text = "Skype"
     $checkBoxSKY.UseVisualStyleBackColor = true
+    $checkBoxSKY.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxEMA.Location = New-Object System.Drawing.Point(570, 390)
@@ -4869,6 +5032,7 @@ Function Control-GUI {
     $checkBoxEMA.TabIndex = 4
     $checkBoxEMA.Text = "Email files"
     $checkBoxEMA.UseVisualStyleBackColor = true
+    $checkBoxEMA.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxCHR.Location = New-Object System.Drawing.Point(570, 430)
@@ -4878,6 +5042,7 @@ Function Control-GUI {
     $checkBoxCHR.TabIndex = 4
     $checkBoxCHR.Text = "Chrome"
     $checkBoxCHR.UseVisualStyleBackColor = true
+    $checkBoxCHR.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxMFI.Location = New-Object System.Drawing.Point(570, 450)
@@ -4887,6 +5052,7 @@ Function Control-GUI {
     $checkBoxMFI.TabIndex = 4
     $checkBoxMFI.Text = "Firefox"
     $checkBoxMFI.UseVisualStyleBackColor = true
+    $checkBoxMFI.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxIEX.Location = New-Object System.Drawing.Point(570, 470)
@@ -4896,6 +5062,7 @@ Function Control-GUI {
     $checkBoxIEX.TabIndex = 4
     $checkBoxIEX.Text = "Internet Explorer"
     $checkBoxIEX.UseVisualStyleBackColor = true
+    $checkBoxIEX.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxEDG.Location = New-Object System.Drawing.Point(570, 490)
@@ -4905,6 +5072,7 @@ Function Control-GUI {
     $checkBoxEDG.TabIndex = 4
     $checkBoxEDG.Text = "EDGE"
     $checkBoxEDG.UseVisualStyleBackColor = true
+    $checkBoxEDG.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxSAF.Location = New-Object System.Drawing.Point(570, 510)
@@ -4914,6 +5082,7 @@ Function Control-GUI {
     $checkBoxSAF.TabIndex = 4
     $checkBoxSAF.Text = "Safari"
     $checkBoxSAF.UseVisualStyleBackColor = true
+    $checkBoxSAF.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxOPE.Location = New-Object System.Drawing.Point(570, 530)
@@ -4923,6 +5092,7 @@ Function Control-GUI {
     $checkBoxOPE.TabIndex = 4
     $checkBoxOPE.Text = "Opera"
     $checkBoxOPE.UseVisualStyleBackColor = true
+    $checkBoxOPE.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxTOR.Location = New-Object System.Drawing.Point(570, 550)
@@ -4932,15 +5102,17 @@ Function Control-GUI {
     $checkBoxTOR.TabIndex = 4
     $checkBoxTOR.Text = "TOR"
     $checkBoxTOR.UseVisualStyleBackColor = true
+    $checkBoxTOR.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxCOD.Location = New-Object System.Drawing.Point(570, 590)
     $checkBoxCOD.Size = New-Object System.Drawing.Size(150, 17)
     $checkBoxCOD.AutoSize = true
-    $checkBoxCOD.Name = "checkBoxAFI"
+    $checkBoxCOD.Name = "checkBoxCOD"
     $checkBoxCOD.TabIndex = 4
     $checkBoxCOD.Text = "OneDrive"
     $checkBoxCOD.UseVisualStyleBackColor = true
+    $checkBoxCOD.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxCGD.Location = New-Object System.Drawing.Point(570, 610)
@@ -4950,6 +5122,7 @@ Function Control-GUI {
     $checkBoxCGD.TabIndex = 4
     $checkBoxCGD.Text = "GoogleDrive"
     $checkBoxCGD.UseVisualStyleBackColor = true
+    $checkBoxCGD.add_MouseHover($ShowHelp)
 
     # DropBox Checkbox
     $checkBoxCDB.Location = New-Object System.Drawing.Point(570, 630)
@@ -4959,6 +5132,7 @@ Function Control-GUI {
     $checkBoxCDB.TabIndex = 4
     $checkBoxCDB.Text = "DropBox"
     $checkBoxCDB.UseVisualStyleBackColor = true
+    $checkBoxCDB.add_MouseHover($ShowHelp)
 
 
 
@@ -5007,7 +5181,7 @@ Function Control-GUI {
     $form.Controls.Add($checkBoxWSE)
     $form.Controls.Add($checkBoxEET)
     $form.Controls.Add($checkBoxJLI)
-    $form.Controls.Add($checkBoxTHC)
+    $form.Controls.Add($checkBoxTIC)
     $form.Controls.Add($checkBoxFSF)
     $form.Controls.Add($checkBoxMSF)
     $form.Controls.Add($checkBoxTLH)
@@ -5159,23 +5333,23 @@ Function Show-Simple-Options-Resume {
     if ($All) {Write-Host "            • ALL:"}
 
     if ($Global:NET ) {Write-Host "            • NET - Network Information."}
-    if ($Global:SAP ) {Write-Host "            • SAP"}
-    if ($Global:STA ) {Write-Host "            • STA"}
-    if ($Global:CPH ) {Write-Host "            • CPH"}
-    if ($Global:INS ) {Write-Host "            • INS"}
-    if ($Global:UGR ) {Write-Host "            • UGR"}
-    if ($Global:PER ) {Write-Host "            • PER"}
-    if ($Global:USB ) {Write-Host "            • USB"}
-    if ($Global:DEV ) {Write-Host "            • DEV"}
-    if ($Global:SEC ) {Write-Host "            • SEC"}
+    if ($Global:SAP ) {Write-Host "            • SAP - Services and Processes."}
+    if ($Global:STA ) {Write-Host "            • STA - Scheduled Tasks."}
+    if ($Global:CPH ) {Write-Host "            • CPH - PowerShell Command Line History."}
+    if ($Global:INS ) {Write-Host "            • INS - Installed Software."}
+    if ($Global:UGR ) {Write-Host "            • UGR - Users and Groups."}
+    if ($Global:PER ) {Write-Host "            • PER - Persistence."}
+    if ($Global:USB ) {Write-Host "            • USB - USB devices information."}
+    if ($Global:PNP ) {Write-Host "            • PNP - Plug and Play devices."}
+    if ($Global:SEC ) {Write-Host "            • SEC - Security confiuration (Fierwall)."}
 
-    if ($Global:MRU ) {Write-Host "            • MRU"}
-    if ($Global:SHI ) {Write-Host "            • SHI"}
+    if ($Global:MRU ) {Write-Host "            • MRU - Most Recent Used."}
+    if ($Global:SHI ) {Write-Host "            • SHI - AppCompatCache aka Shimcache."}
         
     if ($Global:BAM ) {Write-Host "            • BAM - Background Activity Moderator."}
     
     
-    if ($Global:RAP ) {Write-Host "            • RAP"}
+    if ($Global:RAP ) {Write-Host "            • RAP - Recent Applications."}
     if ($Global:SYS ) {Write-Host "            • SYS - System Information."}
 
     if ($Global:LAC ) {Write-Host "            • LAC - Last Activity."}
@@ -5646,5 +5820,5 @@ Function Start-Execution {
 Start-Execution # STARTS THE EXECUTION OF THE PROGRAM
 
 <##################################################################################################################################>
-<#########################  SCRIPT EN  ###########################################>
+<#########################  SCRIPT END  ###########################################>
 <##################################################################################################################################>
