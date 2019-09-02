@@ -688,7 +688,6 @@ Function Collect-PSCommand-History {
         {
             try
             {
-                New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\CMD_HISTORY\$u > $null
                 cmd.exe /c type "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt" > "$Global:Destiny\$HOSTNAME\PSCMD_HISTORY\$u\ConsoleHost_history.txt"
             }
             catch
@@ -1185,17 +1184,17 @@ Function Collect-PnPDevices-Info {
 
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\USB_PnPDevices" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\USB_PnPDevices" > $null }
 
-    Write-Host "[+] Collecting Devices Info ..." -ForegroundColor Green
+    Write-Host "[+] Collecting Plug and Play Devices Info ..." -ForegroundColor Green
     try
     {
-        echo "Devices Resume: "                                                                     > "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
-        Get-PnpDevice | Select-Object Class, FriendlyName, InstanceID | Sort-Object Class          >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
-        echo "Devices Details: "                                                                   >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
-        Get-PnpDevice | Select-Object * | Sort-Object Class                                        >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
-        echo "Devices Deep Details: "                                                              >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt" 
+        echo "Devices Resume: "                                                                     > "$Global:Destiny\$HOSTNAME\USB_PnPDevices\PnP_Devices.txt"
+        Get-PnpDevice | Select-Object Class, FriendlyName, InstanceID | Sort-Object Class          >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\PnP_Devices.txt"
+        echo "Devices Details: "                                                                   >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\PnP_Devices.txt"
+        Get-PnpDevice | Select-Object * | Sort-Object Class                                        >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\PnP_Devices.txt"
+        echo "Devices Deep Details: "                                                              >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\PnP_Devices.txt" 
         Get-PnpDevice | Select-Object InstanceId | ForEach-Object {
-            echo $_.Name                                                                           >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
-            Get-PnpDeviceProperty -InstanceId $_.instanceID | Sort-Object type                     >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\Devices.txt"
+            echo $_.Name                                                                           >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\PnP_Devices.txt"
+            Get-PnpDeviceProperty -InstanceId $_.instanceID | Sort-Object type                     >> "$Global:Destiny\$HOSTNAME\USB_PnPDevices\PnP_Devices.txt"
         }
     } 
     catch 
@@ -1433,67 +1432,70 @@ Function Collect-CIDSizeMRU {
  
     foreach($SID in $SIDS) # Instead of using current user, it iterates through the connected users to the system.
     {
-        if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that are users, removes the system, network and classes
-        { 
-            $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"  # get's the name correspondent to the SID
-            $NAME = $($N.Split("\")[2])
+        if(Test-Path -Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU\")
+        {
+            if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that are users, removes the system, network and classes
+            { 
+                $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"  # get's the name correspondent to the SID
+                $NAME = $($N.Split("\")[2])
 
-            if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
+                if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\MRUs\$NAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\MRUs\$NAME > $null }
             
-            Write-Host "`t○ CIDSizeMRU from $NAME" -ForegroundColor Green
+                Write-Host "`t○ CIDSizeMRU from $NAME" -ForegroundColor Green
 
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
-            echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
-            echo "INFO: Tracks applications used to access documents using Dialog Box because this record is reponsible for the size of the Dialog Box." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
-            echo "More Info(page.10): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
-            echo "More Info: http://windowsir.blogspot.com/2013/07/howto-determine-program-execution.html" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
-            echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+                echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+                echo "KEY: NTUSER.DAT\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+                echo "INFO: Tracks applications used to access documents using Dialog Box because this record is reponsible for the size of the Dialog Box." >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+                echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+                echo "More Info(page.10): https://www.syntricate.com/files/Registry%20Reference%20Guide%20AD%20100116.pdf" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+                echo "More Info: http://windowsir.blogspot.com/2013/07/howto-determine-program-execution.html" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+                echo " " >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
 
-            # TODO: Order the extraction of the data using the MRUListEx like it's implemented in "Collect-RecentDocs2"
-            $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU\" -Name MRUListEx
-            $i=0
-            foreach($b in $cnt){$i++} # gets the number of entries
-            $max = (($i / 4) - 1)
+                # TODO: Order the extraction of the data using the MRUListEx like it's implemented in "Collect-RecentDocs2"
+                $cnt = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU\" -Name MRUListEx
+                $i=0
+                foreach($b in $cnt){$i++} # gets the number of entries
+                $max = (($i / 4) - 1)
 
-            for($n=0; $n -lt $max; $n++){
+                for($n=0; $n -lt $max; $n++){
                         
-                try 
-                {
-                    $temp = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU\" -Name $n
-            
-                    $read=$true
-                    $i = 0
-                            
-                    foreach($b in $temp)
+                    try 
                     {
-                        if($read)
+                        $temp = Get-ItemPropertyValue "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\CIDSizeMRU\" -Name $n
+            
+                        $read=$true
+                        $i = 0
+                            
+                        foreach($b in $temp)
                         {
-                            if([int]$b -ne 0)
+                            if($read)
                             {
-                                $c = [char][int]$b
-                                $filename = $filename + "$c"
-                            }
-                            if([int]$b -eq 0) 
-                            { 
-                                $i = $i + 1 
-                            }
-                            else 
-                            { 
-                                $i = 0 
-                            }
-                            if($i -gt 1) 
-                            {
-                                $read = $false
+                                if([int]$b -ne 0)
+                                {
+                                    $c = [char][int]$b
+                                    $filename = $filename + "$c"
+                                }
+                                if([int]$b -eq 0) 
+                                { 
+                                    $i = $i + 1 
+                                }
+                                else 
+                                { 
+                                    $i = 0 
+                                }
+                                if($i -gt 1) 
+                                {
+                                    $read = $false
+                                }
                             }
                         }
+                        echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
+                        $filename = ""
+                    } 
+                    catch 
+                    {
+                            Report-Error -evidence "Collecting CIDSizeMRU"
                     }
-                    echo "$filename" >> "$Global:Destiny\$HOSTNAME\MRUs\$NAME\RecentUsedApps_CIDSizeMRU.txt"
-                    $filename = ""
-                } 
-                catch 
-                {
-                        Report-Error -evidence "Collecting CIDSizeMRU"
                 }
             }
         }
@@ -1506,8 +1508,10 @@ Function Collect-COMDLG32-LastVisitedPidlMRU {
     
     foreach($SID in $SIDS) # Instead of using current user, it iterates through the connected users to the system.
     {
-        if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that are users, removes the system, network and classes
-        { 
+        if(Test-Path -Path "REGISTRY::HKEY_USERS\$SID\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU\")
+        {   
+            if ($SID.Split("-")[7] -ne $null -and $SID.Split("-")[7] -notlike "*_Classes") # the ones that are users, removes the system, network and classes
+            { 
             $N = Get-ItemPropertyValue -Path "REGISTRY::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$SID\" -Name "ProfileImagePath"  # get's the name correspondent to the SID
             $NAME = $($N.Split("\")[2])
 
@@ -1571,6 +1575,7 @@ Function Collect-COMDLG32-LastVisitedPidlMRU {
                 }
             }
 
+        }
         }
     }
 
@@ -1990,8 +1995,8 @@ Function Collect-BAM {
     {
         Write-Host "[+] Collecting BAM (Background Activiy Moderator) ..." -ForegroundColor Green
 
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\BAM") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\BAM" > $null }    
-        echo "UserSID,Username,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Execution") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Execution" > $null }    
+        echo "UserSID,Username,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\Execution\BAM_LastExecutionDateApps.csv"
 
         $SIDs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\*"  | foreach { 
             $_.Name.split("\")[-1] 
@@ -2017,7 +2022,7 @@ Function Collect-BAM {
 
                     $LastExecutedDateLocal = [datetime]::FromFileTime([System.BitConverter]::ToInt64($RawDate,0))
 
-                    echo "$SID,$USERNAME,$APP,$LastExecutedDateUTC,$LastExecutedDateLocal" >> "$Global:Destiny\$HOSTNAME\BAM\LastExecutionDateApps.csv"
+                    echo "$SID,$USERNAME,$APP,$LastExecutedDateUTC,$LastExecutedDateLocal" >> "$Global:Destiny\$HOSTNAME\Execution\BAM_LastExecutionDateApps.csv"
                 }
             }
         }
@@ -2086,12 +2091,12 @@ Function Collect-Last-Activity {
 <########### A L L   A U T O R U N   F I L E S #####> # AFI*
 Function Collect-Autorun-Files {
     
-    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Autorun_Files\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Autorun_Files\" > $null }
+    if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Persistence\") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Persistence\" > $null }
     
     Write-Host "[+] Collecting Autorun Files ..." -ForegroundColor Green
     try
     {
-        & cmd.exe /c $AUTORUNS -accepteula -a * -c -h -o "$Global:Destiny\$HOSTNAME\Autorun_Files\AutorunFiles.csv" -s -t -u -v -vt -nobanner
+        & cmd.exe /c $AUTORUNS -accepteula -a * -c -h -o "$Global:Destiny\$HOSTNAME\Persistence\Persistence_AutorunFiles.csv" -s -t -u -v -vt -nobanner
     }
     catch
     {
@@ -3660,8 +3665,8 @@ Function Collect-Cloud-OneDrive-Logs {
             try 
             {
                 Write-Host "`t`t○ Business1 folder" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Business1" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Business1" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Business1\*.*" "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Business1" > $null
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Business1" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Business1" > $null }
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Business1\*.*" "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Business1" > $null
             } 
             catch 
             {
@@ -3672,8 +3677,8 @@ Function Collect-Cloud-OneDrive-Logs {
             try 
             {
                 Write-Host "`t`t○ Common folder" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Common" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Common" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Common\*.*" "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Common" > $null
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Common" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Common" > $null }
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Common\*.*" "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Common" > $null
             } 
             catch 
             {
@@ -3684,8 +3689,8 @@ Function Collect-Cloud-OneDrive-Logs {
             try 
             {
                 Write-Host "`t`t○ Personal folder" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Personal" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Personal" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Personal\*.*" "$Global:Destiny\$HOSTNAME\CLOUD\ONEDRIVE\$u\Personal" > $null
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Personal" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Personal" > $null }
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Personal\*.*" "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Personal" > $null
             } 
             catch 
             {
@@ -3710,8 +3715,8 @@ Function Collect-Cloud-GoogleDrive-Logs {
             try 
             {
                 Write-Host "`t`t○ DB files" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.db" "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" > $null
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" > $null }
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.db" "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" > $null
             } 
             catch 
             {
@@ -3722,8 +3727,8 @@ Function Collect-Cloud-GoogleDrive-Logs {
             try 
             {
                 Write-Host "`t`t○ LOG files" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.log" "$Global:Destiny\$HOSTNAME\CLOUD\GOOGLEDRIVE\$u\." > $null
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" > $null }
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.log" "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\." > $null
             } 
             catch 
             {
@@ -3745,11 +3750,11 @@ Function Collect-Cloud-Dropbox-Logs {
             Write-Host "`t○ From user: $u" -ForegroundColor Green        
             
             # INSTANCE1
-            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1" > $null }
+            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance1" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance1" > $null }
             
             try
             {
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance1\*.dbx" "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1\." > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance1\*.dbx" "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance1\." > $null
             } 
             catch 
             {
@@ -3757,11 +3762,11 @@ Function Collect-Cloud-Dropbox-Logs {
             }
             
             # INSTANCE_DB
-            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance_db" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance_db" > $null }
+            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance_db" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance_db" > $null }
 
             try
             {
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance_db\*.dbx" "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance_db\." > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance_db\*.dbx" "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance_db\." > $null
             } 
             catch 
             {
@@ -3800,13 +3805,13 @@ Function Collect-Cloud-Dropbox-Logs {
 
         $rootTemp = $Global:Destiny -replace "\\","\\"
 
-        Get-ChildItem "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance1" -Filter *.dbx | ForEach-Object {
+        Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance1" -Filter *.dbx | ForEach-Object {
             try
             {
                 if($_.Extension -ne ".dbx-wal" -and $_.Extension -ne ".dbx-shm" -and $_.BaseName -ne "aggregation")
                 {
                     $bn=$_.BaseName
-                    & $SQL_DBX_EXE -key $ks1_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\CLOUD\\DROPBOX\\$u\\instance1\\$bn.db" 
+                    & $SQL_DBX_EXE -key $ks1_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\instance1\\$bn.db" 
                 }
             } 
             catch 
@@ -3815,11 +3820,11 @@ Function Collect-Cloud-Dropbox-Logs {
             }
         }
 
-        Get-ChildItem "$Global:Destiny\$HOSTNAME\CLOUD\DROPBOX\$u\instance_db" -Filter *.dbx | ForEach-Object {
+        Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance_db" -Filter *.dbx | ForEach-Object {
             try
             {
                 $bn=$_.BaseName
-                & $SQL_DBX_EXE -key $ks_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\CLOUD\\DROPBOX\\$u\\instance_db\\$bn.db" 
+                & $SQL_DBX_EXE -key $ks_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\instance_db\\$bn.db" 
             } 
             catch 
             {
@@ -3857,8 +3862,12 @@ Function Collect-Sign-Files {
 <# MANAGE NO GUI EXECUTION #>
 Function Control-NOGUI{
 
+    Write-Host "[+] Starting the collection of $HOSTNAME computer artifacts..."  -ForegroundColor Magenta
+    $TotalScriptTime = [Diagnostics.Stopwatch]::StartNew()
     Collect-Time -Status Start
     
+    if($GUI -eq $false) {$Global:Destiny = "$Global:Destiny\"}
+
     # LIVE
     
     if ($All -or $Global:RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:22 4GB
@@ -3921,6 +3930,10 @@ Function Control-NOGUI{
     if (         $Global:SFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Sign-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
 
     Collect-Time -Status Finish
+
+    $TotalScriptTime.Stop()
+    Write-Host "[*] TOTAL Script Execution time: $($TotalScriptTime.Elapsed)"  -ForegroundColor Magenta
+    Write-Host "[*] Finished to collect all the Evidence!"   -ForegroundColor Magenta
 }
 
 <# MANAGE GUI EXECTION #> 
@@ -3931,7 +3944,6 @@ Function Control-GUI {
     param(
         [string]$testtt="bla"
     )
-
     ############################################ Import Assemblies ################################################################
     Add-Type -AssemblyName System.Windows.Forms
     Add-Type -AssemblyName System.Drawing
@@ -4007,7 +4019,7 @@ Function Control-GUI {
             "checkBoxUGR" {$tip = "Collection of: `n- Users `n- Groups `n- Administrator users"}
             "checkBoxPER" {$tip = "Collection of: `n- Persistence : Registry run keys `n- Persistence : Shell Folders `n- Persistence : Winlogon helper dll `n- Persistence : Time providers `n- Persistence : SIP and trust provider hijacking `n- Persistence : Security Support Provider `n- Persistence : Port monitors `n- Persistence : Office application startup `n- Persistence : Change default file association `n- Persistence : AppInit DLLs `n- Persistence : AppCert DLLs"}
             "checkBoxUSB" {$tip = "Collection of: `n- USB devices information"}
-            "checkBoxDEV" {$tip = "Collection of: `n- Plug and Play (PnP) devices information"}
+            "checkBoxPNP" {$tip = "Collection of: `n- Plug and Play (PnP) devices information"}
             "checkBoxSEC" {$tip = "Collection of: `n- Firewall configuration and rules"}
             "checkBoxMRU" {$tip = "Collection and Parsing of: `n- MRUs : MUICache `n- MRUs : Recent docs `n- MRUs : Open/Saved files MRU `n- MRUs : User Assist `n- MRUs : ShellBags `n- MRUs : CIDSizeMRU `n- MRUs : Last Visited MRU `n- MRUs : RUN DialogBox MRU `n- MRUs : AppCompatCache (Shimcache) `n- MRUs : Recent Applications"}
             "checkBoxSHI" {$tip = "Collection and Parsing of: `n- AppCompatCache (Shimcache)"}
@@ -4047,7 +4059,7 @@ Function Control-GUI {
         }
     $tooltipOptions.SetToolTip($this,$tip)
     } #end ShowHelp
-
+    
     ############################################ Controls Creation ################################################################
 
     # GENERAL PANEL
@@ -4082,7 +4094,7 @@ Function Control-GUI {
     $checkBoxUGR = New-Object System.Windows.Forms.CheckBox
     $checkBoxPER = New-Object System.Windows.Forms.CheckBox
     $checkBoxUSB = New-Object System.Windows.Forms.CheckBox
-    $checkBoxDEV = New-Object System.Windows.Forms.CheckBox
+    $checkBoxPNP = New-Object System.Windows.Forms.CheckBox
     $checkBoxSEC = New-Object System.Windows.Forms.CheckBox
     $checkBoxMRU = New-Object System.Windows.Forms.CheckBox
     $checkBoxSHI = New-Object System.Windows.Forms.CheckBox
@@ -4129,7 +4141,7 @@ Function Control-GUI {
     # Label Source
     $labelSource.Location = New-Object System.Drawing.Point(55, 280)
     $labelSource.Size = New-Object System.Drawing.Size(50, 13)
-    $labelSource.AutoSize = true
+    $labelSource.AutoSize = $True
     $labelSource.Name = "labelSource"
     $labelSource.TabIndex = 0 
     $labelSource.TabStop = $False
@@ -4139,7 +4151,7 @@ Function Control-GUI {
     # Combobox Source
     $comboBoxSource.Location = New-Object System.Drawing.Point(105, 277)
     $comboBoxSource.Size = New-Object System.Drawing.Size(60, 20)
-    $comboBoxSource.FormattingEnabled = true
+    $comboBoxSource.FormattingEnabled = $True
     $comboBoxSource.Name = "comboBoxSource"
     $comboBoxSource.TabIndex = 1
     $comboBoxSource.Items.AddRange($DRIVES)
@@ -4147,7 +4159,7 @@ Function Control-GUI {
     # Label Destiny
     $labelDestiny.Location = New-Object System.Drawing.Point(180, 280)
     $labelDestiny.Size = New-Object System.Drawing.Size(50, 13)
-    $labelDestiny.AutoSize = true
+    $labelDestiny.AutoSize = $True
     $labelDestiny.Name = "labelDestiny"
     $labelDestiny.TabIndex = 0
     $labelDestiny.TabStop = $False
@@ -4166,7 +4178,7 @@ Function Control-GUI {
     $buttonDestiny.Name = "buttonDestiny"
     $buttonDestiny.TabIndex = 3
     $buttonDestiny.Text = "Select ..."
-    $buttonDestiny.UseVisualStyleBackColor = true
+    $buttonDestiny.UseVisualStyleBackColor = $True
     $buttonDestiny.add_MouseHover($ShowHelp)
     $buttonDestiny.Add_Click(
         {
@@ -4181,11 +4193,11 @@ Function Control-GUI {
     # Format Checkbox
     $checkBoxFormat.Location = New-Object System.Drawing.Point(600, 280)
     $checkBoxFormat.Size = New-Object System.Drawing.Size(60, 17)
-    $checkBoxFormat.AutoSize = true
+    $checkBoxFormat.AutoSize = $True
     $checkBoxFormat.Name = "checkBoxFormat"
     $checkBoxFormat.TabIndex = 4
     $checkBoxFormat.Text = "Format"
-    $checkBoxFormat.UseVisualStyleBackColor = true
+    $checkBoxFormat.UseVisualStyleBackColor = $True
     $checkBoxFormat.add_MouseHover($ShowHelp)
     $checkBoxFormat.Add_Click(
         {
@@ -4208,11 +4220,11 @@ Function Control-GUI {
     # Quick Format Checkbox
     $checkBoxFormatQuick.Location = New-Object System.Drawing.Point(610, 300)
     $checkBoxFormatQuick.Size = New-Object System.Drawing.Size(60, 17)
-    $checkBoxFormatQuick.AutoSize = true
+    $checkBoxFormatQuick.AutoSize = $True
     $checkBoxFormatQuick.Name = "checkBoxFormatQuick"
     $checkBoxFormatQuick.TabIndex = 4
     $checkBoxFormatQuick.Text = "Quick"
-    $checkBoxFormatQuick.UseVisualStyleBackColor = true
+    $checkBoxFormatQuick.UseVisualStyleBackColor = $True
     $checkBoxFormatQuick.Enabled = $False
     $checkBoxFormatQuick.add_MouseHover($ShowHelp)
     $checkBoxFormatQuick.Add_Click(
@@ -4232,11 +4244,11 @@ Function Control-GUI {
     # Zeros Format Checkbox
     $checkBoxFormatZero.Location = New-Object System.Drawing.Point(610, 320)
     $checkBoxFormatZero.Size = New-Object System.Drawing.Size(50, 17)
-    $checkBoxFormatZero.AutoSize = true
+    $checkBoxFormatZero.AutoSize = $True
     $checkBoxFormatZero.Name = "checkBoxFormatZero"
     $checkBoxFormatZero.TabIndex = 4
     $checkBoxFormatZero.Text = "Zero"
-    $checkBoxFormatZero.UseVisualStyleBackColor = true
+    $checkBoxFormatZero.UseVisualStyleBackColor = $True
     $checkBoxFormatZero.Enabled = $False
     $checkBoxFormatZero.add_MouseHover($ShowHelp)
     $checkBoxFormatZero.Add_Click(
@@ -4256,11 +4268,11 @@ Function Control-GUI {
     # Hash Checkbox
     $checkBoxHash.Location = New-Object System.Drawing.Point(670, 280)
     $checkBoxHash.Size = New-Object System.Drawing.Size(60, 17)
-    $checkBoxHash.AutoSize = true
+    $checkBoxHash.AutoSize = $True
     $checkBoxHash.Name = "checkBoxHash"
     $checkBoxHash.TabIndex = 4
     $checkBoxHash.Text = "Hash"
-    $checkBoxHash.UseVisualStyleBackColor = true
+    $checkBoxHash.UseVisualStyleBackColor = $True
     $checkBoxHash.add_MouseHover($ShowHelp)
     $checkBoxHash.Add_Click(
         {
@@ -4283,11 +4295,11 @@ Function Control-GUI {
     # Hash MD5 Checkbox
     $checkBoxHashMD5.Location = New-Object System.Drawing.Point(680, 300)
     $checkBoxHashMD5.Size = New-Object System.Drawing.Size(60, 17)
-    $checkBoxHashMD5.AutoSize = true
+    $checkBoxHashMD5.AutoSize = $True
     $checkBoxHashMD5.Name = "checkBoxHashMD5"
     $checkBoxHashMD5.TabIndex = 4
     $checkBoxHashMD5.Text = "MD5"
-    $checkBoxHashMD5.UseVisualStyleBackColor = true
+    $checkBoxHashMD5.UseVisualStyleBackColor = $True
     $checkBoxHashMD5.Enabled = $False
     $checkBoxHashMD5.add_MouseHover($ShowHelp)
     $checkBoxHashMD5.Add_Click(
@@ -4307,11 +4319,11 @@ Function Control-GUI {
     # Hash SHA256 Checkbox
     $checkBoxHashSHA256.Location = New-Object System.Drawing.Point(680, 320)
     $checkBoxHashSHA256.Size = New-Object System.Drawing.Size(70, 17)
-    $checkBoxHashSHA256.AutoSize = true
+    $checkBoxHashSHA256.AutoSize = $True
     $checkBoxHashSHA256.Name = "checkBoxHashSHA256"
     $checkBoxHashSHA256.TabIndex = 4
     $checkBoxHashSHA256.Text = "SHA256"
-    $checkBoxHashSHA256.UseVisualStyleBackColor = true
+    $checkBoxHashSHA256.UseVisualStyleBackColor = $True
     $checkBoxHashSHA256.Enabled = $False
     $checkBoxHashSHA256.add_MouseHover($ShowHelp)
     $checkBoxHashSHA256.Add_Click(
@@ -4335,21 +4347,14 @@ Function Control-GUI {
     $buttonExecute.Name = "buttonExecute"
     $buttonExecute.TabIndex = 3
     $buttonExecute.Text = "EXECUTE!"
-    $buttonExecute.UseVisualStyleBackColor = true
+    $buttonExecute.UseVisualStyleBackColor = $True
     $buttonExecute.add_MouseHover($ShowHelp)
     $buttonExecute.Add_Click(
         {
-            if($comboBoxSource.Text -ne "" -and $textBoxDestiny.Text -ne "" -and ($radioButtonAll.Checked -or $radioButtonLive.Checked -or $radioButtonLiveOpt.Checked -or $radioButtonOffline.Checked -or $radioButtonOfflineOpt.Checked))
+            if($comboBoxSource.Text -ne "" -and $textBoxDestiny.Text -ne "")
             {
-                Write-Host "Source is: $($comboBoxSource.Text)" -ForegroundColor Yellow
                 $Global:Source = $($comboBoxSource.Text)
-                Write-Host "Destiny is: $($textBoxDestiny.Text)" -BackgroundColor Green
                 $Global:Destiny = $($textBoxDestiny.Text)
-                Write-Host "Destiny is: $($radioButtonAll.Checked)"
-                Write-Host "Destiny is: $($radioButtonLive.Checked)"
-                Write-Host "Destiny is: $($radioButtonLiveOpt.Checked)"
-                Write-Host "Destiny is: $($radioButtonOffline.Checked)"
-                Write-Host "Destiny is: $($radioButtonOfflineOpt.Checked)"
                 
                 if($checkBoxRAM.Checked -eq $True) { $Global:RAM = $True }
                 if($checkBoxNET.Checked -eq $True) { $Global:NET = $True }
@@ -4360,7 +4365,7 @@ Function Control-GUI {
                 if($checkBoxUGR.Checked -eq $True) { $Global:UGR = $True }
                 if($checkBoxPER.Checked -eq $True) { $Global:PER = $True }
                 if($checkBoxUSB.Checked -eq $True) { $Global:USB = $True }
-                if($checkBoxDEV.Checked -eq $True) { $Global:PNP = $True }
+                if($checkBoxPNP.Checked -eq $True) { $Global:PNP = $True }
                 if($checkBoxSEC.Checked -eq $True) { $Global:SEC = $True }
                 if($checkBoxMRU.Checked -eq $True) { $Global:MRU = $True }
                 if($checkBoxSHI.Checked -eq $True) { $Global:SHI = $True }
@@ -4411,7 +4416,7 @@ Function Control-GUI {
     # Label Collection Type
     $labelColType.Location = New-Object System.Drawing.Point(55, 310)
     $labelColType.Size = New-Object System.Drawing.Size(100, 13)
-    $labelColType.AutoSize = true
+    $labelColType.AutoSize = $True
     $labelColType.Name = "labelColType"
     $labelColType.TabIndex = 0
     $labelColType.TabStop = $False
@@ -4423,12 +4428,12 @@ Function Control-GUI {
     # Radio Button ALL
     $radioButtonAll.Location = New-Object System.Drawing.Point(150, 310)
     $radioButtonAll.Size = New-Object System.Drawing.Size(40, 17)
-    $radioButtonAll.AutoSize = true
+    $radioButtonAll.AutoSize = $True
     $radioButtonAll.Name = "radioButtonAll"
     $radioButtonAll.TabIndex = 4
-    $radioButtonAll.TabStop = true
+    $radioButtonAll.TabStop = $True
     $radioButtonAll.Text = "All"
-    $radioButtonAll.UseVisualStyleBackColor = true
+    $radioButtonAll.UseVisualStyleBackColor = $True
     $radioButtonAll.add_MouseHover($ShowHelp)
     $radioButtonAll.Add_Click(
         {
@@ -4441,7 +4446,7 @@ Function Control-GUI {
         $checkBoxUGR.Checked = $True
         $checkBoxPER.Checked = $True
         $checkBoxUSB.Checked = $True
-        $checkBoxDEV.Checked = $True
+        $checkBoxPNP.Checked = $True
         $checkBoxSEC.Checked = $True
         $checkBoxMRU.Checked = $True
         $checkBoxSHI.Checked = $True
@@ -4484,12 +4489,12 @@ Function Control-GUI {
     # Radio Button Live
     $radioButtonLive.Location = New-Object System.Drawing.Point(200, 300)
     $radioButtonLive.Size = New-Object System.Drawing.Size(70, 17)
-    $radioButtonLive.AutoSize = true
+    $radioButtonLive.AutoSize = $True
     $radioButtonLive.Name = "radioButtonLive"
     $radioButtonLive.TabIndex = 4
-    $radioButtonLive.TabStop = true
+    $radioButtonLive.TabStop = $True
     $radioButtonLive.Text = "Live"
-    $radioButtonLive.UseVisualStyleBackColor = true
+    $radioButtonLive.UseVisualStyleBackColor = $True
     $radioButtonLive.add_MouseHover($ShowHelp)
     $radioButtonLive.Add_Click(
         {
@@ -4502,7 +4507,7 @@ Function Control-GUI {
         $checkBoxUGR.Checked = $True
         $checkBoxPER.Checked = $True
         $checkBoxUSB.Checked = $True
-        $checkBoxDEV.Checked = $True
+        $checkBoxPNP.Checked = $True
         $checkBoxSEC.Checked = $True
         $checkBoxMRU.Checked = $True
         $checkBoxBAM.Checked = $True
@@ -4543,23 +4548,23 @@ Function Control-GUI {
     # Radio Button Live Optimized
     $radioButtonLiveOpt.Location = New-Object System.Drawing.Point(270, 300)
     $radioButtonLiveOpt.Size = New-Object System.Drawing.Size(120, 17)
-    $radioButtonLiveOpt.AutoSize = true
+    $radioButtonLiveOpt.AutoSize = $True
     $radioButtonLiveOpt.Name = "radioButtonLiveOpt"
     $radioButtonLiveOpt.TabIndex = 4
-    $radioButtonLiveOpt.TabStop = true
+    $radioButtonLiveOpt.TabStop = $True
     $radioButtonLiveOpt.Text = "Live Optimized"
-    $radioButtonLiveOpt.UseVisualStyleBackColor = true
+    $radioButtonLiveOpt.UseVisualStyleBackColor = $True
     $radioButtonLiveOpt.add_MouseHover($ShowHelp)
 
     # Radio Button Offline
     $radioButtonOffline.Location = New-Object System.Drawing.Point(200, 320)
     $radioButtonOffline.Size = New-Object System.Drawing.Size(70, 17)
-    $radioButtonOffline.AutoSize = true
+    $radioButtonOffline.AutoSize = $True
     $radioButtonOffline.Name = "radioButtonOffline"
     $radioButtonOffline.TabIndex = 4
-    $radioButtonOffline.TabStop = true
+    $radioButtonOffline.TabStop = $True
     $radioButtonOffline.Text = "Offline"
-    $radioButtonOffline.UseVisualStyleBackColor = true
+    $radioButtonOffline.UseVisualStyleBackColor = $True
     $radioButtonOffline.add_MouseHover($ShowHelp)
     $radioButtonOffline.Add_Click(
         {
@@ -4572,7 +4577,7 @@ Function Control-GUI {
         $checkBoxUGR.Checked = $False
         $checkBoxPER.Checked = $False
         $checkBoxUSB.Checked = $False
-        $checkBoxDEV.Checked = $False
+        $checkBoxPNP.Checked = $False
         $checkBoxSEC.Checked = $False
         $checkBoxMRU.Checked = $False
         $checkBoxSHI.Checked = $False
@@ -4616,12 +4621,12 @@ Function Control-GUI {
     # Radio Button Offline Optimized
     $radioButtonOfflineOpt.Location = New-Object System.Drawing.Point(270, 320)
     $radioButtonOfflineOpt.Size = New-Object System.Drawing.Size(120, 17)
-    $radioButtonOfflineOpt.AutoSize = true
+    $radioButtonOfflineOpt.AutoSize = $True
     $radioButtonOfflineOpt.Name = "radioButtonOfflineOpt"
     $radioButtonOfflineOpt.TabIndex = 4
-    $radioButtonOfflineOpt.TabStop = true
+    $radioButtonOfflineOpt.TabStop = $True
     $radioButtonOfflineOpt.Text = "Offline Optimized"
-    $radioButtonOfflineOpt.UseVisualStyleBackColor = true
+    $radioButtonOfflineOpt.UseVisualStyleBackColor = $True
     $radioButtonOfflineOpt.add_MouseHover($ShowHelp)
 
 
@@ -4641,11 +4646,11 @@ Function Control-GUI {
     # RAM Checkbox
     $checkBoxRAM.Location = New-Object System.Drawing.Point(55, 370)
     $checkBoxRAM.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxRAM.AutoSize = true
+    $checkBoxRAM.AutoSize = $True
     $checkBoxRAM.Name = "checkBoxRAM"
     $checkBoxRAM.TabIndex = 4
     $checkBoxRAM.Text = "Random Access Memory (RAM)"
-    $checkBoxRAM.UseVisualStyleBackColor = true
+    $checkBoxRAM.UseVisualStyleBackColor = $True
     $checkBoxRAM.add_MouseHover($ShowHelp)
     $checkBoxRAM.Add_CheckStateChanged(
         {
@@ -4663,111 +4668,111 @@ Function Control-GUI {
     # Network Checkbox
     $checkBoxNET.Location = New-Object System.Drawing.Point(55, 390)
     $checkBoxNET.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxNET.AutoSize = true
+    $checkBoxNET.AutoSize = $True
     $checkBoxNET.Name = "checkBoxNET"
     $checkBoxNET.TabIndex = 4
     $checkBoxNET.Text = "Network Information"
-    $checkBoxNET.UseVisualStyleBackColor = true
+    $checkBoxNET.UseVisualStyleBackColor = $True
     $checkBoxNET.add_MouseHover($ShowHelp)
 
     # Services and Processes Checkbox
     $checkBoxSAP.Location = New-Object System.Drawing.Point(55, 410)
     $checkBoxSAP.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxSAP.AutoSize = true
+    $checkBoxSAP.AutoSize = $True
     $checkBoxSAP.Name = "checkBoxSAP"
     $checkBoxSAP.TabIndex = 4
     $checkBoxSAP.Text = "Services and Processes"
-    $checkBoxSAP.UseVisualStyleBackColor = true
+    $checkBoxSAP.UseVisualStyleBackColor = $True
     $checkBoxSAP.add_MouseHover($ShowHelp)
 
     # Scheduled Tasks Checkbox
     $checkBoxSTA.Location = New-Object System.Drawing.Point(55, 430)
     $checkBoxSTA.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxSTA.AutoSize = true
+    $checkBoxSTA.AutoSize = $True
     $checkBoxSTA.Name = "checkBoxSTA"
     $checkBoxSTA.TabIndex = 4
     $checkBoxSTA.Text = "Scheduled Tasks"
-    $checkBoxSTA.UseVisualStyleBackColor = true
+    $checkBoxSTA.UseVisualStyleBackColor = $True
     $checkBoxSTA.add_MouseHover($ShowHelp)
 
     # CMD Checkbox
     $checkBoxCPH.Location = New-Object System.Drawing.Point(55, 450)
     $checkBoxCPH.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxCPH.AutoSize = true
+    $checkBoxCPH.AutoSize = $True
     $checkBoxCPH.Name = "checkBoxCPH"
     $checkBoxCPH.TabIndex = 4
     $checkBoxCPH.Text = "Command Line History"
-    $checkBoxCPH.UseVisualStyleBackColor = true
+    $checkBoxCPH.UseVisualStyleBackColor = $True
     $checkBoxCPH.add_MouseHover($ShowHelp)
 
     # Installed Software Checkbox
     $checkBoxINS.Location = New-Object System.Drawing.Point(55, 470)
     $checkBoxINS.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxINS.AutoSize = true
+    $checkBoxINS.AutoSize = $True
     $checkBoxINS.Name = "checkBoxINS"
     $checkBoxINS.TabIndex = 4
     $checkBoxINS.Text = "Installed Software"
-    $checkBoxINS.UseVisualStyleBackColor = true
+    $checkBoxINS.UseVisualStyleBackColor = $True
     $checkBoxINS.add_MouseHover($ShowHelp)
 
     # Users and Groups Checkbox
     $checkBoxUGR.Location = New-Object System.Drawing.Point(55, 490)
     $checkBoxUGR.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxUGR.AutoSize = true
+    $checkBoxUGR.AutoSize = $True
     $checkBoxUGR.Name = "checkBoxUGR"
     $checkBoxUGR.TabIndex = 4
     $checkBoxUGR.Text = "Users and Groups"
-    $checkBoxUGR.UseVisualStyleBackColor = true
+    $checkBoxUGR.UseVisualStyleBackColor = $True
     $checkBoxUGR.add_MouseHover($ShowHelp)
 
     # Persistance Checkbox
     $checkBoxPER.Location = New-Object System.Drawing.Point(55, 510)
     $checkBoxPER.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxPER.AutoSize = true
+    $checkBoxPER.AutoSize = $True
     $checkBoxPER.Name = "checkBoxPER"
     $checkBoxPER.TabIndex = 4
     $checkBoxPER.Text = "Persistance"
-    $checkBoxPER.UseVisualStyleBackColor = true
+    $checkBoxPER.UseVisualStyleBackColor = $True
     $checkBoxPER.add_MouseHover($ShowHelp)
 
     # USB Devices Checkbox
     $checkBoxUSB.Location = New-Object System.Drawing.Point(55, 530)
     $checkBoxUSB.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxUSB.AutoSize = true
+    $checkBoxUSB.AutoSize = $True
     $checkBoxUSB.Name = "checkBoxUSB"
     $checkBoxUSB.TabIndex = 4
     $checkBoxUSB.Text = "USB Devices Info"
-    $checkBoxUSB.UseVisualStyleBackColor = true
+    $checkBoxUSB.UseVisualStyleBackColor = $True
     $checkBoxUSB.add_MouseHover($ShowHelp)
 
     # Devices Info Checkbox
-    $checkBoxDEV.Location = New-Object System.Drawing.Point(55, 550)
-    $checkBoxDEV.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxDEV.AutoSize = true
-    $checkBoxDEV.Name = "checkBoxDEV"
-    $checkBoxDEV.TabIndex = 4
-    $checkBoxDEV.Text = "Devices Info"
-    $checkBoxDEV.UseVisualStyleBackColor = true
-    $checkBoxDEV.add_MouseHover($ShowHelp)
+    $checkBoxPNP.Location = New-Object System.Drawing.Point(55, 550)
+    $checkBoxPNP.Size = New-Object System.Drawing.Size(200, 17)
+    $checkBoxPNP.AutoSize = $True
+    $checkBoxPNP.Name = "checkBoxPNP"
+    $checkBoxPNP.TabIndex = 4
+    $checkBoxPNP.Text = "Devices Info"
+    $checkBoxPNP.UseVisualStyleBackColor = $True
+    $checkBoxPNP.add_MouseHover($ShowHelp)
 
     # Security Configuration Checkbox
     $checkBoxSEC.Location = New-Object System.Drawing.Point(55, 570)
     $checkBoxSEC.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxSEC.AutoSize = true
+    $checkBoxSEC.AutoSize = $True
     $checkBoxSEC.Name = "checkBoxSEC"
     $checkBoxSEC.TabIndex = 4
     $checkBoxSEC.Text = "Security Configuration"
-    $checkBoxSEC.UseVisualStyleBackColor = true
+    $checkBoxSEC.UseVisualStyleBackColor = $True
     $checkBoxSEC.add_MouseHover($ShowHelp)
 
     # MRUs Checkbox
     $checkBoxMRU.Location = New-Object System.Drawing.Point(55, 590)
     $checkBoxMRU.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxMRU.AutoSize = true
+    $checkBoxMRU.AutoSize = $True
     $checkBoxMRU.Name = "checkBoxMRU"
     $checkBoxMRU.TabIndex = 4
     $checkBoxMRU.Text = "Most Recent Used (MRUs)"
-    $checkBoxMRU.UseVisualStyleBackColor = true
+    $checkBoxMRU.UseVisualStyleBackColor = $True
     $checkBoxMRU.add_MouseHover($ShowHelp)
     $checkBoxMRU.Add_CheckStateChanged(
         {
@@ -4789,61 +4794,61 @@ Function Control-GUI {
     # Shimcache Checkbox
     $checkBoxSHI.Location = New-Object System.Drawing.Point(55, 610)
     $checkBoxSHI.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxSHI.AutoSize = true
+    $checkBoxSHI.AutoSize = $True
     $checkBoxSHI.Name = "checkBoxSHI"
     $checkBoxSHI.TabIndex = 4
     $checkBoxSHI.Text = "Shimcache"
-    $checkBoxSHI.UseVisualStyleBackColor = true
+    $checkBoxSHI.UseVisualStyleBackColor = $True
     $checkBoxSHI.add_MouseHover($ShowHelp)
 
     # RecentAPPs Checkbox
     $checkBoxRAP.Location = New-Object System.Drawing.Point(55, 630)
     $checkBoxRAP.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxRAP.AutoSize = true
+    $checkBoxRAP.AutoSize = $True
     $checkBoxRAP.Name = "checkBoxRAP"
     $checkBoxRAP.TabIndex = 4
     $checkBoxRAP.Text = "Recent Applications"
-    $checkBoxRAP.UseVisualStyleBackColor = true
+    $checkBoxRAP.UseVisualStyleBackColor = $True
     $checkBoxRAP.add_MouseHover($ShowHelp)
 
     # BAM Checkbox
     $checkBoxBAM.Location = New-Object System.Drawing.Point(55, 650)
     $checkBoxBAM.Size = New-Object System.Drawing.Size(220, 17)
-    $checkBoxBAM.AutoSize = true
+    $checkBoxBAM.AutoSize = $True
     $checkBoxBAM.Name = "checkBoxBAM"
     $checkBoxBAM.TabIndex = 4
     $checkBoxBAM.Text = "Background Activity Moderator (BAM)"
-    $checkBoxBAM.UseVisualStyleBackColor = true
+    $checkBoxBAM.UseVisualStyleBackColor = $True
     $checkBoxBAM.add_MouseHover($ShowHelp)
 
     # System Info Checkbox
     $checkBoxSYS.Location = New-Object System.Drawing.Point(55, 670)
     $checkBoxSYS.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxSYS.AutoSize = true
+    $checkBoxSYS.AutoSize = $True
     $checkBoxSYS.Name = "checkBoxSYS"
     $checkBoxSYS.TabIndex = 4
     $checkBoxSYS.Text = "System Info"
-    $checkBoxSYS.UseVisualStyleBackColor = true
+    $checkBoxSYS.UseVisualStyleBackColor = $True
     $checkBoxSYS.add_MouseHover($ShowHelp)
 
     # Last Activity Checkbox
     $checkBoxLAC.Location = New-Object System.Drawing.Point(55, 690)
     $checkBoxLAC.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxLAC.AutoSize = true
+    $checkBoxLAC.AutoSize = $True
     $checkBoxLAC.Name = "checkBoxLAC"
     $checkBoxLAC.TabIndex = 4
     $checkBoxLAC.Text = "Last Activity"
-    $checkBoxLAC.UseVisualStyleBackColor = true
+    $checkBoxLAC.UseVisualStyleBackColor = $True
     $checkBoxLAC.add_MouseHover($ShowHelp)
 
     # Autorun Files Checkbox
     $checkBoxAFI.Location = New-Object System.Drawing.Point(55, 710)
     $checkBoxAFI.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxAFI.AutoSize = true
+    $checkBoxAFI.AutoSize = $True
     $checkBoxAFI.Name = "checkBoxAFI"
     $checkBoxAFI.TabIndex = 4
     $checkBoxAFI.Text = "Autorun Files"
-    $checkBoxAFI.UseVisualStyleBackColor = true
+    $checkBoxAFI.UseVisualStyleBackColor = $True
     $checkBoxAFI.add_MouseHover($ShowHelp)
 
     # groupBox Online
@@ -4857,281 +4862,281 @@ Function Control-GUI {
     # Hives Checkbox
     $checkBoxHIV.Location = New-Object System.Drawing.Point(330, 370)
     $checkBoxHIV.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxHIV.AutoSize = true
+    $checkBoxHIV.AutoSize = $True
     $checkBoxHIV.Name = "checkBoxHIV"
     $checkBoxHIV.TabIndex = 4
     $checkBoxHIV.Text = "Hives"
-    $checkBoxHIV.UseVisualStyleBackColor = true
+    $checkBoxHIV.UseVisualStyleBackColor = $True
     $checkBoxHIV.add_MouseHover($ShowHelp)
     
     # Event Log Checkbox
     $checkBoxEVT.Location = New-Object System.Drawing.Point(330, 390)
     $checkBoxEVT.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxEVT.AutoSize = true
+    $checkBoxEVT.AutoSize = $True
     $checkBoxEVT.Name = "checkBoxEVT"
     $checkBoxEVT.TabIndex = 4
     $checkBoxEVT.Text = "Event Log Files"
-    $checkBoxEVT.UseVisualStyleBackColor = true
+    $checkBoxEVT.UseVisualStyleBackColor = $True
     $checkBoxEVT.add_MouseHover($ShowHelp)
     
     # Format Checkbox
     $checkBoxFIL.Location = New-Object System.Drawing.Point(330, 410)
     $checkBoxFIL.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxFIL.AutoSize = true
+    $checkBoxFIL.AutoSize = $True
     $checkBoxFIL.Name = "checkBoxFIL"
     $checkBoxFIL.TabIndex = 4
     $checkBoxFIL.Text = "Files Lists"
-    $checkBoxFIL.UseVisualStyleBackColor = true
+    $checkBoxFIL.UseVisualStyleBackColor = $True
     $checkBoxFIL.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxDEX.Location = New-Object System.Drawing.Point(330, 430)
     $checkBoxDEX.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxDEX.AutoSize = true
+    $checkBoxDEX.AutoSize = $True
     $checkBoxDEX.Name = "checkBoxDEX"
     $checkBoxDEX.TabIndex = 4
     $checkBoxDEX.Text = "Dangerous Extensions"
-    $checkBoxDEX.UseVisualStyleBackColor = true
+    $checkBoxDEX.UseVisualStyleBackColor = $True
     $checkBoxDEX.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxPRF.Location = New-Object System.Drawing.Point(330, 450)
     $checkBoxPRF.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxPRF.AutoSize = true
+    $checkBoxPRF.AutoSize = $True
     $checkBoxPRF.Name = "checkBoxPRF"
     $checkBoxPRF.TabIndex = 4
     $checkBoxPRF.Text = "Prefetch Files"
-    $checkBoxPRF.UseVisualStyleBackColor = true
+    $checkBoxPRF.UseVisualStyleBackColor = $True
     $checkBoxPRF.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxWSE.Location = New-Object System.Drawing.Point(330, 470)
     $checkBoxWSE.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxWSE.AutoSize = true
+    $checkBoxWSE.AutoSize = $True
     $checkBoxWSE.Name = "checkBoxWSE"
     $checkBoxWSE.TabIndex = 4
     $checkBoxWSE.Text = "Windows Search"
-    $checkBoxWSE.UseVisualStyleBackColor = true
+    $checkBoxWSE.UseVisualStyleBackColor = $True
     $checkBoxWSE.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxEET.Location = New-Object System.Drawing.Point(330, 490)
     $checkBoxEET.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxEET.AutoSize = true
+    $checkBoxEET.AutoSize = $True
     $checkBoxEET.Name = "checkBoxEET"
     $checkBoxEET.TabIndex = 4
     $checkBoxEET.Text = "ETW and ETL Files"
-    $checkBoxEET.UseVisualStyleBackColor = true
+    $checkBoxEET.UseVisualStyleBackColor = $True
     $checkBoxEET.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxJLI.Location = New-Object System.Drawing.Point(330, 510)
     $checkBoxJLI.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxJLI.AutoSize = true
+    $checkBoxJLI.AutoSize = $True
     $checkBoxJLI.Name = "checkBoxJLI"
     $checkBoxJLI.TabIndex = 4
     $checkBoxJLI.Text = "JumpLists"
-    $checkBoxJLI.UseVisualStyleBackColor = true
+    $checkBoxJLI.UseVisualStyleBackColor = $True
     $checkBoxJLI.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxTIC.Location = New-Object System.Drawing.Point(330, 530)
     $checkBoxTIC.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxTIC.AutoSize = true
+    $checkBoxTIC.AutoSize = $True
     $checkBoxTIC.Name = "checkBoxTIC"
     $checkBoxTIC.TabIndex = 4
     $checkBoxTIC.Text = "ThumbCache `& IconCache"
-    $checkBoxTIC.UseVisualStyleBackColor = true
+    $checkBoxTIC.UseVisualStyleBackColor = $True
     $checkBoxTIC.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxFSF.Location = New-Object System.Drawing.Point(330, 550)
     $checkBoxFSF.Size = New-Object System.Drawing.Size(240, 17)
-    $checkBoxFSF.AutoSize = true
+    $checkBoxFSF.AutoSize = $True
     $checkBoxFSF.Name = "checkBoxFSF"
     $checkBoxFSF.TabIndex = 4
     $checkBoxFSF.Text = "`$MFT, `$UsnJrnl, `$LogFile"
-    $checkBoxFSF.UseVisualStyleBackColor = true
+    $checkBoxFSF.UseVisualStyleBackColor = $True
     $checkBoxFSF.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxMSF.Location = New-Object System.Drawing.Point(330, 570)
     $checkBoxMSF.Size = New-Object System.Drawing.Size(240, 17)
-    $checkBoxMSF.AutoSize = true
+    $checkBoxMSF.AutoSize = $True
     $checkBoxMSF.Name = "checkBoxMSF"
     $checkBoxMSF.TabIndex = 4
     $checkBoxMSF.Text = "Hiberfil.sys, Pagefile.sys, Swapfile.sys"
-    $checkBoxMSF.UseVisualStyleBackColor = true
+    $checkBoxMSF.UseVisualStyleBackColor = $True
     $checkBoxMSF.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxTLH.Location = New-Object System.Drawing.Point(330, 590)
     $checkBoxTLH.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxTLH.AutoSize = true
+    $checkBoxTLH.AutoSize = $True
     $checkBoxTLH.Name = "checkBoxTLH"
     $checkBoxTLH.TabIndex = 4
     $checkBoxTLH.Text = "Timeline"
-    $checkBoxTLH.UseVisualStyleBackColor = true
+    $checkBoxTLH.UseVisualStyleBackColor = $True
     $checkBoxTLH.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxTHA.Location = New-Object System.Drawing.Point(330, 610)
     $checkBoxTHA.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxTHA.AutoSize = true
+    $checkBoxTHA.AutoSize = $True
     $checkBoxTHA.Name = "checkBoxTHA"
     $checkBoxTHA.TabIndex = 4
     $checkBoxTHA.Text = "Text Harvester"
-    $checkBoxTHA.UseVisualStyleBackColor = true
+    $checkBoxTHA.UseVisualStyleBackColor = $True
     $checkBoxTHA.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxSRU.Location = New-Object System.Drawing.Point(330, 630)
     $checkBoxSRU.Size = New-Object System.Drawing.Size(240, 17)
-    $checkBoxSRU.AutoSize = true
+    $checkBoxSRU.AutoSize = $True
     $checkBoxSRU.Name = "checkBoxSRU"
     $checkBoxSRU.TabIndex = 4
     $checkBoxSRU.Text = "System Resource Usage Monitor (SRUM)"
-    $checkBoxSRU.UseVisualStyleBackColor = true
+    $checkBoxSRU.UseVisualStyleBackColor = $True
     $checkBoxSRU.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxCRE.Location = New-Object System.Drawing.Point(330, 650)
     $checkBoxCRE.Size = New-Object System.Drawing.Size(200, 17)
-    $checkBoxCRE.AutoSize = true
+    $checkBoxCRE.AutoSize = $True
     $checkBoxCRE.Name = "checkBoxCRE"
     $checkBoxCRE.TabIndex = 4
     $checkBoxCRE.Text = "Credentials"
-    $checkBoxCRE.UseVisualStyleBackColor = true
+    $checkBoxCRE.UseVisualStyleBackColor = $True
     $checkBoxCRE.add_MouseHover($ShowHelp)
     
     # Format Checkbox
     $checkBoxSFI.Location = New-Object System.Drawing.Point(330, 670)
     $checkBoxSFI.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxSFI.AutoSize = true
+    $checkBoxSFI.AutoSize = $True
     $checkBoxSFI.Name = "checkBoxSFI"
     $checkBoxSFI.TabIndex = 4
     $checkBoxSFI.Text = "Signed Files"
-    $checkBoxSFI.UseVisualStyleBackColor = true
+    $checkBoxSFI.UseVisualStyleBackColor = $True
     $checkBoxSFI.add_MouseHover($ShowHelp)
     
     # Format Checkbox
     $checkBoxSKY.Location = New-Object System.Drawing.Point(570, 370)
     $checkBoxSKY.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxSKY.AutoSize = true
+    $checkBoxSKY.AutoSize = $True
     $checkBoxSKY.Name = "checkBoxSKY"
     $checkBoxSKY.TabIndex = 4
     $checkBoxSKY.Text = "Skype"
-    $checkBoxSKY.UseVisualStyleBackColor = true
+    $checkBoxSKY.UseVisualStyleBackColor = $True
     $checkBoxSKY.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxEMA.Location = New-Object System.Drawing.Point(570, 390)
     $checkBoxEMA.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxEMA.AutoSize = true
+    $checkBoxEMA.AutoSize = $True
     $checkBoxEMA.Name = "checkBoxEMA"
     $checkBoxEMA.TabIndex = 4
     $checkBoxEMA.Text = "Email files"
-    $checkBoxEMA.UseVisualStyleBackColor = true
+    $checkBoxEMA.UseVisualStyleBackColor = $True
     $checkBoxEMA.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxCHR.Location = New-Object System.Drawing.Point(570, 430)
     $checkBoxCHR.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxCHR.AutoSize = true
+    $checkBoxCHR.AutoSize = $True
     $checkBoxCHR.Name = "checkBoxCHR"
     $checkBoxCHR.TabIndex = 4
     $checkBoxCHR.Text = "Chrome"
-    $checkBoxCHR.UseVisualStyleBackColor = true
+    $checkBoxCHR.UseVisualStyleBackColor = $True
     $checkBoxCHR.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxMFI.Location = New-Object System.Drawing.Point(570, 450)
     $checkBoxMFI.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxMFI.AutoSize = true
+    $checkBoxMFI.AutoSize = $True
     $checkBoxMFI.Name = "checkBoxMFI"
     $checkBoxMFI.TabIndex = 4
     $checkBoxMFI.Text = "Firefox"
-    $checkBoxMFI.UseVisualStyleBackColor = true
+    $checkBoxMFI.UseVisualStyleBackColor = $True
     $checkBoxMFI.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxIEX.Location = New-Object System.Drawing.Point(570, 470)
     $checkBoxIEX.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxIEX.AutoSize = true
+    $checkBoxIEX.AutoSize = $True
     $checkBoxIEX.Name = "checkBoxIEX"
     $checkBoxIEX.TabIndex = 4
     $checkBoxIEX.Text = "Internet Explorer"
-    $checkBoxIEX.UseVisualStyleBackColor = true
+    $checkBoxIEX.UseVisualStyleBackColor = $True
     $checkBoxIEX.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxEDG.Location = New-Object System.Drawing.Point(570, 490)
     $checkBoxEDG.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxEDG.AutoSize = true
+    $checkBoxEDG.AutoSize = $True
     $checkBoxEDG.Name = "checkBoxEDG"
     $checkBoxEDG.TabIndex = 4
     $checkBoxEDG.Text = "EDGE"
-    $checkBoxEDG.UseVisualStyleBackColor = true
+    $checkBoxEDG.UseVisualStyleBackColor = $True
     $checkBoxEDG.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxSAF.Location = New-Object System.Drawing.Point(570, 510)
     $checkBoxSAF.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxSAF.AutoSize = true
+    $checkBoxSAF.AutoSize = $True
     $checkBoxSAF.Name = "checkBoxSAF"
     $checkBoxSAF.TabIndex = 4
     $checkBoxSAF.Text = "Safari"
-    $checkBoxSAF.UseVisualStyleBackColor = true
+    $checkBoxSAF.UseVisualStyleBackColor = $True
     $checkBoxSAF.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxOPE.Location = New-Object System.Drawing.Point(570, 530)
     $checkBoxOPE.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxOPE.AutoSize = true
+    $checkBoxOPE.AutoSize = $True
     $checkBoxOPE.Name = "checkBoxOPE"
     $checkBoxOPE.TabIndex = 4
     $checkBoxOPE.Text = "Opera"
-    $checkBoxOPE.UseVisualStyleBackColor = true
+    $checkBoxOPE.UseVisualStyleBackColor = $True
     $checkBoxOPE.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxTOR.Location = New-Object System.Drawing.Point(570, 550)
     $checkBoxTOR.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxTOR.AutoSize = true
+    $checkBoxTOR.AutoSize = $True
     $checkBoxTOR.Name = "checkBoxTOR"
     $checkBoxTOR.TabIndex = 4
     $checkBoxTOR.Text = "TOR"
-    $checkBoxTOR.UseVisualStyleBackColor = true
+    $checkBoxTOR.UseVisualStyleBackColor = $True
     $checkBoxTOR.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxCOD.Location = New-Object System.Drawing.Point(570, 590)
     $checkBoxCOD.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxCOD.AutoSize = true
+    $checkBoxCOD.AutoSize = $True
     $checkBoxCOD.Name = "checkBoxCOD"
     $checkBoxCOD.TabIndex = 4
     $checkBoxCOD.Text = "OneDrive"
-    $checkBoxCOD.UseVisualStyleBackColor = true
+    $checkBoxCOD.UseVisualStyleBackColor = $True
     $checkBoxCOD.add_MouseHover($ShowHelp)
 
     # Format Checkbox
     $checkBoxCGD.Location = New-Object System.Drawing.Point(570, 610)
     $checkBoxCGD.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxCGD.AutoSize = true
+    $checkBoxCGD.AutoSize = $True
     $checkBoxCGD.Name = "checkBoxCGD"
     $checkBoxCGD.TabIndex = 4
     $checkBoxCGD.Text = "GoogleDrive"
-    $checkBoxCGD.UseVisualStyleBackColor = true
+    $checkBoxCGD.UseVisualStyleBackColor = $True
     $checkBoxCGD.add_MouseHover($ShowHelp)
 
     # DropBox Checkbox
     $checkBoxCDB.Location = New-Object System.Drawing.Point(570, 630)
     $checkBoxCDB.Size = New-Object System.Drawing.Size(150, 17)
-    $checkBoxCDB.AutoSize = true
+    $checkBoxCDB.AutoSize = $True
     $checkBoxCDB.Name = "checkBoxCDB"
     $checkBoxCDB.TabIndex = 4
     $checkBoxCDB.Text = "DropBox"
-    $checkBoxCDB.UseVisualStyleBackColor = true
+    $checkBoxCDB.UseVisualStyleBackColor = $True
     $checkBoxCDB.add_MouseHover($ShowHelp)
 
 
@@ -5169,7 +5174,7 @@ Function Control-GUI {
 
     # Add to Form: Live Options
     $form.Controls.AddRange(@($checkBoxRAM,$checkBoxNET,$checkBoxSAP,$checkBoxSTA,$checkBoxCPH,$checkBoxINS,$checkBoxUGR,$checkBoxPER,$checkBoxUSB))
-    $form.Controls.AddRange(@($checkBoxDEV,$checkBoxSEC,$checkBoxMRU,$checkBoxSHI,$checkBoxRAP,$checkBoxBAM,$checkBoxSYS,$checkBoxLAC,$checkBoxAFI ))
+    $form.Controls.AddRange(@($checkBoxPNP,$checkBoxSEC,$checkBoxMRU,$checkBoxSHI,$checkBoxRAP,$checkBoxBAM,$checkBoxSYS,$checkBoxLAC,$checkBoxAFI ))
     $form.Controls.Add($groupBoxOnline)
 
     # Add to Form: Offline Options
@@ -5202,51 +5207,11 @@ Function Control-GUI {
     $form.Controls.Add($checkBoxCDB)
     $form.Controls.Add($checkBoxSFI)
     $form.Controls.Add($groupBoxOffline)
-    
-    
 
-    #######################################################################################################################################
-    
-    $OKButton = New-Object System.Windows.Forms.Button
-    $OKButton.Location = New-Object System.Drawing.Point(75,120)
-    $OKButton.Size = New-Object System.Drawing.Size(75,23)
-    $OKButton.Text = 'OK'
-    $OKButton.DialogResult = [System.Windows.Forms.DialogResult]::OK
-    $form.AcceptButton = $OKButton
-    #$form.Controls.Add($OKButton)
-
-    $CancelButton = New-Object System.Windows.Forms.Button
-    $CancelButton.Location = New-Object System.Drawing.Point(150,120)
-    $CancelButton.Size = New-Object System.Drawing.Size(75,23)
-    $CancelButton.Text = 'Cancel'
-    $CancelButton.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
-    $form.CancelButton = $CancelButton
-    #$form.Controls.Add($CancelButton)
-
-    $label = New-Object System.Windows.Forms.Label
-    $label.Location = New-Object System.Drawing.Point(10,20)
-    $label.Size = New-Object System.Drawing.Size(280,20)
-    $label.Text = 'Please enter the information in the space below:'
-    #$form.Controls.Add($label)
-
-    $textBox = New-Object System.Windows.Forms.TextBox
-    $textBox.Location = New-Object System.Drawing.Point(10,40)
-    $textBox.Size = New-Object System.Drawing.Size(260,20)
-    #$form.Controls.Add($textBox)
-    
-    
     $form.Topmost = $true
 
     $form.Add_Shown({$textBox.Select()})
     $result = $form.ShowDialog()
-
-    if ($result -eq [System.Windows.Forms.DialogResult]::OK)
-    {
-        $x = $textBox.Text
-        $x
-    }
-    
-
 }
 
 
@@ -5417,9 +5382,9 @@ Function Execute-Format {
 <# Test if specific value exists in the registry #>
 Function Test-RegistryValue {
     param (
-        [parameter(Mandatory=$true)]
+        [parameter(Mandatory=$True)]
         [ValidateNotNullOrEmpty()]$Path,
-        [parameter(Mandatory=$true)]
+        [parameter(Mandatory=$True)]
         [ValidateNotNullOrEmpty()]$Value
     )
 
@@ -5700,7 +5665,7 @@ Function Invoke-WCMDump{
 Function Check-Variables {
     
     <# Check DEVELOPER MODE and apply configurations if true #>    
-    if($DevMode -eq $true){
+    if($DevMode -eq $True){
         $Global:Source="C:"         
         $Global:Destiny="D:\TFM\Inquisitor"
         $Global:FormatType="No"
@@ -5791,27 +5756,21 @@ Function Start-Execution {
 
     if($GUI)
     {
+        echo $GUI
         Control-GUI
         exit
     }
 
     if( -not $GUI)
     {
-        Check-Variables
-        Show-Simple-Options-Resume
+        Check-Variables # In GUI the control is done in the form
+        Show-Simple-Options-Resume # In GUI this is not needed, because the info is in the GUI
         Execute-Format
                 
         <# Creates base folder to the collect data. The folder name is the name of the computer where the data is being collected #>
         if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME > $null }
-
-        Write-Host "[+] Start to Collect computer info data."  -ForegroundColor Magenta
-        $TotalScriptTime = [Diagnostics.Stopwatch]::StartNew()
                 
         Control-NOGUI
-    
-        $TotalScriptTime.Stop()
-        Write-Host "[*] TOTAL Script Execution time: $($TotalScriptTime.Elapsed)"  -ForegroundColor Magenta
-        Write-Host "[*] Finished to collect all the Evidence!"   -ForegroundColor Magenta
     
         exit
     }
