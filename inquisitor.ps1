@@ -2117,10 +2117,11 @@ Function Collect-Hives {
 
     try{
         Write-Host "[+] Collecting HIVES: NTUSER.DAT ..." -ForegroundColor Green
-        foreach($u in $USERS){
+        foreach($u in $USERS)
+        {
             if($OS -eq "XP")  <# TODO: NOT SURE IF THIS WORKS, CHECK THE OS RESULT IN A XP MACHINE TO VERIFY #>
             { 
-                & $RAW_EXE /FileNamePath:"$Global:Source\Documents and Settings\$u\NTUSER.dat" /OutputPath:"$Global:Destiny\$HOSTNAME\HIVES\$u" /OutputName:NTUSER.DAT > $null
+                & $RAW_EXE /FileNamePath:$Global:Source\Documents and Settings\$u\NTUSER.dat /OutputPath:$Global:Destiny\$HOSTNAME\HIVES\$u /OutputName:NTUSER.DAT > $null
             } 
             else 
             {
@@ -2128,7 +2129,9 @@ Function Collect-Hives {
                 {
                     if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\HIVES\$u ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\HIVES\$u > $null }
 
-                    & $RAW_EXE /FileNamePath:"$Global:Source\Users\$u\NTUSER.dat" /OutputPath:"$Global:Destiny\$HOSTNAME\HIVES\$u" /OutputName:NTUSER.DAT > $null
+                    
+
+                    & $RAW_EXE /FileNamePath:$Global:Source\Users\$u\NTUSER.dat /OutputPath:$Global:Destiny\$HOSTNAME\HIVES\$u /OutputName:NTUSER.DAT > $null
                 }
             }
         }
@@ -4353,8 +4356,18 @@ Function Control-GUI {
         {
             if($comboBoxSource.Text -ne "" -and $textBoxDestiny.Text -ne "")
             {
-                $Global:Source = $($comboBoxSource.Text)
-                $Global:Destiny = $($textBoxDestiny.Text)
+                Write-Host "0: $($comboBoxSource.Text)" -ForegroundColor Red
+                $temp = $($($comboBoxSource.Text)).Split("\")[0] ; Write-Host "1.1: $temp" -ForegroundColor Red
+                $temp = $($($comboBoxSource.Text).Split("\"))[0] ; Write-Host "1.2: $temp" -ForegroundColor Red
+                $temp = $($comboBoxSource.Text).Split("\")[0] ; Write-Host "1.3: $temp" -ForegroundColor Red
+                $temp = $($comboBoxSource.Text).Split("\")[0] ; Write-Host "1.4: $temp" -ForegroundColor Red
+                
+                Write-Host "2: $($($comboBoxSource.Text).Split("\")[1])" -ForegroundColor Red
+                $Global:Source = $($($comboBoxSource.Text)).Split("\")[0]
+                $Global:Destiny = $($textBoxDestiny.Text) 
+                Write-Host "GLOBAL: $Global:Source" -ForegroundColor Red
+                Write-Host "GLOBAL: $Global:Destiny" -ForegroundColor Red
+                Write-Host "GLOBAL: -----------------------------" -ForegroundColor Red
                 
                 if($checkBoxRAM.Checked -eq $True) { $Global:RAM = $True }
                 if($checkBoxNET.Checked -eq $True) { $Global:NET = $True }
@@ -5208,9 +5221,9 @@ Function Control-GUI {
     $form.Controls.Add($checkBoxSFI)
     $form.Controls.Add($groupBoxOffline)
 
-    $form.Topmost = $true
+    $form.Topmost = $false
 
-    $form.Add_Shown({$textBox.Select()})
+    #$form.Add_Shown({$textBox.Select()})
     $result = $form.ShowDialog()
 }
 
