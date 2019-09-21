@@ -15,7 +15,7 @@
     ▓                            ## |                                                              ▒
     ▓                            ## |                           Forensic artifacts collector       ▒
     ▓                            \__|                           By:      f4d0                      ▒
-    ▓                                                           Version: 0.7                       ▒ 
+    ▓                                                           Version: 1.0                       ▒ 
     ▓                                                                                              ▒
     ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
@@ -445,6 +445,8 @@ Function Collect-Network-Information {
     
     if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Network" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Network" > $null }
     
+    Write-Host "[+] Collecting Network Information ..." -ForegroundColor Green
+
     Write-Host "`t○ Collecting TCP Connections ..." -ForegroundColor Green
     try
     {
@@ -3116,6 +3118,8 @@ Function Collect-Email-Files {
 Function Collect-Chrome-Data {
     
     # TODO: parse SQLite tables to CSV files
+    # sqlite3.exe -header -csv places.sqlite "select * from moz_places;" > places.csv
+    # https://www.sqlitetutorial.net/sqlite-tutorial/sqlite-export-csv/
 
     Write-Host "[+] Collecting Chrome files ..." -ForegroundColor Green
 
@@ -3184,7 +3188,7 @@ Function Collect-Chrome-Data {
                     # In case Default profile exists
                     if(Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default")
                     {
-                        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default" > $null }
+                        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default\Raw" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default\Raw" > $null }
 
                         Write-Host "`t`t○ `"Default profile`" found ..." -ForegroundColor Green
 
@@ -3192,7 +3196,7 @@ Function Collect-Chrome-Data {
                         {
                             if (Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\$file")
                             {
-                                copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default"
+                                copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\Default\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\Default\Raw"
                             }
                         }
                     }
@@ -3204,7 +3208,7 @@ Function Collect-Chrome-Data {
                         {
                             if(Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)")
                             {
-                                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)" > $null }
+                                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw" > $null }
 
                                 Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
@@ -3212,7 +3216,7 @@ Function Collect-Chrome-Data {
                                 {
                                     if (Test-Path "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)\$file")
                                     {
-                                        copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)"
+                                        copy "$Global:Source\Users\$u\AppData\Local\Google\Chrome\User Data\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw"
                                     }
                                 }
                             }
@@ -3228,6 +3232,22 @@ Function Collect-Chrome-Data {
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\")){
             Write-Host "`t[i] There is no Chrome Browser in the System for user $u ..." -ForegroundColor Yellow
+        }
+        else # If there is data, lets parse it
+        {
+            Write-Host "`t○ Parsing data ..." -ForegroundColor Green
+
+            Get-ChildItem "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\" | ForEach-Object {
+                
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed" > $null }
+
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history `"select * from urls;`""                    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_urls.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history `"select * from keyword_search_terms;`""    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_keyword_search-terms.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history `"select * from downloads;`""               > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_downloads.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history `"select * from downloads_url_chains;`""    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_download_url_chains.csv"
+
+
+            }
         }
     }
 }
@@ -3256,7 +3276,7 @@ Function Collect-Firefox-Data {
                         
                         if(Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)")
                         {
-                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)" > $null }
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw" > $null }
 
                             Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
@@ -3264,7 +3284,7 @@ Function Collect-Firefox-Data {
                             {
                                 if (Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)\$file")
                                 {
-                                    copy "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)"
+                                    copy "$Global:Source\Documents and Settings\$u\Application Data\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw"
                                 }
                             }
                         }
@@ -3288,7 +3308,7 @@ Function Collect-Firefox-Data {
                         
                         if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)")
                         {
-                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)" > $null }
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw" > $null }
 
                             Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
@@ -3296,7 +3316,7 @@ Function Collect-Firefox-Data {
                             {
                                 if (Test-Path "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)\$file")
                                 {
-                                    copy "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)"
+                                    copy "$Global:Source\Users\$u\AppData\Roaming\Mozilla\Firefox\Profiles\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw"
                                 }
                             }
                         }
@@ -3312,6 +3332,20 @@ Function Collect-Firefox-Data {
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\")){
             Write-Host "`t[i] There is no Firefox Browser in the System for user $u ..." -ForegroundColor Yellow
+        }
+        else # If there is data, lets parse it
+        {
+            Write-Host "`t○ Parsing data ..." -ForegroundColor Green
+
+            Get-ChildItem "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)" | ForEach-Object {
+                
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed" > $null }
+
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw\places.sqlite `"select * from moz_bookmarks;`""                    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed\places_bookmarks.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw\places.sqlite `"select * from moz_origins;`""                      > "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed\places_origins.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw\places.sqlite `"select * from moz_places;`""                       > "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed\places_history.csv"
+
+            }
         }
     }
 }
@@ -3539,7 +3573,7 @@ Function Collect-Opera-Data {
                         
                         if(Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Opera Software\$($_.Name)")
                         {
-                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)" > $null }
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw" > $null }
 
                             Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
@@ -3547,7 +3581,7 @@ Function Collect-Opera-Data {
                             {
                                 if (Test-Path "$Global:Source\Documents and Settings\$u\Application Data\Opera Software\$($_.Name)\$file")
                                 {
-                                    copy "$Global:Source\Documents and Settings\$u\Application Data\Opera Software\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)"
+                                    copy "$Global:Source\Documents and Settings\$u\Application Data\Opera Software\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw"
                                 }
                             }
                         }
@@ -3571,7 +3605,7 @@ Function Collect-Opera-Data {
                         
                         if(Test-Path "$Global:Source\Users\$u\AppData\Roaming\Opera Software\$($_.Name)")
                         {
-                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)" > $null }
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw" > $null }
 
                             Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
@@ -3579,7 +3613,7 @@ Function Collect-Opera-Data {
                             {
                                 if (Test-Path "$Global:Source\Users\$u\AppData\Roaming\Opera Software\$($_.Name)\$file")
                                 {
-                                    copy "$Global:Source\Users\$u\AppData\Roaming\Opera Software\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)"
+                                    copy "$Global:Source\Users\$u\AppData\Roaming\Opera Software\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw"
                                 }
                             }
                         }
@@ -3594,6 +3628,22 @@ Function Collect-Opera-Data {
 
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\")){
             Write-Host "`t[i] There is no Opera Browser in the System for user $u ..." -ForegroundColor Yellow
+        }
+        else # If there is data, lets parse it
+        {
+            Write-Host "`t○ Parsing data ..." -ForegroundColor Green
+
+            Get-ChildItem "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\" | ForEach-Object {
+                
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Parsed" > $null }
+
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw\history`" `"select * from urls;`""                    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Parsed\history_urls.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw\history`" `"select * from keyword_search_terms;`""    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Parsed\history_keyword_search-terms.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw\history`" `"select * from downloads;`""               > "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Parsed\history_downloads.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Raw\history`" `"select * from downloads_url_chains;`""    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u\$($_.Name)\Parsed\history_download_url_chains.csv"
+
+
+            }
         }
     }
 }
@@ -3624,7 +3674,7 @@ Function Collect-Tor-Data {
                     {
                         if(Test-Path "$pathTOR\Browser\TorBrowser\Data\Browser\$($_.Name)")
                         {
-                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)" > $null }
+                            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Raw" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Raw" > $null }
 
                             Write-Host "`t`t○ `"$($_.Name)`" found ..." -ForegroundColor Green
 
@@ -3632,7 +3682,7 @@ Function Collect-Tor-Data {
                             {
                                 if (Test-Path "$pathTOR\Browser\TorBrowser\Data\Browser\$($_.Name)\$file")
                                 {
-                                    copy "$pathTOR\Browser\TorBrowser\Data\Browser\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)"
+                                    copy "$pathTOR\Browser\TorBrowser\Data\Browser\$($_.Name)\$file" "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Raw"
                                 }
                             }
                         }
@@ -3647,6 +3697,23 @@ Function Collect-Tor-Data {
             #break #continue #return #continue # After found finish searching # TODO: Whether Continue whether Break it breaks the code execution of the script
         }
     }
+
+    if (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR")
+    {
+        Write-Host "`t○ Parsing data ..." -ForegroundColor Green
+
+        Get-ChildItem "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\" -Directory 2> $null | ForEach-Object {
+
+            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Parsed" > $null }
+
+            & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Raw\places.sqlite `"select * from moz_bookmarks;`""                    > "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Parsed\places_bookmarks.csv"
+            & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Raw\places.sqlite `"select * from moz_origins;`""                      > "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Parsed\places_origins.csv"
+            & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Raw\places.sqlite `"select * from moz_places;`""                       > "$Global:Destiny\$HOSTNAME\WebBrowsers\TOR\$($_.Name)\Parsed\places_history.csv"
+            
+        }
+    }
+
+
 
     # The Below only if Break, continue or return work in finishing this foreach
     # Write-Host "`t○ Tor NOT found in the System ..." -ForegroundColor Yellow 
@@ -3720,8 +3787,8 @@ Function Collect-Cloud-GoogleDrive-Logs {
             try 
             {
                 Write-Host "`t`t○ DB files" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.db" "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" > $null
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw" > $null }
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.db" "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw" > $null
             } 
             catch 
             {
@@ -3732,14 +3799,28 @@ Function Collect-Cloud-GoogleDrive-Logs {
             try 
             {
                 Write-Host "`t`t○ LOG files" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.log" "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\." > $null
+                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw" > $null }
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Google\Drive\user_default\*.log" "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw\." > $null
             } 
             catch 
             {
                 Report-Error -evidence "Google Drive LOG file"
             }
         }
+    }
+
+    # PARSING DB FILES 
+    foreach($u in $USERS)
+    {
+        Write-Host "`t○ Parsing GoogleDrive DB files ..." -ForegroundColor Green
+
+        Write-Host "`t`t○ From user: $u" -ForegroundColor Green
+
+        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed" > $null }
+
+        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw\snapshot.db `"select * from cloud_entry;`"" > "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed\snapshot_cloud_entry.csv"
+        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw\snapshot.db `"select * from local_entry;`"" > "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed\snapshot_local_entry.csv"
+        
     }
 }
 
@@ -3755,11 +3836,11 @@ Function Collect-Cloud-Dropbox-Logs {
             Write-Host "`t○ From user: $u" -ForegroundColor Green        
             
             # INSTANCE1
-            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance1" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance1" > $null }
+            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1" > $null }
             
             try
             {
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance1\*.dbx" "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance1\." > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance1\*.dbx" "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\." > $null
             } 
             catch 
             {
@@ -3767,11 +3848,11 @@ Function Collect-Cloud-Dropbox-Logs {
             }
             
             # INSTANCE_DB
-            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance_db" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance_db" > $null }
+            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance_db" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance_db" > $null }
 
             try
             {
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance_db\*.dbx" "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance_db\." > $null
+                Copy-Item "$Global:Source\Users\$u\AppData\Local\Dropbox\instance_db\*.dbx" "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance_db\." > $null
             } 
             catch 
             {
@@ -3810,13 +3891,13 @@ Function Collect-Cloud-Dropbox-Logs {
 
         $rootTemp = $Global:Destiny -replace "\\","\\"
 
-        Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance1" -Filter *.dbx | ForEach-Object {
+        Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1" -Filter *.dbx | ForEach-Object {
             try
             {
                 if($_.Extension -ne ".dbx-wal" -and $_.Extension -ne ".dbx-shm" -and $_.BaseName -ne "aggregation")
                 {
                     $bn=$_.BaseName
-                    & $SQL_DBX_EXE -key $ks1_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\instance1\\$bn.db" 
+                    & $SQL_DBX_EXE -key $ks1_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\Raw\\instance1\\$bn.db" 
                 }
             } 
             catch 
@@ -3825,17 +3906,33 @@ Function Collect-Cloud-Dropbox-Logs {
             }
         }
 
-        Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\instance_db" -Filter *.dbx | ForEach-Object {
+        Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance_db" -Filter *.dbx | ForEach-Object {
             try
             {
                 $bn=$_.BaseName
-                & $SQL_DBX_EXE -key $ks_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\instance_db\\$bn.db" 
+                & $SQL_DBX_EXE -key $ks_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\Raw\\instance_db\\$bn.db" 
             } 
             catch 
             {
                 Report-Error -evidence "DropBox File: $_.FullName"
             }
         }
+    }
+
+    # PARSING DB FILES 
+    foreach($u in $USERS)
+    {
+        Write-Host "`t○ Parsing Dropbox DB files ..." -ForegroundColor Green
+
+        Write-Host "`t`t○ From user: $u" -ForegroundColor Green
+
+        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed" > $null }
+
+        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\filecache.db `"select * from file_journal;`"" > "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed\filecache_file_journal.csv"
+        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\filecache.db `"select * from file_journal_fileid;`"" > "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed\filecache_file_journal_fileid.csv"
+        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\filecache.db `"select * from deleted_fileids;`"" > "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed\filecache_deleted_fileids.csv"
+        
+        
     }
 
     Remove-Item -Recurse -Path "$Global:Destiny\$HOSTNAME\z_temp"
@@ -3875,64 +3972,463 @@ Function Control-NOGUI{
 
     # LIVE                                                                                                                                                                                                                        # mm:ss
     
-    if ($All -or $Global:RAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Memory-Dump ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:22 4GB
+    if ($All -or $Global:RAM ) {
+        $time = Get-Date; echo "$time : Start collection of RAM Memory." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Memory-Dump ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of RAM Memory."  >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:22 4GB
 
-    if ($All -or $Global:NET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Network-Information ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:23 - 00:12
-    if ($All -or $Global:SAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Services-and-Processes ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 01:03 - 00:56
-    if ($All -or $Global:STA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Scheduled-Tasks ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # 00:02 - 00:02
-    if ($All -or $Global:CPH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PSCommand-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                # 00:00
-    if ($All -or $Global:INS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Installed-Software ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # 00:11 - 00:09
-    if ($All -or $Global:UGR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Users-Groups ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # 00:00
-    if ($All -or $Global:PER ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Persistence ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:03
-    if ($All -or $Global:USB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-USB-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # 00:00
-    if ($All -or $Global:PNP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-PnPDevices-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # 00:40
-    if ($All -or $Global:SEC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firewall-Config ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # 00:03
+    if ($All -or $Global:NET ) {
+        $time = Get-Date; echo "$time : Start collection of Network Information." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Network-Information ; $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Network Information. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:23 - 00:12
+                 
+    if ($All -or $Global:SAP ) {
+        $time = Get-Date; echo "$time : Start collection of Services and Processes. " >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Services-and-Processes ; $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Services and Processes. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 01:03 - 00:56 
 
-    if ($All -or $Global:MRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MRUs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # 00:25 - 00:17
-    if (         $Global:SHI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Shimcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # ??:??
-    if (         $Global:RAP ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-RecentApps ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # ??:??
+    if ($All -or $Global:STA ) {
+        $time = Get-Date; echo "$time : Start collection of Scheduled Tasks." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Scheduled-Tasks ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Scheduled Tasks. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:02 - 00:02
+                     
+    if ($All -or $Global:CPH ) {
+        $time = Get-Date; echo "$time : Start collection of PowerShell Command History." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-PSCommand-History ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of PowerShell Command History. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+                    
+    if ($All -or $Global:INS ) {
+        $time = Get-Date; echo "$time : Start collection of Installed Software." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Installed-Software ; $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Installed Software. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:11 - 00:09
+                
+    if ($All -or $Global:UGR ) {
+        $time = Get-Date; echo "$time : Start collection of Users and Groups." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Users-Groups ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Users and Groups. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+                        
+    if ($All -or $Global:PER ) {
+        $time = Get-Date; echo "$time : Start collection of Persistence." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Persistence ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Persistence. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:03
 
-    if ($All -or $Global:BAM ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-BAM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                              # 00:00
-    if ($All -or $Global:SYS ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-System-Info ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:02
-    if ($All -or $Global:LAC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Last-Activity ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 00:00
-    if (         $Global:AFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Autorun-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 05:40 - 05:20
+    if ($All -or $Global:USB ) {
+        $time = Get-Date; echo "$time : Start collection of USB Info." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-USB-Info ; $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of USB Info. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+        
+    if ($All -or $Global:PNP ) {
+        $time = Get-Date; echo "$time : Start collection of PnP Devices." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-PnPDevices-Info ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of PnP Devices. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:40
+    
+    if ($All -or $Global:SEC ) {
+        $time = Get-Date; echo "$time : Start collection of Firewall Config." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Firewall-Config ; $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Firewall Config. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:03
+
+    if ($All -or $Global:MRU ) {
+        $time = Get-Date; echo "$time : Start collection of MRUs." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-MRUs ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of MRUs. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:25 - 00:17
+    
+    if (         $Global:SHI ) {
+        $time = Get-Date; echo "$time : Start collection of Shimcache." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Shimcache ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Shimcache. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # ??:??
+    
+    if (         $Global:RAP ) {
+        $time = Get-Date; echo "$time : Start collection of Recent Apps." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-RecentApps ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray  
+        $time = Get-Date; echo "$time : Finish collection of Recent Apps. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # ??:??
+
+    if ($All -or $Global:BAM ) {
+        $time = Get-Date; echo "$time : Start collection of BAM." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-BAM ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of BAM. Elapsed time: $elapsed"
+    } # 00:00
+    
+    if ($All -or $Global:SYS ) {
+        $time = Get-Date; echo "$time : Start collection of System Info." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-System-Info ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of System Info. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:02
+    
+    if ($All -or $Global:LAC ) {
+        $time = Get-Date; echo "$time : Start collection of Last Activity." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Last-Activity ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Last Activity. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00                   
+    
+    if (         $Global:AFI ) {
+        $time = Get-Date; echo "$time : Start collection of Autorun Files." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Autorun-Files ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Autorun Files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 05:40 - 05:20
 
     # OFFLINE
-    if ($All -or $Global:HIV ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Hives ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                            # 02:28
-    if ($All -or $Global:EVT ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-EVTX-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # 00:03
-    if ($All -or $Global:EET ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-ETW-ETL ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # 00:29
-    if ($All -or $Global:FIL ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Files-Lists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 06:19
-    if (         $Global:DEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Dangerous-Extensions ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }             # 07:05 - 04:18
-    if ($All -or $Global:PRF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Prefetch ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # 00:02
-    if ($All -or $Global:WSE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Windows-Search ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                   # 00:08
-    if ($All -or $Global:JLI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-JumpLists ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # 00:18
-    if ($All -or $Global:TIC ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Thumcache-Iconcache ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:05
+    if ($All -or $Global:HIV ) {
+        $time = Get-Date; echo "$time : Start collection of HIVES." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Hives ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of HIVES. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 02:28                           
     
-    if ($All -or $Global:FSF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-FileSystemFiles ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                  # 00:59
-    if ($All -or $Global:MSF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-MemorySupportFiles ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # 00:29
-
-    if ($All -or $Global:TLH ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Timeline ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # 00:02
-
-    if ($All -or $Global:THA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-TextHarvester ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 00:00
-    if ($All -or $Global:SRU ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-SRUM ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                             # 01:02
-    if ($All -or $Global:CRE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Credentials ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:14
+    if ($All -or $Global:EVT ) {
+        $time = Get-Date; echo "$time : Start collection of EVTX Files." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-EVTX-Files ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of EVTX Files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:03 
     
-    if ($All -or $Global:SKY ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Skype-History ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                    # 00:00
-    if ($All -or $Global:EMA ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Email-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 04:00 - 00:25
-
-    if ($All -or $Global:CHR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Chrome-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:00
-    if ($All -or $Global:MFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Firefox-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                     # 00:00
-    if ($All -or $Global:IEX ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-IE-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                          # 00:07
-    if ($All -or $Global:EDG ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-EDGE-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                        # 00:11
-    if ($All -or $Global:SAF ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Safari-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                      # 00:00
-    if ($All -or $Global:OPE ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Opera-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # 00:00
-    if ($All -or $Global:TOR ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Tor-Data ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                         # 00:21
-
-    if ($All -or $Global:COD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-OneDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }              # 00:04
-    if ($All -or $Global:CGD ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-GoogleDrive-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }           # 00:00
-    if ($All -or $Global:CDB ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Cloud-Dropbox-Logs ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }               # 00:02
+    if ($All -or $Global:EET ) {
+        $time = Get-Date; echo "$time : Start collection of ETL and ETW files." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-ETW-ETL ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of ETL and ETW files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:29                         
     
-    if (         $Global:SFI ) {$ScriptTime = [Diagnostics.Stopwatch]::StartNew(); Collect-Sign-Files ; $ScriptTime.Stop(); Write-Host "`t└>Execution time: $($ScriptTime.Elapsed)" -ForegroundColor Gray }                       # 23:36
+    if ($All -or $Global:FIL ) { 
+        $time = Get-Date; echo "$time : Start collection of Files Lists." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Files-Lists ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Files Lists. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 06:19                 
+    
+    if (         $Global:DEX ) {
+        $time = Get-Date; echo "$time : Start collection of Dangerous Extensions." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Dangerous-Extensions ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Dangerous Extensions. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 07:05 - 04:18
+    
+    if ($All -or $Global:PRF ) {
+        $time = Get-Date; echo "$time : Start collection of Prefecth files." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Prefetch ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Prefecth files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:02
+    
+    
+    if ($All -or $Global:WSE ) {
+        $time = Get-Date; echo "$time : Start collection of Windows Search." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Windows-Search ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Windows Search. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:08
+    
+    if ($All -or $Global:JLI ) {
+        $time = Get-Date; echo "$time : Start collection of Jumplists." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-JumpLists ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Jumplists. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:18
+    
+    if ($All -or $Global:TIC ) {
+        $time = Get-Date; echo "$time : Start collection of Thumcache and Iconcache." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Thumcache-Iconcache ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Thumcache and Iconcache. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:05
+        
+    if ($All -or $Global:FSF ) {
+        $time = Get-Date; echo "$time : Start collection of File System Files." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-FileSystemFiles ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of File System Files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:59
+    
+    if ($All -or $Global:MSF ) {
+        $time = Get-Date; echo "$time : Start collection of Memory Support files." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-MemorySupportFiles ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Memory Support files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:29
+
+    if ($All -or $Global:TLH ) {
+        $time = Get-Date; echo "$time : Start collection of Time Line." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Timeline ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Time Line. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:02
+
+    if ($All -or $Global:THA ) {
+        $time = Get-Date; echo "$time : Start collection of Text Harvester." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-TextHarvester ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Text Harvester. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+    
+    if ($All -or $Global:SRU ) {
+        $time = Get-Date; echo "$time : Start collection of SRUM." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-SRUM ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of SRUM. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 01:02
+    
+    if ($All -or $Global:CRE ) {
+        $time = Get-Date; echo "$time : Start collection of Credentials." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Credentials ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Credentials. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:14
+    
+    if ($All -or $Global:SKY ) {
+        $time = Get-Date; echo "$time : Start collection of Skype logs." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Skype-History ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Skype logs. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+    
+    if ($All -or $Global:EMA ) {
+        $time = Get-Date; echo "$time : Start collection of Email files." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Email-Files ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Email files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 04:00 - 00:25
+
+
+    if ($All -or $Global:CHR ) {
+        $time = Get-Date; echo "$time : Start collection of Chrome browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Chrome-Data ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Chrome browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+    
+    if ($All -or $Global:MFI ) {
+        $time = Get-Date; echo "$time : Start collection of Firefox browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Firefox-Data ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Firefox browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+    
+    if ($All -or $Global:IEX ) {
+        $time = Get-Date; echo "$time : Start collection of IE browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-IE-Data ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of IE browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:07
+    
+    if ($All -or $Global:EDG ) {
+        $time = Get-Date; echo "$time : Start collection of Edge browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-EDGE-Data ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Edge browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:11
+    
+    if ($All -or $Global:SAF ) {
+        $time = Get-Date; echo "$time : Start collection of Safari browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Safari-Data ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Safari browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+    
+    if ($All -or $Global:OPE ) {
+        $time = Get-Date; echo "$time : Start collection of Opera browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Opera-Data ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Opera browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+    
+    if ($All -or $Global:TOR ) {
+        $time = Get-Date; echo "$time : Start collection of Tor browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Tor-Data ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Tor browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:21
+
+    
+    if ($All -or $Global:COD ) {
+        $time = Get-Date; echo "$time : Start collection of OneDrive Logs." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Cloud-OneDrive-Logs ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of OneDrive Logs. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:04
+    
+    if ($All -or $Global:CGD ) {
+        $time = Get-Date; echo "$time : Start collection of GoogleDrive logs." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Cloud-GoogleDrive-Logs ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of GoogleDrive logs. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:00
+    
+    if ($All -or $Global:CDB ) {
+        $time = Get-Date; echo "$time : Start collection of Dropbox logs." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Cloud-Dropbox-Logs ; 
+        $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Dropbox logs. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 00:02
+    
+    if (         $Global:SFI ) {
+        $time = Get-Date; echo "$time : Start collection of Signed Files." >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+        $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
+        Collect-Sign-Files ; $ScriptTime.Stop(); 
+        $elapsed = $($ScriptTime.Elapsed)
+        Write-Host "`t└>Execution time: $elapsed" -ForegroundColor Gray 
+        $time = Get-Date; echo "$time : Finish collection of Signed Files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.txt"
+    } # 23:36
 
     Collect-Time -Status Finish
 
@@ -3979,7 +4475,7 @@ Function Control-GUI {
     $Banner.Text += "  ▓                            ## |                                                              ▒`n"
     $Banner.Text += "  ▓                            ## |                              Forensic artifacts collector    ▒`n"
     $Banner.Text += "  ▓                            \__|                              By:      f4d0                   ▒`n"
-    $Banner.Text += "  ▓                                                              Version: 0.7                    ▒`n"
+    $Banner.Text += "  ▓                                                              Version: 1.0                    ▒`n"
     $Banner.Text += "  ▓                                                                                              ▒`n"
     $Banner.Text += "  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒`n"
     
@@ -5347,9 +5843,10 @@ Function Report-Error {
     )
 
     Write-Host "`t[-] Error Collecting $evidence . Check log file for more info."  -ForegroundColor Red
-    echo "`t[-] Error Collecting $evidence :" >> $Global:Destiny\$HOSTNAME\errors.log
-    $_.Exception.GetType().FullName >> $Global:Destiny\$HOSTNAME\errors.log
-    $_.Exception.Message >> $Global:Destiny\$HOSTNAME\errors.log
+    $time = Get-Date
+    echo "$time : Error Collecting $evidence"   >> $Global:Destiny\$HOSTNAME\_logFile.log
+    "`t`t $_.Exception.GetType().FullName"      >> $Global:Destiny\$HOSTNAME\_logFile.log
+    "`t`t $_.Exception.Message"                 >> $Global:Destiny\$HOSTNAME\_logFile.log
 }
 
 <# Show Banner #>
@@ -5370,7 +5867,7 @@ Function Show-Banner {
     Write-Host '  ▓                            ## |                                                              ▒'
     Write-Host '  ▓                            ## |                           Forensic artifacts collector       ▒'
     Write-Host '  ▓                            \__|                           By:      f4d0                      ▒'
-    Write-Host '  ▓                                                           Version: 0.7                       ▒'
+    Write-Host '  ▓                                                           Version: 1.0                       ▒'
     Write-Host '  ▓                                                                                              ▒'
     Write-Host '  ▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒'
 
