@@ -561,7 +561,133 @@ Function Collect-Network-Information {
         cmd.exe /c netsh wlan show all > "$Global:Destiny\$HOSTNAME\Network\WIFI_All_Configuration.txt"
         cmd.exe /c netsh wlan export profile folder=$Global:Destiny\$HOSTNAME\Network\ > $null
 
+        cmd.exe /c netsh wlan show profilesFunction Collect-Network-Information {
+    
+    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Network" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Network" > $null }
+    
+    Write-Host "[+] Collecting Network Information ..." -ForegroundColor Green
+
+    Write-Host "`t○ Collecting TCP Connections ..." -ForegroundColor Green
+    try
+    {
+        Get-NetTCPConnection | Select-Object *, @{Name="Process";Expression={(Get-Process -Id $_.OwningProcess).ProcessName }},@{Name="Proc. Path:";Expression={(Get-Process -Id $_.OwningProcess).Path }}, @{Name="CMD Line:";Expression={(Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $_.OwningProcess).CommandLine }} | Export-Csv "$Global:Destiny\$HOSTNAME\Network\TCP_Connections_All.csv"
+    }
+    catch
+    {
+        Report-Error -evidence "TCP Connections"
+    }
+
+
+    Write-Host "`t○ Collecting UDP Connections ..." -ForegroundColor Green
+    try
+    {
+        Get-NetUDPEndpoint | Select-Object *, @{Name="Process";Expression={(Get-Process -Id $_.OwningProcess).ProcessName }},@{Name="Proc. Path:";Expression={(Get-Process -Id $_.OwningProcess).Path }}, @{Name="CMD Line:";Expression={(Get-CimInstance -ClassName Win32_Process | where ProcessID -eq $_.OwningProcess).CommandLine }} | Export-Csv "$Global:Destiny\$HOSTNAME\Network\UDP_Connections.csv" 
+    }
+    catch
+    {
+        Report-Error -evidence "UDP Connections"
+    }
+    
+    
+    Write-Host "`t○ Collecting NetBIOS Active Connections ..." -ForegroundColor Green
+    try
+    {
+        cmd.exe /c nbtstat -S > "$Global:Destiny\$HOSTNAME\Network\NetBIOS_Active_Connections.txt"
+    }
+    catch
+    {
+        Report-Error -evidence "NetBIOS Active Connections"
+    }
+
+    
+    Write-Host "`t○ Collecting Remote Established Sessions ..." -ForegroundColor Green    
+    try
+    {
+    
+        cmd.exe /c net sessions > "$Global:Destiny\$HOSTNAME\Network\LAN_Established_Sessions.txt"
+    }
+    catch
+    {
+        Report-Error -evidence "Remote Established Sessions"
+    }
+
+    
+    Write-Host "`t○ Collecting Info of Remotely Open/Locked files ..." -ForegroundColor Green
+    try
+    {
+        cmd.exe /c net file > "$Global:Destiny\$HOSTNAME\Network\LAN_Open_Locked_Files.txt"
+    }
+    catch
+    {
+        Report-Error -evidence "Remotely Open/Locked files"
+    }
+
+
+    Write-Host "`t○ Collecting Network Configuration ..." -ForegroundColor Green
+    try
+    {
+        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Network\Raw_Files" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Network\Raw_Files" > $null }
+           
+        Get-NetAdapter | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_Visible_Adapters_Complete.csv"
+        Get-NetAdapter | Select-Object ComponentID, CreationClassName, DeviceID, DriverDescription, DriverFileName, DriverInformation, DriverName, Hidden, ifAlias, ifDesc, LinkLayerAddress | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_Visible_Adapters_Resume.csv"
+        # Get-CimInstance Win32_NetworkAdapterConfiguration | Select-Object * | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_All_Adapters_Complete.csv"
+        # Get-CimInstance Win32_NetworkAdapterConfiguration | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Network_All_Adapters_Resume.csv"
+        
+        cmd.exe /c type "$Global:Source\windows\system32\drivers\etc\hosts" > "$Global:Destiny\$HOSTNAME\Network\Raw_Files\hosts_file"
+
+        Get-CimInstance Win32_MappedLogicalDisk | select Name, ProviderName, FileSystem, Size, FreeSpace | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Mapped_Drives_ps.csv" # cmd.exe /c net use > "$Global:Destiny\$HOSTNAME\Network\Mapped_Drives_cmd.txt"
+        Get-SmbShare | Export-Csv "$Global:Destiny\$HOSTNAME\Network\Shared_Folders.csv" #  Get-CimInstance Win32_Share || cmd.exe /c net share > "$Global:Destiny\$HOSTNAME\Network\Shared_Folders.txt"
+    }
+    catch
+    {
+        Report-Error -evidence "Network Configuration"
+    }
+
+
+    Write-Host "`t○ Collecting DNS Cache ..." -ForegroundColor Green
+    try
+    {
+        Get-DnsClientCache > "$Global:Destiny\$HOSTNAME\Network\DNS_Cache.csv"
+    }
+    catch
+    {
+        Report-Error -evidence "DNS Cache"
+    }
+
+
+    Write-Host "`t○ Collecting ARP Cache ..." -ForegroundColor Green
+    try
+    {
+        cmd.exe /c arp -a > "$Global:Destiny\$HOSTNAME\Network\ARPCache.txt"
+    }
+    catch
+    {
+        Report-Error -evidence "ARP Cache"
+    }
+
+
+    Write-Host "`t○ Collecting Info from WIFI Network ..." -ForegroundColor Green
+    try
+    {
+        cmd.exe /c netsh wlan show all > "$Global:Destiny\$HOSTNAME\Network\WIFI_All_Configuration.txt"
+        cmd.exe /c netsh wlan export profile folder=$Global:Destiny\$HOSTNAME\Network\ > $null
+
         cmd.exe /c netsh wlan show profiles | Select-String "All User Profile" | ForEach {
+             $bla = netsh wlan show profiles name=$(($_ -split ":")[1].Trim()) key="clear"
+             $SSID = ((($bla | Select-String "SSID Name") -split ":")[1].Trim())
+             $KEY = ((($bla | Select-string "Key Content") -split ":")[1].Trim())
+             echo "SSID: $SSID | Key: $KEY" >> "$Global:Destiny\$HOSTNAME\Network\WIFI_Credentials.txt"
+        }  2>$null
+        
+    } 
+    catch 
+    {
+        Report-Error -evidence "WIFI Info"
+    }
+
+
+
+} | Select-String "All User Profile" | ForEach {
              $bla = netsh wlan show profiles name=$(($_ -split ":")[1].Trim()) key="clear"
              $SSID = ((($bla | Select-String "SSID Name") -split ":")[1].Trim())
              $KEY = ((($bla | Select-string "Key Content") -split ":")[1].Trim())
@@ -742,7 +868,8 @@ Function Collect-Users-Groups {
     {
         Get-LocalUser | Select-Object *                            > "$Global:Destiny\$HOSTNAME\UsersGroups\Users_Local.txt"
         Get-LocalGroup | Select-Object *                           > "$Global:Destiny\$HOSTNAME\UsersGroups\Groups_Local.txt"
-        Get-LocalGroupMember Administrators | Select-Object *      > "$Global:Destiny\$HOSTNAME\UsersGroups\Administrator_LocalMembers.txt"  #TODO: There might be a problem with the word Administrators in systems that use other languages.
+        $admin = Get-LocalGroup | Select-Object -ExpandProperty Name | Select-String admin
+        Get-LocalGroupMember $admin | Select-Object *              > "$Global:Destiny\$HOSTNAME\UsersGroups\Administrator_LocalMembers.txt"  #TODO: There might be a problem with the word Administrators in systems that use other languages.
     }
     catch
     {
@@ -2008,8 +2135,8 @@ Function Collect-BAM {
     {
         Write-Host "[+] Collecting BAM (Background Activiy Moderator) ..." -ForegroundColor Green
 
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\Execution") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\Execution" > $null }    
-        echo "UserSID,Username,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\Execution\BAM_LastExecutionDateApps.csv"
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\BAM") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\BAM" > $null }    
+        echo "UserSID,Username,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\BAM\BAM_LastExecutionDateApps.csv"
 
         $SIDs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\*"  | foreach { 
             $_.Name.split("\")[-1] 
@@ -2035,7 +2162,7 @@ Function Collect-BAM {
 
                     $LastExecutedDateLocal = [datetime]::FromFileTime([System.BitConverter]::ToInt64($RawDate,0))
 
-                    echo "$SID,$USERNAME,$APP,$LastExecutedDateUTC,$LastExecutedDateLocal" >> "$Global:Destiny\$HOSTNAME\Execution\BAM_LastExecutionDateApps.csv"
+                    echo "$SID,$USERNAME,$APP,$LastExecutedDateUTC,$LastExecutedDateLocal" >> "$Global:Destiny\$HOSTNAME\BAM\BAM_LastExecutionDateApps.csv"
                 }
             }
         }
@@ -2659,7 +2786,8 @@ Function Collect-UsnJrnl {
     try
     {
         & $RAW_EXE /FileNamePath:$Global:Source\`$Extend\`$UsnJrnl /OutputPath:$Global:Destiny\$HOSTNAME\FileSystemFiles /OutputName:`$UsnJrnl > $null
-        Hash-File -Source "$Global:Source\`$Extend\`$UsnJrnl" -Destiny "$Global:Destiny\$HOSTNAME\FileSystemFiles\`$UsnJrnl"
+        Hash-File -Source "$Global:Source\`$Extend\`$UsnJrnl" -Destiny "$Global:Destiny\$HOSTNAME\FileSystemFiles\`$UsnJrnl[ADS_`$J]"
+        Hash-File -Source "$Global:Source\`$Extend\`$UsnJrnl" -Destiny "$Global:Destiny\$HOSTNAME\FileSystemFiles\`$UsnJrnl[ADS_`$Max]"
     }
     catch
     {
@@ -2922,11 +3050,11 @@ Function Collect-Credentials {
         # COLLECT THE RAW INFORMATION/EVIDENCE
         try 
         {
-            Write-Host "`t`t○ Collecting ..." -ForegroundColor Green
-
             # "C:\Users\<user>\AppData\Roaming\Microsoft\Credentials"
             if(Test-Path -Path "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Credentials")
             {
+                Write-Host "`t`t○ Collecting Roaming credentials ..." -ForegroundColor Green
+
                 if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Roaming" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Roaming" > $null }
 
                 $tempFileList1 = Get-ChildItem -Force "$Global:Source\Users\$u\AppData\Roaming\Microsoft\Credentials" 2> $null | ForEach-Object { $_.Name }
@@ -2945,6 +3073,8 @@ Function Collect-Credentials {
             # "C:\Users\<user>\AppData\Local\Microsoft\Credentials"
             if(Test-Path -Path "$Global:Source\Users\$u\AppData\Local\Microsoft\Credentials")
             {
+                Write-Host "`t`t○ Collecting Local Credentials ..." -ForegroundColor Green
+                
                 if ( -Not ( Test-Path -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Local" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Credentials\$u\Local" > $null }
 
                 $tempFileList2 = Get-ChildItem -Force "$Global:Source\Users\$u\AppData\Local\Microsoft\Credentials" 2> $null | ForEach-Object { $_.Name }
@@ -3135,8 +3265,16 @@ Function Collect-Email-Files {
 
                 if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles > $null }
                 
-                & $RAW_EXE /FileNamePath:"$($_.FullName)" /OutputPath:"$Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles" /OutputName:"$($_.Name)" > $null
-                Hash-File -Source "$($_.FullName)" -Destiny "$Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles\$($_.Name)"
+                if($($_.FullName) -cmatch "OneDrive") # find a way to ask if the folder is on the disk or not
+                {
+                    Write-Host "`t`t`tFile $($_.FullName) it's on the cloud, it is not posible to get it..." -ForegroundColor Yellow
+                }
+                else
+                {
+                    & $RAW_EXE /FileNamePath:"$($_.FullName)" /OutputPath:"$Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles" /OutputName:"$($_.Name)" > $null
+                    #& Copy-Item /FileNamePath:"$($_.FullName)" /OutputPath:"$Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles" /OutputName:"$($_.Name)" > $null
+                    Hash-File -Source "$($_.FullName)" -Destiny "$Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles\$($_.Name)"
+                }
             }
         }
         
@@ -3154,7 +3292,7 @@ Function Collect-Email-Files {
         Get-ChildItem "$Global:Source`\" -Recurse *.ost 2> $null | ForEach-Object {
             if (-not ($_.Name -in $existingEmails))
             {
-                Write-Host "`t`t○ Found one $_.FullName ..." -ForegroundColor Green
+                Write-Host "`t`t○ Found one: $($_.FullName) ..." -ForegroundColor Green
 
                 if ( -Not ( Test-Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles ) ) { New-Item -ItemType directory -Path $Global:Destiny\$HOSTNAME\EmailFiles\LostEmailFiles > $null }
                 
@@ -3287,7 +3425,7 @@ Function Collect-Chrome-Data {
             }
         }
 
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\")){
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u")){
             Write-Host "`t[i] There is no Chrome Browser in the System for user $u ..." -ForegroundColor Yellow
         }
         else # If there is data, lets parse it
@@ -3298,10 +3436,10 @@ Function Collect-Chrome-Data {
                 
                 if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed" > $null }
 
-                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history `"select * from urls;`""                    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_urls.csv"
-                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history `"select * from keyword_search_terms;`""    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_keyword_search-terms.csv"
-                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history `"select * from downloads;`""               > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_downloads.csv"
-                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history `"select * from downloads_url_chains;`""    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_download_url_chains.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history`" `"select * from urls;`""                    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_urls.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history`" `"select * from keyword_search_terms;`""    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_keyword_search-terms.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history`" `"select * from downloads;`""               > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_downloads.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Raw\history`" `"select * from downloads_url_chains;`""    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Chrome\$u\$($_.Name)\Parsed\history_download_url_chains.csv"
 
 
             }
@@ -3387,7 +3525,7 @@ Function Collect-Firefox-Data {
             }
         }
 
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\")){
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u")){
             Write-Host "`t[i] There is no Firefox Browser in the System for user $u ..." -ForegroundColor Yellow
         }
         else # If there is data, lets parse it
@@ -3398,9 +3536,9 @@ Function Collect-Firefox-Data {
                 
                 if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed" > $null }
 
-                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw\places.sqlite `"select * from moz_bookmarks;`""                    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed\places_bookmarks.csv"
-                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw\places.sqlite `"select * from moz_origins;`""                      > "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed\places_origins.csv"
-                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw\places.sqlite `"select * from moz_places;`""                       > "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed\places_history.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw\places.sqlite`" `"select * from moz_bookmarks;`""                    > "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed\places_bookmarks.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw\places.sqlite`" `"select * from moz_origins;`""                      > "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed\places_origins.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Raw\places.sqlite`" `"select * from moz_places;`""                       > "$Global:Destiny\$HOSTNAME\WebBrowsers\Firefox\$u\$($_.Name)\Parsed\places_history.csv"
 
             }
         }
@@ -3686,7 +3824,7 @@ Function Collect-Opera-Data {
             }
         }
 
-        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\")){
+        if( -not (Test-Path "$Global:Destiny\$HOSTNAME\WebBrowsers\Opera\$u")){
             Write-Host "`t[i] There is no Opera Browser in the System for user $u ..." -ForegroundColor Yellow
         }
         else # If there is data, lets parse it
@@ -3794,45 +3932,66 @@ Function Collect-Cloud-OneDrive-Logs {
             Write-Host "`t○ from user: $u" -ForegroundColor Green
 
             # BUSINESS1 logs
-            try 
+            if( Test-Path "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Business1" )
             {
-                Write-Host "`t`t○ Business1 folder" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Business1" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Business1" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Business1\*.*" "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Business1" > $null
-                # TODO: Iterate through the collected files and calculate the hashes
-                # Hash-File -Source " " -Destiny " "
-            } 
-            catch 
+                try 
+                {
+                    Write-Host "`t`t○ Business1 folder" -ForegroundColor Green
+                    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Business1" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Business1" > $null }
+                    Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Business1\*.*" "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Business1" > $null
+                    # TODO: Iterate through the collected files and calculate the hashes
+                    # Hash-File -Source " " -Destiny " "
+                } 
+                catch 
+                {
+                    Report-Error -evidence "OneDrive Business1 Logs"
+                }
+            }
+            else
             {
-                Report-Error -evidence "OneDrive Business1 Logs"
+                Write-Host "`t`tBussiness1 folder not found." -ForegroundColor Yellow
             }
 
             # COMMON logs
-            try 
+            if( Test-Path "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Common" )
             {
-                Write-Host "`t`t○ Common folder" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Common" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Common" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Common\*.*" "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Common" > $null
-                # TODO: Iterate through the collected files and calculate the hashes
-                # Hash-File -Source " " -Destiny " "
-            } 
-            catch 
+                try 
+                {
+                    Write-Host "`t`t○ Common folder" -ForegroundColor Green
+                    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Common" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Common" > $null }
+                    Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Common\*.*" "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Common" > $null
+                    # TODO: Iterate through the collected files and calculate the hashes
+                    # Hash-File -Source " " -Destiny " "
+                } 
+                catch 
+                {
+                    Report-Error -evidence "OneDrive Common Logs"
+                }
+            }
+            else
             {
-                Report-Error -evidence "OneDrive Common Logs"
+                Write-Host "`t`tCommon folder not found." -ForegroundColor Yellow
             }
 
             # Personal logs
-            try 
+            if( Test-Path "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Personal" )
             {
-                Write-Host "`t`t○ Personal folder" -ForegroundColor Green
-                if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Personal" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Personal" > $null }
-                Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Personal\*.*" "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Personal" > $null
-                # TODO: Iterate through the collected files and calculate the hashes
-                # Hash-File -Source " " -Destiny " "
-            } 
-            catch 
+                try 
+                {
+                    Write-Host "`t`t○ Personal folder" -ForegroundColor Green
+                    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Personal" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Personal" > $null }
+                    Copy-Item "$Global:Source\Users\$u\AppData\Local\Microsoft\OneDrive\logs\Personal\*.*" "$Global:Destiny\$HOSTNAME\Cloud\ONEDRIVE\$u\Personal" > $null
+                    # TODO: Iterate through the collected files and calculate the hashes
+                    # Hash-File -Source " " -Destiny " "
+                } 
+                catch 
+                {
+                    Report-Error -evidence "OneDrive Personal Logs"
+                }
+            }
+            else
             {
-                Report-Error -evidence "OneDrive Personal Logs"
+                Write-Host "`t`tPersonal folder not found." -ForegroundColor Yellow
             }
         }
     }
@@ -3882,21 +4041,28 @@ Function Collect-Cloud-GoogleDrive-Logs {
     # PARSING DB FILES 
     foreach($u in $USERS)
     {
-        Write-Host "`t○ Parsing GoogleDrive DB files ..." -ForegroundColor Green
+        if( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw")
+        {
+            Write-Host "`t○ Parsing GoogleDrive DB files ..." -ForegroundColor Green
 
-        Write-Host "`t`t○ From user: $u" -ForegroundColor Green
+            Write-Host "`t`t○ From user: $u" -ForegroundColor Green
 
-        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed" > $null }
-
-        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw\snapshot.db `"select * from cloud_entry;`"" > "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed\snapshot_cloud_entry.csv"
-        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw\snapshot.db `"select * from local_entry;`"" > "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed\snapshot_local_entry.csv"
-        
+            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed" > $null }
+            
+            if($("`"$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw\snapshot.db`"").Length -gt 1)
+            {
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw\snapshot.db`" `"select * from cloud_entry;`"" > "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed\snapshot_cloud_entry.csv"
+                & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv `"$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Raw\snapshot.db`" `"select * from local_entry;`"" > "$Global:Destiny\$HOSTNAME\Cloud\GOOGLEDRIVE\$u\Parsed\snapshot_local_entry.csv"
+            }
+        }
     }
 }
 
 <########### CLOUD - DROPBOX ##############################>  # CDB*
 Function Collect-Cloud-Dropbox-Logs {
     
+    $dpx = $false # Variable used to activate the collection of the KEYS to decrypt the 
+
     Write-Host "[+] Collecting Dropbox Logs ..." -ForegroundColor Green
 
     foreach($u in $USERS)
@@ -3932,63 +4098,74 @@ Function Collect-Cloud-Dropbox-Logs {
             {
                 Report-Error -evidence "DropBox DBX Files from INSTANCE_DB"
             }
+            $dpx = $true 
+        }
+        else
+        {
+            Write-Host "`t○ User: $u doesn't have DropBox installed" -ForegroundColor Yellow
         }
     }
-
+    
     # GETTING KEYS TO DECRYPT DROPBOX FILES
-    Write-Host "`t○ Getting Keys to Decrypt Dropbox DBX files ..." -ForegroundColor Green
+    if( $dpx )
+    {
+        Write-Host "`t○ Getting Keys to Decrypt Dropbox DBX files ..." -ForegroundColor Green
 
-    if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\z_temp" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\z_temp" > $null }
+        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\z_temp" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\z_temp" > $null }
 
-    & $SCRIPTPATH\bin\dbx-key-win-live.ps1 > "$Global:Destiny\$HOSTNAME\z_temp\keys.txt"
+        & $SCRIPTPATH\bin\dbx-key-win-live.ps1 > "$Global:Destiny\$HOSTNAME\z_temp\keys.txt"
 
-    Select-String -Path "$Global:Destiny\$HOSTNAME\z_temp\keys.txt" -Pattern DBX | ForEach-Object { 
+        Select-String -Path "$Global:Destiny\$HOSTNAME\z_temp\keys.txt" -Pattern DBX | ForEach-Object { 
                 
-        if( ($_.Line.Split(":")[0]).Contains("ks1") ) 
-        {
-            $ks1_key=($_.Line.Split(":")[1]).Trim()
-            #Write-Host "`tks1_key: $ks1_key" -ForegroundColor Cyan
-        } 
-        else 
-        {
-            $ks_key=($_.Line.Split(":")[1]).Trim()
-            #Write-Host "`tks_key: $ks_key" -ForegroundColor Cyan
+            if( ($_.Line.Split(":")[0]).Contains("ks1") ) 
+            {
+                $ks1_key=($_.Line.Split(":")[1]).Trim()
+                #Write-Host "`tks1_key: $ks1_key" -ForegroundColor Cyan
+            } 
+            else 
+            {
+                $ks_key=($_.Line.Split(":")[1]).Trim()
+                #Write-Host "`tks_key: $ks_key" -ForegroundColor Cyan
+            }
         }
     }
 
     # DECRYPTING FILES WITH THE KEYS FROM ABOVE
     foreach($u in $USERS)
     {
-        Write-Host "`t○ Decrypting Dropbox DBX files ..." -ForegroundColor Green
+        if( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1")
+        {
+            Write-Host "`t○ Decrypting Dropbox DBX files ..." -ForegroundColor Green
 
-        Write-Host "`t`t○ From user: $u" -ForegroundColor Green
+            Write-Host "`t`t○ From user: $u" -ForegroundColor Green
 
-        $rootTemp = $Global:Destiny -replace "\\","\\"
+            $rootTemp = $Global:Destiny -replace "\\","\\"
 
-        Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1" -Filter *.dbx | ForEach-Object {
-            try
-            {
-                if($_.Extension -ne ".dbx-wal" -and $_.Extension -ne ".dbx-shm" -and $_.BaseName -ne "aggregation")
+            Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1" -Filter *.dbx | ForEach-Object {
+                try
+                {
+                    if($_.Extension -ne ".dbx-wal" -and $_.Extension -ne ".dbx-shm" -and $_.BaseName -ne "aggregation")
+                    {
+                        $bn=$_.BaseName
+                        & $SQL_DBX_EXE -key $ks1_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\Raw\\instance1\\$bn.db" 
+                    }
+                } 
+                catch 
+                {
+                    Report-Error -evidence "DropBox File: $_.FullName"
+                }
+            }
+
+            Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance_db" -Filter *.dbx | ForEach-Object {
+                try
                 {
                     $bn=$_.BaseName
-                    & $SQL_DBX_EXE -key $ks1_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\Raw\\instance1\\$bn.db" 
+                    & $SQL_DBX_EXE -key $ks_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\Raw\\instance_db\\$bn.db" 
+                } 
+                catch 
+                {
+                    Report-Error -evidence "DropBox File: $_.FullName"
                 }
-            } 
-            catch 
-            {
-                Report-Error -evidence "DropBox File: $_.FullName"
-            }
-        }
-
-        Get-ChildItem "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance_db" -Filter *.dbx | ForEach-Object {
-            try
-            {
-                $bn=$_.BaseName
-                & $SQL_DBX_EXE -key $ks_key $_.FullName ".backup $rootTemp\\$HOSTNAME\\\Cloud\\DROPBOX\\$u\\Raw\\instance_db\\$bn.db" 
-            } 
-            catch 
-            {
-                Report-Error -evidence "DropBox File: $_.FullName"
             }
         }
     }
@@ -3996,20 +4173,21 @@ Function Collect-Cloud-Dropbox-Logs {
     # PARSING DB FILES 
     foreach($u in $USERS)
     {
-        Write-Host "`t○ Parsing Dropbox DB files ..." -ForegroundColor Green
+        if( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1")
+        {
+            Write-Host "`t○ Parsing Dropbox DB files ..." -ForegroundColor Green
 
-        Write-Host "`t`t○ From user: $u" -ForegroundColor Green
+            Write-Host "`t`t○ From user: $u" -ForegroundColor Green
 
-        if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed" > $null }
+            if ( -Not ( Test-Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed" ) ) { New-Item -ItemType directory -Path "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed" > $null }
 
-        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\filecache.db `"select * from file_journal;`"" > "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed\filecache_file_journal.csv"
-        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\filecache.db `"select * from file_journal_fileid;`"" > "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed\filecache_file_journal_fileid.csv"
-        & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\filecache.db `"select * from deleted_fileids;`"" > "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed\filecache_deleted_fileids.csv"
-        
-        
+            & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\filecache.db `"select * from file_journal;`"" > "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed\filecache_file_journal.csv"
+            & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\filecache.db `"select * from file_journal_fileid;`"" > "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed\filecache_file_journal_fileid.csv"
+            & cmd.exe /c "$SCRIPTPATH\bin\sqlite3.exe -header -csv $Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Raw\instance1\filecache.db `"select * from deleted_fileids;`"" > "$Global:Destiny\$HOSTNAME\Cloud\DROPBOX\$u\Parsed\filecache_deleted_fileids.csv"
+        }
     }
 
-    Remove-Item -Recurse -Path "$Global:Destiny\$HOSTNAME\z_temp"
+    If(Test-Path "$Global:Destiny\$HOSTNAME\z_temp") { Remove-Item -Recurse -Path "$Global:Destiny\$HOSTNAME\z_temp"}
 }
 
 
@@ -4778,8 +4956,20 @@ Function Control-GUI {
         {
             if($checkBoxFormat.Checked -eq $True)
             {
-                $checkBoxFormatQuick.Enabled = $True
-                $checkBoxFormatZero.Enabled = $True
+                $return = [System.Windows.Forms.MessageBox]::Show("Please have in mind that you choose to format the destiny. This will erase all its content.",[System.Windows.Forms.MessageBoxIcon]::Warning,[System.Windows.Forms.MessageBoxButtons]::OKCancel)
+                if($return -eq "OK")
+                {
+                    $checkBoxFormatQuick.Enabled = $True
+                    $checkBoxFormatZero.Enabled = $True
+                }
+                else
+                {
+                    $checkBoxFormat.Checked = $False
+                    $checkBoxFormatQuick.Enabled = $False
+                    $checkBoxFormatZero.Enabled = $False
+                    $checkBoxFormatQuick.Checked = $False
+                    $checkBoxFormatZero.Checked = $False
+                }
             }
             else
             {
@@ -4807,6 +4997,7 @@ Function Control-GUI {
             if($checkBoxFormatQuick.Checked -eq $True)
             {
                 $checkBoxFormatZero.Checked = $False
+                
             }
             else
             {
@@ -5024,8 +5215,8 @@ Function Control-GUI {
         $checkBoxPNP.Checked = $True
         $checkBoxSEC.Checked = $True
         $checkBoxMRU.Checked = $True
-        $checkBoxSHI.Checked = $True
-        $checkBoxRAP.Checked = $True
+        $checkBoxSHI.Checked = $False
+        $checkBoxRAP.Checked = $False
         $checkBoxBAM.Checked = $True
         $checkBoxSYS.Checked = $True
         $checkBoxLAC.Checked = $True
