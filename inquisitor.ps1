@@ -371,7 +371,7 @@ $APPVersion = "v1.0"
 <# GLOBAL VARIABLES #>
 $HOSTNAME = hostname
 $OS = ((Get-CimInstance win32_operatingsystem).name).split(" ")[2] <# Intead of collecting the windows version: XP, Vista, 7, 10, ... should be according to the core #>
-$USERS = Get-LocalUser | ? { $_.Enabled } | Select-Object -ExpandProperty Name # TODO: Get the users from Users folder and not from PowerShell command, it will not work correctly for offline collection like it is at the moment
+$USERS = Get-ChildItem "$Global:Source\Users" -Force | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty Name # $USERS = Get-LocalUser | ? { $_.Enabled } | Select-Object -ExpandProperty Name # For Live collection
 $SIDS = Get-ChildItem "REGISTRY::HKEY_USERS" | ForEach-Object { ($_.Name).Split("\")[1] } # list of user SIDs
 $ARCH = $env:PROCESSOR_ARCHITECTURE
 $SCRIPTPATH = split-path -parent $MyInvocation.MyCommand.Definition
@@ -610,8 +610,8 @@ Function Collect-Services-and-Processes {
     Write-Host "[+] Collecting Processes ..." -ForegroundColor Green
     try # Dependency of PowerShell 3.1 because or the Export-Csv
     {
-        Get-CimInstance -ClassName Win32_Process | Select-Object ProcessId,ProcessName,Path, CreationDate | Sort-Object ProcessId | Export-Csv $Global:Destiny\$HOSTNAME\ServicesProcesses\"Processes_Simplified.txt"
-        Get-CimInstance -ClassName Win32_Process | Select-Object * | Sort-Object ProcessId | Export-Csv $Global:Destiny\$HOSTNAME\ServicesProcesses\"Processes_All.txt"
+        Get-CimInstance -ClassName Win32_Process | Select-Object ProcessId,ProcessName,Path, CreationDate | Sort-Object ProcessId | Export-Csv $Global:Destiny\$HOSTNAME\ServicesProcesses\"Processes_Simplified.csv"
+        Get-CimInstance -ClassName Win32_Process | Select-Object * | Sort-Object ProcessId | Export-Csv $Global:Destiny\$HOSTNAME\ServicesProcesses\"Processes_All.csv"
 
     }
     catch
