@@ -98,22 +98,25 @@ There are 3 options:
     [ValidateSet("No","Quick","Zeros")][string]$FormatType="No",    
     
     <# Defines if the triage is over a Live system #>
-    [switch]$Live=$null,
+    [switch]$Live=$false,
     
+    <# Defines if the triage is over a Live system #>
+    [switch]$LiveOpt=$false,
+
     <# Defines if the triage is over an Offline system #>
-    [switch]$Offline=$null,
+    [switch]$Offline=$false,
+
+    <# Defines if the triage is over an Offline system #>
+    [switch]$OfflineOpt=$false,
 
     <# Calculates MD5 file hashes of the collected files #>
-    [switch]$MD5=$null,
+    [switch]$MD5=$true,
 
     <# Calculates SHA256 file hashes of the collected files #>
-    [switch]$SHA256=$null,
+    [switch]$SHA256=$true,
 
     
-    <# Enables the collection of all the posible evidences by Inquisitor.
-Exceptions are: "Signed Files" and "RAM"
-"Signed Files" is time consuming task
-"RAM is a collecting that might not allawys be needed and it's also a time consuming task" #>
+    <# Enables the collection of all the posible evidences by Inquisitor. #>
     [switch]$All=$false,         
 
 ##### LIVE
@@ -284,7 +287,9 @@ $Global:Source=$Source
 $Global:Destiny=$Destiny
 $Global:FormatType=$FormatType
 $Global:Live=$Live
+$Global:LiveOpt=$LiveOpt
 $Global:Offline=$Offline
+$Global:OfflineOpt=$OfflineOpt
 $Global:All=$All
     
 $Global:MD5=$MD5
@@ -4221,7 +4226,7 @@ Function Control-NOGUI{
 
     # LIVE                                                                                                                                                                                                                        # mm:ss
     
-    if ($All -or $Global:RAM ) {
+    if ($Global:All -or $Global:RAM -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of RAM Memory." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Memory-Dump ; 
@@ -4231,7 +4236,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of RAM Memory."  >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:22 4GB
 
-    if ($All -or $Global:NET ) {
+    if ($Global:All -or $Global:NET -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Network Information." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Network-Information ; $ScriptTime.Stop(); 
@@ -4240,7 +4245,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Network Information. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:23 - 00:12
                  
-    if ($All -or $Global:SAP ) {
+    if ($Global:All -or $Global:SAP -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Services and Processes. " >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Services-and-Processes ; $ScriptTime.Stop(); 
@@ -4249,7 +4254,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Services and Processes. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 01:03 - 00:56 
 
-    if ($All -or $Global:STA ) {
+    if ($Global:All -or $Global:STA -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Scheduled Tasks." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Scheduled-Tasks ; 
@@ -4259,7 +4264,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Scheduled Tasks. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:02 - 00:02
                      
-    if ($All -or $Global:CPH ) {
+    if ($Global:All -or $Global:CPH -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of PowerShell Command History." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-PSCommand-History ; 
@@ -4269,7 +4274,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of PowerShell Command History. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
                     
-    if ($All -or $Global:INS ) {
+    if ($Global:All -or $Global:INS -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Installed Software." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Installed-Software ; $ScriptTime.Stop(); 
@@ -4278,7 +4283,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Installed Software. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:11 - 00:09
                 
-    if ($All -or $Global:UGR ) {
+    if ($Global:All -or $Global:UGR -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Users and Groups." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Users-Groups ; 
@@ -4288,7 +4293,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Users and Groups. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
                         
-    if ($All -or $Global:PER ) {
+    if ($Global:All -or $Global:PER -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Persistence." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Persistence ; 
@@ -4298,7 +4303,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Persistence. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:03
 
-    if ($All -or $Global:USB ) {
+    if ($Global:All -or $Global:USB -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of USB Info." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-USB-Info ; $ScriptTime.Stop(); 
@@ -4307,7 +4312,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of USB Info. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
         
-    if ($All -or $Global:PNP ) {
+    if ($Global:All -or $Global:PNP -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of PnP Devices." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-PnPDevices-Info ; 
@@ -4317,7 +4322,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of PnP Devices. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:40
     
-    if ($All -or $Global:SEC ) {
+    if ($Global:All -or $Global:SEC -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Firewall Config." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Firewall-Config ; $ScriptTime.Stop(); 
@@ -4326,7 +4331,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Firewall Config. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:03
 
-    if ($All -or $Global:MRU ) {
+    if ($Global:All -or $Global:MRU -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of MRUs." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-MRUs ; 
@@ -4356,7 +4361,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Recent Apps. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # ??:??
 
-    if ($All -or $Global:BAM ) {
+    if ($Global:All -or $Global:BAM -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of BAM." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-BAM ; 
@@ -4366,7 +4371,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of BAM. Elapsed time: $elapsed"
     } # 00:00
     
-    if ($All -or $Global:SYS ) {
+    if ($Global:All -or $Global:SYS -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of System Info." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-System-Info ; 
@@ -4376,7 +4381,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of System Info. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:02
     
-    if ($All -or $Global:LAC ) {
+    if ($Global:All -or $Global:LAC -or $Global:Live -or $Global:LiveOpt) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Last Activity." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Last-Activity ; 
@@ -4386,7 +4391,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Last Activity. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00                   
     
-    if (         $Global:AFI ) {
+    if ($Global:All -or $Global:AFI -or $Global:Live ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Autorun Files." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Autorun-Files ; 
@@ -4396,8 +4401,8 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Autorun Files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 05:40 - 05:20
 
-    # OFFLINE
-    if ($All -or $Global:HIV ) {
+    # OFFLINE ##########################
+    if ($Global:All -or $Global:HIV -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of HIVES." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Hives ; 
@@ -4407,7 +4412,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of HIVES. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 02:28                           
     
-    if ($All -or $Global:EVT ) {
+    if ($Global:All -or $Global:EVT -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of EVTX Files." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-EVTX-Files ; 
@@ -4417,7 +4422,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of EVTX Files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:03 
     
-    if ($All -or $Global:EET ) {
+    if ($Global:All -or $Global:EET -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of ETL and ETW files." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-ETW-ETL ; 
@@ -4427,7 +4432,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of ETL and ETW files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:29                         
     
-    if ($All -or $Global:FIL ) { 
+    if ($Global:All -or $Global:FIL -or $Global:Offline ) { 
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Files Lists." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Files-Lists ; 
@@ -4437,7 +4442,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Files Lists. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 06:19                 
     
-    if (         $Global:DEX ) {
+    if ($Global:All -or $Global:DEX -or $Global:Offline ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Dangerous Extensions." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Dangerous-Extensions ; 
@@ -4447,7 +4452,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Dangerous Extensions. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 07:05 - 04:18
     
-    if ($All -or $Global:PRF ) {
+    if ($Global:All -or $Global:PRF -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Prefecth files." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Prefetch ; 
@@ -4458,7 +4463,7 @@ Function Control-NOGUI{
     } # 00:02
     
     
-    if ($All -or $Global:WSE ) {
+    if ($Global:All -or $Global:WSE -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Windows Search." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Windows-Search ; 
@@ -4468,7 +4473,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Windows Search. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:08
     
-    if ($All -or $Global:JLI ) {
+    if ($Global:All -or $Global:JLI -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Jumplists." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-JumpLists ; 
@@ -4478,7 +4483,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Jumplists. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:18
     
-    if ($All -or $Global:TIC ) {
+    if ($Global:All -or $Global:TIC -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Thumcache and Iconcache." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Thumcache-Iconcache ; 
@@ -4488,7 +4493,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Thumcache and Iconcache. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:05
         
-    if ($All -or $Global:FSF ) {
+    if ($Global:All -or $Global:FSF -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of File System Files." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-FileSystemFiles ; 
@@ -4498,7 +4503,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of File System Files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:59
     
-    if ($All -or $Global:MSF ) {
+    if ($Global:All -or $Global:MSF -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Memory Support files." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-MemorySupportFiles ; 
@@ -4508,7 +4513,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Memory Support files. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:29
 
-    if ($All -or $Global:TLH ) {
+    if ($Global:All -or $Global:TLH -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Time Line." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Timeline ; 
@@ -4518,7 +4523,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Time Line. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:02
 
-    if ($All -or $Global:THA ) {
+    if ($Global:All -or $Global:THA -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Text Harvester." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-TextHarvester ; 
@@ -4528,7 +4533,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Text Harvester. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
     
-    if ($All -or $Global:SRU ) {
+    if ($Global:All -or $Global:SRU -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of SRUM." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-SRUM ; 
@@ -4538,7 +4543,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of SRUM. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 01:02
     
-    if ($All -or $Global:CRE ) {
+    if ($Global:All -or $Global:CRE -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Credentials." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Credentials ; 
@@ -4548,7 +4553,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Credentials. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:14
     
-    if ($All -or $Global:SKY ) {
+    if ($Global:All -or $Global:SKY -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Skype logs." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Skype-History ; 
@@ -4558,7 +4563,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Skype logs. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
     
-    if ($All -or $Global:EMA ) {
+    if ($Global:All -or $Global:EMA -or $Global:Offline ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Email files." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Email-Files ; 
@@ -4569,7 +4574,7 @@ Function Control-NOGUI{
     } # 04:00 - 00:25
 
 
-    if ($All -or $Global:CHR ) {
+    if ($Global:All -or $Global:CHR -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Chrome browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Chrome-Data ; 
@@ -4579,7 +4584,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Chrome browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
     
-    if ($All -or $Global:MFI ) {
+    if ($Global:All -or $Global:MFI -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Firefox browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Firefox-Data ; 
@@ -4589,7 +4594,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Firefox browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
     
-    if ($All -or $Global:IEX ) {
+    if ($Global:All -or $Global:IEX -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of IE browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-IE-Data ; 
@@ -4599,7 +4604,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of IE browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:07
     
-    if ($All -or $Global:EDG ) {
+    if ($Global:All -or $Global:EDG -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Edge browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-EDGE-Data ; 
@@ -4609,7 +4614,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Edge browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:11
     
-    if ($All -or $Global:SAF ) {
+    if ($Global:All -or $Global:SAF -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Safari browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Safari-Data ; 
@@ -4619,7 +4624,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Safari browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
     
-    if ($All -or $Global:OPE ) {
+    if ($Global:All -or $Global:OPE -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Opera browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Opera-Data ; 
@@ -4629,7 +4634,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Opera browser artifacts. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
     
-    if ($All -or $Global:TOR ) {
+    if ($Global:All -or $Global:TOR -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Tor browser artifacts." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Tor-Data ; 
@@ -4640,7 +4645,7 @@ Function Control-NOGUI{
     } # 00:21
 
     
-    if ($All -or $Global:COD ) {
+    if ($Global:All -or $Global:COD -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of OneDrive Logs." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Cloud-OneDrive-Logs ; 
@@ -4650,7 +4655,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of OneDrive Logs. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:04
     
-    if ($All -or $Global:CGD ) {
+    if ($Global:All -or $Global:CGD -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of GoogleDrive logs." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Cloud-GoogleDrive-Logs ; 
@@ -4660,7 +4665,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of GoogleDrive logs. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:00
     
-    if ($All -or $Global:CDB ) {
+    if ($Global:All -or $Global:CDB -or $Global:Offline -or $Global:OfflineOpt ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Dropbox logs." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Cloud-Dropbox-Logs ; 
@@ -4670,7 +4675,7 @@ Function Control-NOGUI{
         $time = Get-Date([datetime]::UtcNow); echo "$time : Finish collection of Dropbox logs. Elapsed time: $elapsed" >> "$Global:Destiny\$HOSTNAME\_logFile.log"
     } # 00:02
     
-    if (         $Global:SFI ) {
+    if ($Global:All -or $Global:SFI -or $Global:Offline ) {
         $time = Get-Date([datetime]::UtcNow); echo "$time : Start collection of Signed Files." >> "$Global:Destiny\$HOSTNAME\_logFile.log"
         $ScriptTime = [Diagnostics.Stopwatch]::StartNew(); 
         Collect-Sign-Files ; $ScriptTime.Stop(); 
@@ -6176,7 +6181,7 @@ Function Show-Simple-Options-Resume {
     if ($Global:SFI ) {Write-Host "            • SFI - Signed Files for folders %SystemDrive%\Windows and %SystemDrive%\\windows\system32. (Time Consuming)"}
     if ($Global:AFI ) {Write-Host "            • AFI - All Autorun Files. (Time Consuming)"}
     if ($Global:DEX ) {Write-Host "            • DEX - Collect list of files with potential dangerous extensions.(Time Consuming)"}
-    if ($All) {Write-Host "            • ALL:"}
+    if ($Global:All) {Write-Host "            • ALL:"}
 
     if ($Global:NET ) {Write-Host "            • NET - Network Information."}
     if ($Global:SAP ) {Write-Host "            • SAP - Services and Processes."}
