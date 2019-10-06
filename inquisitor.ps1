@@ -90,9 +90,6 @@ param(
     <# Define the DESTINY drive.#>
     [String]$Destiny="",            
     
-    <# DEVELOPMENT mode to help the developer. #>
-    [parameter(DontShow)][switch]$DevMode=$false,     
-    
     <# This option allows the user to format the DESTINY drive before start to collect data to it. 
 There are 3 options:
 - No -> It does not format. (default)
@@ -6172,7 +6169,6 @@ Function Show-Simple-Options-Resume {
     Write-Host "        Destiny:     $Global:Destiny          "
     Write-Host "        Memory Dump: $RAM                     "
     Write-Host "        Format:      $Global:FormatType       "
-    Write-Host "        Dev. Mode:   $DevMode                 "  
     Write-Host "                                              "
     Write-Host "        Collect:                              "
     Write-Host " "
@@ -6549,89 +6545,58 @@ Function Invoke-WCMDump{
 
 Function Check-Variables {
     
-    <# Check DEVELOPER MODE and apply configurations if true #>    
-    if($DevMode -eq $True){
-        $Global:Source="C:"         
-        $Global:Destiny="D:\TFM\Inquisitor"
-        $Global:FormatType="No"
-        $Global:RAM=$false
-        $All=$false
+    # treat Source variable, in case user inserts the "\" character
+    $Global:Source = ($Global:Source).Split("\")[0]
+
+    # Treat Destiny variable in case is a drive and the user inserts the "\" character
+    if(($Global:Destiny).Length -eq 3)
+    {
+        $Global:Destiny = ($Global:Destiny).Split("\")[0]
     }
 
-    <# Check SOURCE #>
-    if($Global:Source -eq ""){ <# In case it is empy which means the user did not define the unit #>
-        cls
-        Show-Banner
+    # Check SOURCE
+    if($Global:Source -eq ""){ # In case it is empy which means the user did not define the unit
         Write-Host ""
-        Write-Host "No SOURCE drive defined!! The following below are available:" -ForegroundColor Yellow
-        gdr -PSProvider "FileSystem"  
+        Write-Host "You must specify a -Source parameter!!" -ForegroundColor Yellow
+        Write-Host "Below a list of posible sources:" -ForegroundColor Green
         Write-Host ""
-        $Global:Source = Read-Host 'Please select a destiny drive(e.g. C: )'
-    }
-        
-    if($Global:Source -ne "C:"){   <# In case it is not C: and it's not empty, Let's check if the unit is MOUNTED #>
-            cls
-            Show-Banner
-            Write-Host ""
-            Write-Host "The SOURCE drive is not C:" -ForegroundColor Yellow
-            $Answer = Read-Host 'Is this a mounted DRIVE? (Yes or No): '
-            if($Answer -eq "Yes"){ $Global:Mounted=$True }                           <#TODO: This variable will stop the execution of some parts of the script in case the drive is mounted. #>
+        gdr -PSProvider FileSystem | Select-Object -ExpandProperty Root
+        Write-Host "`n`n"
+        exit
     }
 
-
-    <# Check DESTINY #>
+    # Check DESTINY
     if($Global:Destiny -eq ""){
-        cls
-        Show-Banner
         Write-Host ""
-        Write-Host "No DESTINY drive defined!! The following below are available:"  -ForegroundColor Yellow
-        gdr -PSProvider "FileSystem"
-        Write-Host ""
-        $Global:Destiny = Read-Host 'Please select a destiny drive(e.g. D: ) '
-    }
-
-    <# Check FORMAT #>
-    if($FormatType -ne "No"){
-        if( ($DevMode -eq $false) -and (($Global:FormatType -eq "Quick" ) -or ($Global:FormatType -eq "Zeros" ))){
-            cls
-            Show-Banner
-            Write-Host ""
-            Write-Host "You have selected to format the DESTINY drive!"  -ForegroundColor Yellow
-            Write-Host "Are you sure you wish to format the destiny driver?"  -ForegroundColor DarkYellow
-            do{
-                $Global:FormatType = Read-Host  'Which type of formating? "Zeros" or "Quick"? ("No" to give up format.)'
-                if( ($Global:FormatType -ne "No") -and ($Global:FormatType -ne "Quick") -and ($Global:FormatType -ne "Zeros") ) {
-                    Write-Host "Wrong option!"  -ForegroundColor Red
-                } else {
-                    break
-                }
-            } while(1)
-        }
-        if( ($DevMode -eq $false) -and ($Global:FormatType -eq "" ) ){
-            cls
-            Show-Banner
-            Write-Host ""
-            Write-Host "You have not defined the format parameter for the DESTINY drive!" -ForegroundColor Yellow
-            Write-Host "Do you wish to format the DESTINY driver?"  -ForegroundColor Yellow
-            do{
-                $Global:FormatType = Read-Host  'Which type of formating? "Zeros" or "Quick"? ("No" to give up format.)'
-                if( ($Global:FormatType -ne "No") -and ($Global:FormatType -ne "Quick") -and ($Global:FormatType -ne "Zeros") ) {
-                    Write-Host "Wrong option!"  -ForegroundColor Red
-                } else {
-                    break
-                }
-            } while(1)
-        }
+        Write-Host "No DESTINY drive defined!!"  -ForegroundColor Yellow
+        Write-Host "A Destiny can be a drive or can be a folder anywhere in any drive." -ForegroundColor Green
+        Write-Host "Be sure to have enough space in the Destiny. `nIf RAM collection is choosen and Memory support files, the size can easly pass the 40GB." -ForegroundColor Green
+        Write-Host "`n`n"
+        exit
     }
     
-    <# Check RAM #>
-    if ( ($DevMode -eq $false) -and ($RAM -eq "$false") ){
-        $Answer = Read-Host 'Do you wish to collect a Memory Dump? (YES or NO): '
-        if ($Answer -eq "YES") { 
-            $RAM=$true 
-            }
+    # In case it's not a C: drive and Live acquisition is selected        
+    if($Global:Source -ne "C:" -and $Global:Live -eq $true){   
+        Write-Host ""
+        Write-Host "The SOURCE drive is not C: and you have selected LIVE acquisition." -ForegroundColor Yellow
+        Write-Host "Be aware that you know what you are doing, the results might be worng. " -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Click some key to continue!! or Ctrl-c to quit."
+        Read-Host  '.:'
     }
 
+    # Check FORMAT
+    if( ($Global:FormatType -eq "Quick" ) -or ($Global:FormatType -eq "Zeros" ) ){
+        Write-Host ""
+        Write-Host "You have selected to format the DESTINY drive! In mode $Global:FormatType."  -ForegroundColor Yellow
+        Write-Host "This will erase all the information in the DESTINY"  -ForegroundColor Red
+        Write-Host "Are you sure you wish to format the DESTINY? (Yes(Y)/No(N))"  -ForegroundColor DarkYellow
+        $answer = Read-Host "."
+        if ( -not ($answer -eq "y" -or $answer -eq "yes"))
+        {
+            $Global:FormatType = $false
+        }
+    }
 }
 
 
