@@ -1,5 +1,7 @@
 # inquisitor
 
+[![Quick Demo](https://raw.githubusercontent.com/nrrpinto/videoGifs/master/Inquisitor_Execution.gif)](https://raw.githubusercontent.com/nrrpinto/videoGifs/master/Inquisitor_Execution.gif)
+
 Execution instructions:
 1. Download last release from https://github.com/nrrpinto/inquisitor/releases
 2. Unzip it.
