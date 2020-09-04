@@ -2014,7 +2014,7 @@ Function Collect-BAM {
         if( -not (Test-Path "$Global:Destiny\$HOSTNAME\BAM") ) { New-Item -ItemType Directory -Path "$Global:Destiny\$HOSTNAME\BAM" > $null }    
         echo "UserSID,Username,Application,LastExecutionDate UTC, LastExecutionDate" > "$Global:Destiny\$HOSTNAME\BAM\BAM_LastExecutionDateApps.csv"
 
-        $SIDs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\*"  | foreach { 
+        $SIDs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\State\UserSettings\*"  | foreach { 
             $_.Name.split("\")[-1] 
         }
 
@@ -2024,7 +2024,7 @@ Function Collect-BAM {
 
             Write-Host "`t○ for user $USERNAME ..." -ForegroundColor Green
             
-            $APPs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\$SID\" | foreach{ 
+            $APPs = Get-Item "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\State\UserSettings\$SID\" | foreach{ 
                 $_.Property 
             }
             
@@ -2032,7 +2032,7 @@ Function Collect-BAM {
             {
                 if((-not ($avoidlist -contains $APP))) # if not in the blacklist
                 {
-                    $RawDate = Get-ItemPropertyValue "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\UserSettings\$SID\" -Name $APP
+                    $RawDate = Get-ItemPropertyValue "REGISTRY::HKLM\SYSTEM\CurrentControlSet\Services\bam\State\UserSettings\$SID\" -Name $APP
                     $DateTimeOffset = [System.DateTimeOffset]::FromFileTime([System.BitConverter]::ToInt64($RawDate,0))
                     $LastExecutedDateUTC = $($DateTimeOffset.UtcDateTime)
 
